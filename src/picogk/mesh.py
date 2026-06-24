@@ -23,13 +23,13 @@ class Mesh(NativeObject):
 
     def __init__(self, handle: int | None = None):
         if handle is None:
-            handle = library.lib().Mesh_hCreate(C.c_uint64(library.instance()))
+            handle = library.lib().Mesh_hCreate(library.instance())
         super().__init__(handle)
 
     @classmethod
     def from_voxels(cls, voxels) -> "Mesh":
         lib, inst = library.lib(), library.instance()
-        h = lib.Mesh_hCreateFromVoxels(C.c_uint64(inst), C.c_uint64(voxels.handle))
+        h = lib.Mesh_hCreateFromVoxels(inst, voxels.handle)
         return cls(h)
 
     @classmethod
@@ -66,31 +66,31 @@ class Mesh(NativeObject):
 
     def is_valid(self) -> bool:
         return bool(self._lib.Mesh_bIsValid(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def memory_bytes(self) -> int:
         return int(self._lib.Mesh_nMemUsage(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     # --- counts --------------------------------------------------------------
     def vertex_count(self) -> int:
         return int(self._lib.Mesh_nVertexCount(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def triangle_count(self) -> int:
         return int(self._lib.Mesh_nTriangleCount(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     # --- building ------------------------------------------------------------
     def add_vertex(self, point) -> int:
         v = to_vec3(point)
         return int(self._lib.Mesh_nAddVertex(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(v)))
+            self._inst, self.handle, C.byref(v)))
 
     def add_triangle(self, a: int, b: int, c: int) -> int:
         tri = PKTriangle(int(a), int(b), int(c))
         return int(self._lib.Mesh_nAddTriangle(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(tri)))
+            self._inst, self.handle, C.byref(tri)))
 
     # --- bulk access (Python loop for now) -----------------------------------
     @property
@@ -106,9 +106,9 @@ class Mesh(NativeObject):
         out = np.empty((n, 3), dtype=np.float32)
         v = PKVector3()
         get = self._lib.Mesh_GetVertex
-        inst, h, ref = C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(v)
+        inst, h, ref = self._inst, self.handle, C.byref(v)
         for i in range(n):
-            get(inst, h, C.c_int32(i), ref)
+            get(inst, h, i, ref)
             out[i, 0], out[i, 1], out[i, 2] = v.X, v.Y, v.Z
         return out
 
@@ -125,16 +125,16 @@ class Mesh(NativeObject):
         out = np.empty((n, 3), dtype=np.int32)
         t = PKTriangle()
         get = self._lib.Mesh_GetTriangle
-        inst, h, ref = C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(t)
+        inst, h, ref = self._inst, self.handle, C.byref(t)
         for i in range(n):
-            get(inst, h, C.c_int32(i), ref)
+            get(inst, h, i, ref)
             out[i, 0], out[i, 1], out[i, 2] = t.A, t.B, t.C
         return out
 
     def bounding_box(self) -> BBox3:
         box = PKBBox3()
         self._lib.Mesh_GetBoundingBox(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(box))
+            self._inst, self.handle, C.byref(box))
         return BBox3._from_pk(box)
 
     # --- export --------------------------------------------------------------

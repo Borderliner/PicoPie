@@ -6,15 +6,23 @@ array of shape (3,). Returned vectors are NumPy ``float32`` arrays.
 
 from __future__ import annotations
 
-from typing import Iterable
+import ctypes as C
 
 import numpy as np
 
-from ._native.ctypes_types import (
-    PKBBox3, PKColorFloat, PKTriangle, PKVector2, PKVector3,
-)
+from ._native.ctypes_types import PKBBox3, PKColorFloat, PKVector2, PKVector3
 
 Vec3Like = "PKVector3 | Iterable[float] | np.ndarray"
+
+
+def read_voxel_dimensions(lib, fn_name: str, inst: int, handle: int):
+    """Read a voxel-space bounding box via a native ``*_GetVoxelDimensions``
+    function. Returns ``(origin, size)`` as int32 arrays of shape (3,)."""
+    ints = [C.c_int32() for _ in range(6)]
+    getattr(lib, fn_name)(inst, handle, *[C.byref(i) for i in ints])
+    origin = np.array([ints[i].value for i in range(3)], dtype=np.int32)
+    size = np.array([ints[i].value for i in range(3, 6)], dtype=np.int32)
+    return origin, size
 
 
 def to_vec3(v) -> PKVector3:

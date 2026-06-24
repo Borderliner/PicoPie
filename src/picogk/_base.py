@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import contextlib
-import ctypes as C
 
 from ._errors import InvalidHandleError
 from . import library
@@ -41,7 +40,7 @@ class NativeObject:
             if self._destroy_fn:
                 with contextlib.suppress(Exception):
                     getattr(self._lib, self._destroy_fn)(
-                        C.c_uint64(self._inst), C.c_uint64(self._h))
+                        self._inst, self._h)
             self._closed = True
 
     def __enter__(self):

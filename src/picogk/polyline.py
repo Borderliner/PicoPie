@@ -10,7 +10,7 @@ import numpy as np
 from . import library
 from ._base import NativeObject
 from ._native.ctypes_types import PKBBox3, PKColorFloat, PKVector3
-from .types import BBox3, to_color, to_vec3, vec3_to_np
+from .types import BBox3, to_color, to_vec3
 
 
 class PolyLine(NativeObject):

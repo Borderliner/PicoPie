@@ -125,7 +125,6 @@ def arg_type_only(arg: str) -> str:
     if len(tokens) <= 1:
         type_str = a  # unnamed parameter: whole thing is the type
     else:
-        last = tokens[-1]
         # if last token is glued to a '*' (e.g. "*pvec") it's the name
         type_str = " ".join(tokens[:-1])
     if has_array:

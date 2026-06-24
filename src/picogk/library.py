@@ -72,7 +72,7 @@ def init(voxel_size_mm: float = 0.1) -> None:
                 f"mm. Call picogk.shutdown() first.")
         return
     cdll = _lib()
-    handle = cdll.Library_hCreateInstance(C.c_float(voxel_size_mm))
+    handle = cdll.Library_hCreateInstance(voxel_size_mm)
     if not handle:
         raise PicoGKError("Library_hCreateInstance returned a null handle")
     _session = _Session(cdll, int(handle), float(voxel_size_mm))
@@ -91,7 +91,7 @@ def shutdown() -> None:
             obj._closed = True            # ops now raise InvalidHandleError; close() is a no-op
         _live_objects.clear()
         with contextlib.suppress(Exception):
-            _session.lib.Library_DestroyInstance(C.c_uint64(_session.instance))
+            _session.lib.Library_DestroyInstance(_session.instance)
         _session = None
 
 
@@ -160,4 +160,4 @@ def build_info() -> str:
 def total_memory_bytes() -> int:
     """Total memory the native runtime currently attributes to this instance."""
     s = _active()
-    return int(s.lib.Library_nTotalMemUsage(C.c_uint64(s.instance)))
+    return int(s.lib.Library_nTotalMemUsage(s.instance))

@@ -16,7 +16,7 @@ import numpy as np
 from . import library
 from ._base import NativeObject
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
-from .types import BBox3, to_vec3, vec3_to_np
+from .types import BBox3, read_voxel_dimensions, to_vec3, vec3_to_np
 
 
 def _to_pkbbox(box) -> PKBBox3:
@@ -32,7 +32,7 @@ class Voxels(NativeObject):
 
     def __init__(self, handle: int | None = None):
         if handle is None:
-            handle = library.lib().Voxels_hCreate(C.c_uint64(library.instance()))
+            handle = library.lib().Voxels_hCreate(library.instance())
         super().__init__(handle)
 
     # --- constructors --------------------------------------------------------
@@ -44,7 +44,7 @@ class Voxels(NativeObject):
     def sphere(cls, center=(0.0, 0.0, 0.0), radius: float = 1.0) -> "Voxels":
         lib, inst = library.lib(), library.instance()
         c = to_vec3(center)
-        h = lib.Voxels_hCreateSphere(C.c_uint64(inst), C.byref(c), C.c_float(radius))
+        h = lib.Voxels_hCreateSphere(inst, C.byref(c), radius)
         return cls(h)
 
     @classmethod
@@ -52,16 +52,16 @@ class Voxels(NativeObject):
         lib, inst = library.lib(), library.instance()
         a, b = to_vec3(start), to_vec3(end)
         r2 = radius if radius2 is None else radius2
-        h = lib.Voxels_hCreateCapsule(C.c_uint64(inst), C.byref(a), C.byref(b),
-                                      C.c_float(radius), C.c_float(r2))
+        h = lib.Voxels_hCreateCapsule(inst, C.byref(a), C.byref(b),
+                                      radius, r2)
         return cls(h)
 
     @classmethod
     def mesh_shell(cls, mesh, radius: float) -> "Voxels":
         """A hollow shell of the given thickness around a mesh surface."""
         lib, inst = library.lib(), library.instance()
-        h = lib.Voxels_hCreateMeshShell(C.c_uint64(inst),
-                                        C.c_uint64(mesh.handle), C.c_float(radius))
+        h = lib.Voxels_hCreateMeshShell(inst,
+                                        mesh.handle, radius)
         return cls(h)
 
     @classmethod
@@ -78,7 +78,7 @@ class Voxels(NativeObject):
         return v
 
     def copy(self) -> "Voxels":
-        h = self._lib.Voxels_hCreateCopy(C.c_uint64(self._inst), C.c_uint64(self.handle))
+        h = self._lib.Voxels_hCreateCopy(self._inst, self.handle)
         return Voxels(h)
 
     # --- boolean ops (in-place, return self) ---------------------------------
@@ -96,20 +96,20 @@ class Voxels(NativeObject):
 
     def bool_add_(self, other: "Voxels") -> "Voxels":
         self._check_operand(other)
-        self._lib.Voxels_BoolAdd(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                 C.c_uint64(other.handle))
+        self._lib.Voxels_BoolAdd(self._inst, self.handle,
+                                 other.handle)
         return self
 
     def bool_subtract_(self, other: "Voxels") -> "Voxels":
         self._check_operand(other)
-        self._lib.Voxels_BoolSubtract(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                      C.c_uint64(other.handle))
+        self._lib.Voxels_BoolSubtract(self._inst, self.handle,
+                                      other.handle)
         return self
 
     def bool_intersect_(self, other: "Voxels") -> "Voxels":
         self._check_operand(other)
-        self._lib.Voxels_BoolIntersect(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                       C.c_uint64(other.handle))
+        self._lib.Voxels_BoolIntersect(self._inst, self.handle,
+                                       other.handle)
         return self
 
     # --- boolean ops (functional, return new) --------------------------------
@@ -137,8 +137,8 @@ class Voxels(NativeObject):
     # --- offsets -------------------------------------------------------------
     def offset_(self, dist_mm: float) -> "Voxels":
         """Grow (positive) / shrink (negative) the surface, in mm. In place."""
-        self._lib.Voxels_Offset(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                C.c_float(dist_mm))
+        self._lib.Voxels_Offset(self._inst, self.handle,
+                                dist_mm)
         return self
 
     def offset(self, dist_mm: float) -> "Voxels":
@@ -147,8 +147,8 @@ class Voxels(NativeObject):
     def double_offset_(self, dist1_mm: float, dist2_mm: float) -> "Voxels":
         """Two sequential offsets (grow/shrink) of the surface -- a rounding /
         morphological op, NOT a hollow. Use :meth:`shell_` to hollow."""
-        self._lib.Voxels_DoubleOffset(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                      C.c_float(dist1_mm), C.c_float(dist2_mm))
+        self._lib.Voxels_DoubleOffset(self._inst, self.handle,
+                                      dist1_mm, dist2_mm)
         return self
 
     def shell_(self, thickness_mm: float) -> "Voxels":
@@ -165,24 +165,24 @@ class Voxels(NativeObject):
         return self
 
     def triple_offset_(self, dist_mm: float) -> "Voxels":
-        self._lib.Voxels_TripleOffset(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                      C.c_float(dist_mm))
+        self._lib.Voxels_TripleOffset(self._inst, self.handle,
+                                      dist_mm)
         return self
 
     # --- rendering into this volume ------------------------------------------
     def render_mesh_(self, mesh) -> "Voxels":
-        self._lib.Voxels_RenderMesh(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                    C.c_uint64(mesh.handle))
+        self._lib.Voxels_RenderMesh(self._inst, self.handle,
+                                    mesh.handle)
         return self
 
     def render_lattice_(self, lattice) -> "Voxels":
-        self._lib.Voxels_RenderLattice(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                       C.c_uint64(lattice.handle))
+        self._lib.Voxels_RenderLattice(self._inst, self.handle,
+                                       lattice.handle)
         return self
 
     def project_z_slice_(self, z_start_mm: float, z_end_mm: float) -> "Voxels":
-        self._lib.Voxels_ProjectZSlice(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                       C.c_float(z_start_mm), C.c_float(z_end_mm))
+        self._lib.Voxels_ProjectZSlice(self._inst, self.handle,
+                                       z_start_mm, z_end_mm)
         return self
 
     @staticmethod
@@ -215,7 +215,7 @@ class Voxels(NativeObject):
         errors: list = []
         cb = self._wrap_sdf(sdf, errors)
         box = _to_pkbbox(bbox)
-        self._lib.Voxels_RenderImplicit(C.c_uint64(self._inst), C.c_uint64(self.handle),
+        self._lib.Voxels_RenderImplicit(self._inst, self.handle,
                                         C.byref(box), cb)
         if errors:
             raise errors[0]
@@ -232,8 +232,8 @@ class Voxels(NativeObject):
         """
         errors: list = []
         cb = self._wrap_sdf(sdf, errors)
-        self._lib.Voxels_IntersectImplicit(C.c_uint64(self._inst),
-                                           C.c_uint64(self.handle), cb)
+        self._lib.Voxels_IntersectImplicit(self._inst,
+                                           self.handle, cb)
         if errors:
             raise errors[0]
         return self
@@ -244,7 +244,7 @@ class Voxels(NativeObject):
         zero-distance surface voxels after boolean ops that can skew it. For an
         accurate figure use :meth:`calculate_properties`."""
         return float(self._lib.Voxels_fCalculateVolume(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def calculate_properties(self):
         """Return ``(volume_mm3, bbox)`` measured the accurate way -- via a mesh
@@ -254,7 +254,7 @@ class Voxels(NativeObject):
         clean = Voxels.from_mesh(mesh)
         try:
             vol = float(self._lib.Voxels_fCalculateVolume(
-                C.c_uint64(self._inst), C.c_uint64(clean.handle)))
+                self._inst, clean.handle))
             return vol, mesh.bounding_box()
         finally:
             clean.close()
@@ -262,29 +262,24 @@ class Voxels(NativeObject):
 
     def is_empty(self) -> bool:
         return bool(self._lib.Voxels_bIsEmpty(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def is_valid(self) -> bool:
         return bool(self._lib.Voxels_bIsValid(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def voxel_size_mm(self) -> float:
         return float(self._lib.Voxels_fVoxelSize(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
     def memory_bytes(self) -> int:
         return int(self._lib.Voxels_nMemUsage(
-            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+            self._inst, self.handle))
 
-    def voxel_dimensions(self):
+    def voxel_dimensions(self) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(origin, size)`` as integer NumPy arrays in voxel space."""
-        ints = [C.c_int32() for _ in range(6)]
-        self._lib.Voxels_GetVoxelDimensions(
-            C.c_uint64(self._inst), C.c_uint64(self.handle),
-            *[C.byref(i) for i in ints])
-        origin = np.array([ints[0].value, ints[1].value, ints[2].value], dtype=np.int32)
-        size = np.array([ints[3].value, ints[4].value, ints[5].value], dtype=np.int32)
-        return origin, size
+        return read_voxel_dimensions(
+            self._lib, "Voxels_GetVoxelDimensions", self._inst, self.handle)
 
     def bounding_box(self) -> BBox3:
         """Bounding box in millimetres (derived from the voxel extent)."""
@@ -294,44 +289,44 @@ class Voxels(NativeObject):
         hi_v = PKVector3(float(origin[0] + size[0]), float(origin[1] + size[1]),
                          float(origin[2] + size[2]))
         lo_mm, hi_mm = PKVector3(), PKVector3()
-        lib.Library_VoxelsToMm(C.c_uint64(inst), C.byref(lo_v), C.byref(lo_mm))
-        lib.Library_VoxelsToMm(C.c_uint64(inst), C.byref(hi_v), C.byref(hi_mm))
+        lib.Library_VoxelsToMm(inst, C.byref(lo_v), C.byref(lo_mm))
+        lib.Library_VoxelsToMm(inst, C.byref(hi_v), C.byref(hi_mm))
         return BBox3(vec3_to_np(lo_mm), vec3_to_np(hi_mm))
 
     def is_inside(self, point) -> bool:
         p = to_vec3(point)
         return bool(self._lib.Voxels_bIsInside(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(p)))
+            self._inst, self.handle, C.byref(p)))
 
     def surface_normal(self, point) -> np.ndarray:
         p = to_vec3(point)
         out = PKVector3()
         self._lib.Voxels_GetSurfaceNormal(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(p), C.byref(out))
+            self._inst, self.handle, C.byref(p), C.byref(out))
         return vec3_to_np(out)
 
     def closest_point(self, point):
         p = to_vec3(point)
         out = PKVector3()
         ok = self._lib.Voxels_bClosestPointOnSurface(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(p), C.byref(out))
+            self._inst, self.handle, C.byref(p), C.byref(out))
         return vec3_to_np(out) if ok else None
 
     def ray_cast(self, origin, direction):
         o, d = to_vec3(origin), to_vec3(direction)
         out = PKVector3()
         ok = self._lib.Voxels_bRayCastToSurface(
-            C.c_uint64(self._inst), C.c_uint64(self.handle),
+            self._inst, self.handle,
             C.byref(o), C.byref(d), C.byref(out))
         return vec3_to_np(out) if ok else None
 
     def equals(self, other: "Voxels") -> bool:
         return bool(self._lib.Voxels_bIsEqual(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), C.c_uint64(other.handle)))
+            self._inst, self.handle, other.handle))
 
     def diagnose(self) -> str:
         buf = C.create_string_buffer(255)
-        self._lib.Voxels_bDiagnose(C.c_uint64(self._inst), C.c_uint64(self.handle), buf)
+        self._lib.Voxels_bDiagnose(self._inst, self.handle, buf)
         return buf.value.decode(errors="replace")
 
     # --- slices --------------------------------------------------------------
@@ -342,7 +337,7 @@ class Voxels(NativeObject):
         buf = np.empty(h * w, dtype=np.float32)
         bg = C.c_float()
         getattr(self._lib, fn_name)(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), int(index),
+            self._inst, self.handle, int(index),
             buf.ctypes.data_as(C.POINTER(C.c_float)), C.byref(bg))
         return buf.reshape(h, w)
 
@@ -379,7 +374,7 @@ class Voxels(NativeObject):
         buf = np.empty(sy * sx, dtype=np.float32)
         bg = C.c_float()
         self._lib.Voxels_GetInterpolatedZSlice(
-            C.c_uint64(self._inst), C.c_uint64(self.handle), float(z_voxels),
+            self._inst, self.handle, float(z_voxels),
             buf.ctypes.data_as(C.POINTER(C.c_float)), C.byref(bg))
         return buf.reshape(sy, sx)
 
@@ -392,7 +387,7 @@ class Voxels(NativeObject):
         if self._closed:
             return "Voxels(<closed>)"
         try:
-            o, s = self.voxel_dimensions()
+            _, s = self.voxel_dimensions()
             return f"Voxels(handle={self._h}, voxels={s[0]}x{s[1]}x{s[2]})"
         except Exception:
             return f"Voxels(handle={self._h})"

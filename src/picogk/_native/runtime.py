@@ -21,7 +21,7 @@ def lib() -> C.CDLL:
             import warnings
             warnings.warn(
                 f"{len(missing)} PicoGK functions missing from the runtime "
-                f"(version mismatch?): {missing[:5]}...", RuntimeWarning)
+                f"(version mismatch?): {missing[:5]}...", RuntimeWarning, stacklevel=2)
         _BOUND = cdll
     return _BOUND
 

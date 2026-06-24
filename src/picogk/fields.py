@@ -15,7 +15,7 @@ import numpy as np
 from . import _fast, library
 from ._base import NativeObject
 from ._native.ctypes_types import PKFnTraverseActiveS, PKFnTraverseActiveV, PKVector3
-from .types import to_vec3, vec3_to_np
+from .types import read_voxel_dimensions, to_vec3, vec3_to_np
 
 
 class ScalarField(NativeObject):
@@ -79,7 +79,7 @@ class ScalarField(NativeObject):
             _fast.lib.scalar_set_many(_fast.addr(self._lib.ScalarField_SetValue),
                                       self._inst, self.handle, pos, vals)
         else:
-            for p, v in zip(pos, vals):
+            for p, v in zip(pos, vals, strict=True):
                 self.set(p, float(v))
         return self
 
@@ -109,13 +109,9 @@ class ScalarField(NativeObject):
     def memory_bytes(self) -> int:
         return int(self._lib.ScalarField_nMemUsage(self._inst, self.handle))
 
-    def voxel_dimensions(self):
-        ints = [C.c_int32() for _ in range(6)]
-        self._lib.ScalarField_GetVoxelDimensions(
-            self._inst, self.handle, *[C.byref(i) for i in ints])
-        origin = np.array([ints[i].value for i in range(3)], dtype=np.int32)
-        size = np.array([ints[i].value for i in range(3, 6)], dtype=np.int32)
-        return origin, size
+    def voxel_dimensions(self) -> tuple[np.ndarray, np.ndarray]:
+        return read_voxel_dimensions(
+            self._lib, "ScalarField_GetVoxelDimensions", self._inst, self.handle)
 
     def slice(self, z_index: int) -> np.ndarray:
         """Return a (sy, sx) float32 array for Z slice ``z_index``.
@@ -212,7 +208,7 @@ class VectorField(NativeObject):
             _fast.lib.vector_set_many(_fast.addr(self._lib.VectorField_SetValue),
                                       self._inst, self.handle, pos, vals)
         else:
-            for p, v in zip(pos, vals):
+            for p, v in zip(pos, vals, strict=True):
                 self.set(p, v)
         return self
 
