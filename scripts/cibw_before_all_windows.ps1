@@ -12,13 +12,15 @@ if (-not (Test-Path "$native\.git")) {
     git clone --recurse-submodules --jobs 8 https://github.com/leap71/PicoGKRuntime $native
 }
 
-# vcpkg deps per the runtime's Install_Dependencies/Win.bat (boost-iostreams, tbb, blosc, zlib)
+# vcpkg deps for OpenVDB. boost-interprocess (header-only) is needed by OpenVDB's
+# delayed-loading io/Archive.cc (file_mapping); vcpkg installs boost per-component,
+# so unlike a full Boost source tree it must be requested explicitly.
 $vcpkg = Join-Path $native "Install_Dependencies\vcpkg"
 if (-not (Test-Path $vcpkg)) {
     git clone https://github.com/microsoft/vcpkg $vcpkg
     & "$vcpkg\bootstrap-vcpkg.bat"
 }
-& "$vcpkg\vcpkg.exe" install boost-iostreams:x64-windows tbb:x64-windows blosc:x64-windows zlib:x64-windows
+& "$vcpkg\vcpkg.exe" install boost-iostreams:x64-windows boost-interprocess:x64-windows boost-system:x64-windows tbb:x64-windows blosc:x64-windows zlib:x64-windows
 
 # Let CMake auto-detect the installed Visual Studio (the runner's VS version
 # changes over time -- it is currently VS 18); don't hardcode the generator.
