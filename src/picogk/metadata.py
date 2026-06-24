@@ -55,7 +55,9 @@ class Metadata(NativeObject):
         out = []
         for i in range(self.count()):
             n = int(self._lib.Metadata_nNameLengthAt(self._inst, self.handle, i))
-            buf = C.create_string_buffer(max(n + 1, 1))
+            # +2, not +1: the native getter does strncpy_s(psz, nMaxLen-1, ...) on
+            # Windows, which aborts (0xC0000409) unless nMaxLen-1 > the string len.
+            buf = C.create_string_buffer(max(n + 2, 2))
             if self._lib.Metadata_bGetNameAt(self._inst, self.handle, i, buf, len(buf)):
                 out.append(buf.value.decode(errors="replace"))
         return out
@@ -67,7 +69,9 @@ class Metadata(NativeObject):
     # --- typed getters -------------------------------------------------------
     def get_string(self, name: str) -> str | None:
         n = int(self._lib.Metadata_nStringLengthAt(self._inst, self.handle, name.encode()))
-        buf = C.create_string_buffer(max(n + 1, 1))
+        # +2, not +1: see names() -- Windows strncpy_s(psz, nMaxLen-1, ...) aborts
+        # (0xC0000409) when nMaxLen-1 == the string length (no room for the NUL).
+        buf = C.create_string_buffer(max(n + 2, 2))
         ok = self._lib.Metadata_bGetStringAt(
             self._inst, self.handle, name.encode(), buf, len(buf))
         return buf.value.decode(errors="replace") if ok else None
