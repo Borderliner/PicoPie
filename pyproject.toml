@@ -109,6 +109,9 @@ before-all = "bash {project}/scripts/cibw_before_all_macos.sh"
 environment = { MACOSX_DEPLOYMENT_TARGET = "14.0" }
 
 [tool.cibuildwheel.windows]
+# 64-bit only: the runtime + vcpkg deps are x64, and numpy/matplotlib no longer
+# ship 32-bit (win32) wheels (their source build fails in the test step).
+archs = ["AMD64"]
 before-all = "powershell {project}/scripts/cibw_before_all_windows.ps1"
 # picogk.dll is dlopen'd, and its deps (tbb/blosc/boost/zlib) live in the vcpkg
 # bin (not on PATH), so point delvewheel there to vendor them into the wheel.
