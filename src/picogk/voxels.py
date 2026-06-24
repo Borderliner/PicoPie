@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from . import library
-from ._base import NativeObject
+from ._base import NativeObject, require_type
 from ._errors import InvalidHandleError, PicoGKError
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
 from .types import BBox3, read_voxel_dimensions, to_vec3, vec3_to_np
@@ -71,6 +71,8 @@ class Voxels(NativeObject):
     @classmethod
     def mesh_shell(cls, mesh: Mesh, radius: float) -> Voxels:
         """A hollow shell of the given thickness around a mesh surface."""
+        from .mesh import Mesh as _Mesh
+        require_type(mesh, _Mesh, "mesh")
         lib, inst = library.lib(), library.instance()
         h = lib.Voxels_hCreateMeshShell(inst,
                                         mesh.handle, radius)
@@ -184,11 +186,15 @@ class Voxels(NativeObject):
 
     # --- rendering into this volume ------------------------------------------
     def render_mesh_(self, mesh: Mesh) -> Voxels:
+        from .mesh import Mesh as _Mesh
+        require_type(mesh, _Mesh, "mesh")
         self._lib.Voxels_RenderMesh(self._inst, self.handle,
                                     mesh.handle)
         return self
 
     def render_lattice_(self, lattice: Lattice) -> Voxels:
+        from .lattice import Lattice as _Lattice
+        require_type(lattice, _Lattice, "lattice")
         self._lib.Voxels_RenderLattice(self._inst, self.handle,
                                        lattice.handle)
         return self

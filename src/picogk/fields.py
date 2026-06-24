@@ -13,7 +13,7 @@ import ctypes as C
 import numpy as np
 
 from . import _fast, library
-from ._base import NativeObject
+from ._base import NativeObject, require_type
 from ._native.ctypes_types import PKFnTraverseActiveS, PKFnTraverseActiveV, PKVector3
 from .types import read_voxel_dimensions, to_vec3, vec3_to_np
 
@@ -31,6 +31,8 @@ class ScalarField(NativeObject):
     def from_voxels(cls, voxels) -> ScalarField:
         """A field defined wherever ``voxels`` has data (values copied from the
         underlying signed-distance grid)."""
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         h = library.lib().ScalarField_hCreateFromVoxels(
             library.instance(), voxels.handle)
         return cls(h)
@@ -40,6 +42,8 @@ class ScalarField(NativeObject):
                           sd_threshold: float) -> ScalarField:
         """A field set to ``value`` for every voxel whose signed distance is
         below ``sd_threshold`` (i.e. inside / near the surface)."""
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         h = library.lib().ScalarField_hBuildFromVoxels(
             library.instance(), voxels.handle, float(value), float(sd_threshold))
         return cls(h)
@@ -163,12 +167,16 @@ class VectorField(NativeObject):
 
     @classmethod
     def from_voxels(cls, voxels) -> VectorField:
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         h = library.lib().VectorField_hCreateFromVoxels(
             library.instance(), voxels.handle)
         return cls(h)
 
     @classmethod
     def build_from_voxels(cls, voxels, value, sd_threshold: float) -> VectorField:
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         v = to_vec3(value)
         h = library.lib().VectorField_hBuildFromVoxels(
             library.instance(), voxels.handle, C.byref(v), float(sd_threshold))

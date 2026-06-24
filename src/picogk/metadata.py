@@ -17,7 +17,7 @@ from enum import IntEnum
 import numpy as np
 
 from . import library
-from ._base import NativeObject
+from ._base import NativeObject, require_type
 from ._native.ctypes_types import PKVector3
 from .types import to_vec3, vec3_to_np
 
@@ -35,15 +35,21 @@ class Metadata(NativeObject):
     # Metadata is obtained from an owning object; never created bare.
     @classmethod
     def from_voxels(cls, voxels) -> Metadata:
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         return cls(library.lib().Metadata_hFromVoxels(library.instance(), voxels.handle))
 
     @classmethod
     def from_scalar_field(cls, field) -> Metadata:
+        from .fields import ScalarField
+        require_type(field, ScalarField, "field")
         return cls(library.lib().Metadata_hFromScalarField(
             library.instance(), field.handle))
 
     @classmethod
     def from_vector_field(cls, field) -> Metadata:
+        from .fields import VectorField
+        require_type(field, VectorField, "field")
         return cls(library.lib().Metadata_hFromVectorField(
             library.instance(), field.handle))
 
@@ -100,17 +106,30 @@ class Metadata(NativeObject):
         return None
 
     # --- setters -------------------------------------------------------------
+    @staticmethod
+    def _guard_name(name: str) -> None:
+        # The runtime stamps its own bookkeeping under the "PicoGK." prefix (e.g.
+        # the grid class). Overwriting it can corrupt the grid; reject writes, as
+        # the C# port does (FieldMetadata.GuardInternalFields). Reads are fine.
+        if name.startswith("PicoGK."):
+            raise ValueError(
+                f"metadata name {name!r} is reserved (the 'PicoGK.' prefix is for "
+                f"the runtime's internal fields)")
+
     def set_string(self, name: str, value: str) -> Metadata:
+        self._guard_name(name)
         self._lib.Metadata_SetStringValue(
             self._inst, self.handle, name.encode(), str(value).encode())
         return self
 
     def set_float(self, name: str, value: float) -> Metadata:
+        self._guard_name(name)
         self._lib.Metadata_SetFloatValue(
             self._inst, self.handle, name.encode(), float(value))
         return self
 
     def set_vector(self, name: str, value) -> Metadata:
+        self._guard_name(name)
         v = to_vec3(value)
         self._lib.Metadata_SetVectorValue(
             self._inst, self.handle, name.encode(), C.byref(v))
@@ -126,6 +145,7 @@ class Metadata(NativeObject):
         return self.set_vector(name, value)
 
     def remove(self, name: str) -> Metadata:
+        self._guard_name(name)
         self._lib.MetaData_RemoveValue(self._inst, self.handle, name.encode())
         return self
 

@@ -8,6 +8,19 @@ from . import library
 from ._errors import InvalidHandleError
 
 
+def require_type(obj, cls, what: str):
+    """Reject a wrong-typed native object before its opaque handle reaches C.
+
+    Handles are bare ``uint64`` across the ABI, so a type mismatch (e.g. a Mesh
+    where a Voxels is expected) isn't caught natively -- it corrupts state or
+    aborts the process. This is the runtime equivalent of the C# port's distinct
+    typed handle structs (which give the same guarantee at compile time).
+    """
+    if not isinstance(obj, cls):
+        raise TypeError(f"{what} must be a {cls.__name__}, got {type(obj).__name__}")
+    return obj
+
+
 class NativeObject:
     """Wraps a ``uint64`` native handle and ties its lifetime to Python's.
 

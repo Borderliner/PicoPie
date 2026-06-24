@@ -124,9 +124,13 @@ so normal use can't crash your interpreter:
 
 - **Out-of-range / closed handles** → `IndexError` / `InvalidHandleError`
   (VDB field indices, slice indices, ops on a closed object or after `shutdown()`).
-- **Wrong-type operands** → `TypeError` (e.g. a boolean op with a non-`Voxels`,
-  or `VdbFile.get_scalar_field()` on a level-set field — which would otherwise
-  return silently wrong data).
+- **Wrong-type operands** → `TypeError`. Handles are bare `uint64` across the
+  ABI, so any method that takes another native object (`Voxels.from_mesh`,
+  `VdbFile.add_voxels`, `ScalarField.from_voxels`, …) checks the type before the
+  handle reaches C, and `VdbFile.get_scalar_field()` on a level-set field is
+  rejected rather than returning silently wrong data.
+- **Reserved metadata** → `ValueError`: writing/removing a `PicoGK.`-prefixed
+  name (the runtime's internal fields) is refused so you can't corrupt grid state.
 - **Bad file paths** → `FileNotFoundError` / `PicoGKError` (load/save check first).
 - **Failing SDF callbacks** → your exception is re-raised; non-finite returns are
   treated as "outside" rather than corrupting the grid.

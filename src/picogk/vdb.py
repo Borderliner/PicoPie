@@ -23,7 +23,7 @@ import ctypes as C
 from enum import IntEnum
 
 from . import library
-from ._base import NativeObject
+from ._base import NativeObject, require_type
 from ._errors import PicoGKError
 from .fields import ScalarField, VectorField
 from .voxels import Voxels
@@ -109,14 +109,17 @@ class VdbFile(NativeObject):
 
     # --- add -----------------------------------------------------------------
     def add_voxels(self, name: str, voxels: Voxels) -> int:
+        require_type(voxels, Voxels, "voxels")
         return int(self._lib.VdbFile_nAddVoxels(
             self._inst, self.handle, name.encode(), voxels.handle))
 
     def add_scalar_field(self, name: str, field: ScalarField) -> int:
+        require_type(field, ScalarField, "field")
         return int(self._lib.VdbFile_nAddScalarField(
             self._inst, self.handle, name.encode(), field.handle))
 
     def add_vector_field(self, name: str, field: VectorField) -> int:
+        require_type(field, VectorField, "field")
         return int(self._lib.VdbFile_nAddVectorField(
             self._inst, self.handle, name.encode(), field.handle))
 

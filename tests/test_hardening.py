@@ -6,8 +6,8 @@ import ctypes as C
 import pytest
 
 import picogk
-from picogk import ScalarField, VdbFile, Voxels, library
-from picogk._errors import PicoGKError
+from picogk import Metadata, ScalarField, VdbFile, Voxels, library
+from picogk._errors import InvalidHandleError, PicoGKError
 from picogk._native import ctypes_types
 
 
@@ -160,3 +160,40 @@ def test_vdb_typed_getter_rejects_wrong_field_type():
         assert isinstance(f.get(0), Voxels)
     finally:
         f.close()
+
+
+# --- Phase 8: handle type safety + internal-field guard + use-after-free ------
+def test_cross_type_handle_rejected():
+    # passing the wrong native object (its handle would reach C as a uint64 and
+    # corrupt/abort) must raise TypeError at the boundary.
+    v = _solid()
+    m = v.to_mesh()
+    with pytest.raises(TypeError):
+        Voxels.from_mesh(v)                  # Voxels where Mesh expected
+    with pytest.raises(TypeError):
+        Voxels.mesh_shell(v, 1.0)
+    with pytest.raises(TypeError):
+        VdbFile().add_voxels("x", m)         # Mesh where Voxels expected
+    with pytest.raises(TypeError):
+        ScalarField.from_voxels(m)
+    with pytest.raises(TypeError):
+        Metadata.from_voxels(m)
+    assert isinstance(Voxels.from_mesh(m), Voxels)   # correct usage still works
+
+
+def test_metadata_internal_fields_protected():
+    md = Metadata.from_voxels(_solid())
+    for op in (lambda: md.__setitem__("PicoGK.Class", "x"),
+               lambda: md.set_float("PicoGK.foo", 1.0),
+               lambda: md.remove("PicoGK.bar")):
+        with pytest.raises(ValueError, match="reserved"):
+            op()
+    md["material"] = "Ti"                      # ordinary names unaffected
+    assert md["material"] == "Ti"
+
+
+def test_use_after_free_raises_not_aborts():
+    v = _solid()
+    v.close()
+    with pytest.raises(InvalidHandleError):
+        v.volume_mm3()

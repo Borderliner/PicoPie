@@ -13,7 +13,7 @@ import struct
 import numpy as np
 
 from . import _fast, library
-from ._base import NativeObject
+from ._base import NativeObject, require_type
 from ._native.ctypes_types import PKBBox3, PKTriangle, PKVector3
 from .types import BBox3, to_vec3
 
@@ -28,6 +28,8 @@ class Mesh(NativeObject):
 
     @classmethod
     def from_voxels(cls, voxels) -> Mesh:
+        from .voxels import Voxels
+        require_type(voxels, Voxels, "voxels")
         lib, inst = library.lib(), library.instance()
         h = lib.Mesh_hCreateFromVoxels(inst, voxels.handle)
         return cls(h)
