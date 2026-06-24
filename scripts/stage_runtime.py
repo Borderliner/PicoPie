@@ -35,7 +35,13 @@ def _platform_names() -> list[str]:
 
 def _search_dirs() -> list[Path]:
     native = ROOT / "native" / "PicoGKRuntime"
-    return [native / "Dist", native / "build" / "lib", native / "build" / "Dist"]
+    b = native / "build"
+    return [
+        native / "Dist",
+        b / "lib", b / "Dist",
+        b / "bin",                       # Windows: VS generator puts the .dll here
+        b / "bin" / "Release", b / "lib" / "Release",  # VS multi-config subdirs
+    ]
 
 
 def find_runtime() -> Path:

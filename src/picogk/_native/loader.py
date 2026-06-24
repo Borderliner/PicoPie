@@ -36,7 +36,8 @@ def _candidate_dirs() -> list[Path]:
     # 3. developer build trees (repo root is .../src/picogk/_native -> up 4)
     repo_root = here.parents[3]
     native = repo_root / "native" / "PicoGKRuntime"
-    dirs += [native / "Dist", native / "build" / "lib", native / "build" / "Dist"]
+    dirs += [native / "Dist", native / "build" / "lib", native / "build" / "Dist",
+             native / "build" / "bin"]  # Windows VS generator output
     return dirs
 
 
