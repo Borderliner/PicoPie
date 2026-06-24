@@ -48,6 +48,8 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [ ] `cibuildwheel` matrix: Linux (manylinux, build runtime in-container), macOS, Windows
 - [ ] Bundle runtime into wheels (`auditwheel`/`delocate`/`delvewheel`) under `picogk/_lib/`
 - [ ] GitHub Actions CI: build + test on all three OSes
+- [ ] CI must assert the `_fastloop` extension actually builds from the sdist/wheel
+      (a from-source install silently falls back to pure Python otherwise)
 - *Heaviest infra; loader + `_lib/` hooks already in place.*
 
 ## Phase 5 — Parity validation & docs
