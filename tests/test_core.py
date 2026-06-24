@@ -65,6 +65,25 @@ def test_shell_zero_thickness_raises():
         Voxels.sphere(radius=8).shell_(-1.0)
 
 
+def test_calculate_properties_accurate_vs_raw():
+    # accurate (mesh round-trip) volume is close to but distinct from the raw call
+    v = Voxels.sphere(radius=10)
+    acc, bb = v.calculate_properties()
+    assert acc == pytest.approx(4 / 3 * math.pi * 10**3, rel=0.02)
+    assert not bb.is_empty()
+
+
+def test_calculate_properties_empty_no_overflow():
+    import warnings
+    v = Voxels()                       # empty
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # any numpy overflow RuntimeWarning -> fail
+        vol, bb = v.calculate_properties()
+        _ = bb.size                     # must not overflow on the degenerate bbox
+    assert vol == 0.0
+    assert bb.is_empty()
+
+
 def test_shell_thicker_than_object_stays_solid():
     # eroding the core away entirely leaves the part solid (not empty/invalid)
     v = Voxels.sphere(radius=8)
