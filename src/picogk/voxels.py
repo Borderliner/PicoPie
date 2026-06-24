@@ -222,8 +222,25 @@ class Voxels(NativeObject):
 
     # --- queries -------------------------------------------------------------
     def volume_mm3(self) -> float:
+        """Volume from a direct native measurement -- fast, but OpenVDB leaves
+        zero-distance surface voxels after boolean ops that can skew it. For an
+        accurate figure use :meth:`calculate_properties`."""
         return float(self._lib.Voxels_fCalculateVolume(
             C.c_uint64(self._inst), C.c_uint64(self.handle)))
+
+    def calculate_properties(self):
+        """Return ``(volume_mm3, bbox)`` measured the accurate way -- via a mesh
+        round-trip that drops spurious surface voxels -- matching C# PicoGK's
+        ``CalculateProperties``. ``bbox`` is the surface (mesh) bounding box."""
+        mesh = self.to_mesh()
+        clean = Voxels.from_mesh(mesh)
+        try:
+            vol = float(self._lib.Voxels_fCalculateVolume(
+                C.c_uint64(self._inst), C.c_uint64(clean.handle)))
+            return vol, mesh.bounding_box()
+        finally:
+            clean.close()
+            mesh.close()
 
     def is_empty(self) -> bool:
         return bool(self._lib.Voxels_bIsEmpty(
