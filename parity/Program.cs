@@ -66,4 +66,36 @@ lat.AddBeam(new Vector3(-8, 0, 0), new Vector3(8, 0, 0), 1f, 1f, true);
 new Voxels(lat).CalculateProperties(out float latVol, out _);
 r["lattice_volume"] = latVol;
 
+// --- boolean union (+) ---
+var sphU = Voxels.voxSphere(lib, new Vector3(6, 0, 0), 10f);
+(sph + sphU).CalculateProperties(out float addVol, out _);
+r["bool_add_volume"] = addVol;
+
+// --- double offset (grow then shrink) and negative offset (erode) ---
+Voxels.voxSphere(lib, new Vector3(0, 0, 0), 10f).voxDoubleOffset(2f, -2f)
+      .CalculateProperties(out float dblVol, out _);
+r["double_offset_volume"] = dblVol;
+Voxels.voxSphere(lib, new Vector3(0, 0, 0), 10f).voxOffset(-2f)
+      .CalculateProperties(out float negVol, out _);
+r["offset_neg_volume"] = negVol;
+
+// --- mesh -> voxels (RenderMesh round-trip) ---
+new Voxels(new Mesh(sph)).CalculateProperties(out float fmVol, out _);
+r["from_mesh_volume"] = fmVol;
+
+// --- point queries (is_inside on sphere r=10) ---
+var pts = new[] { new Vector3(0, 0, 0), new Vector3(7, 0, 0),
+                  new Vector3(100, 0, 0), new Vector3(9.5f, 0, 0) };
+r["is_inside"] = pts.Select(p => sph.bIsInside(p)).ToArray();
+
+// --- write a .vdb for cross-implementation read parity (args[2] = path) ---
+if (args.Length > 2)
+{
+    var vdb = new OpenVdbFile(lib);
+    vdb.nAdd(sph, "sphere");
+    vdb.SaveToFile(args[2]);
+    r["vdb_field_name"] = "sphere";
+    r["vdb_sphere_volume"] = sphVol;       // loaded voxels should match this
+}
+
 Console.WriteLine(JsonSerializer.Serialize(r));

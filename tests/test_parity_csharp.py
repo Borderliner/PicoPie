@@ -87,3 +87,49 @@ def test_lattice_volume():
     lat.add_beam((-8, 0, 0), (8, 0, 0), 1.0, 1.0, round_cap=True)
     vol, _ = lat.to_voxels().calculate_properties()
     assert vol == pytest.approx(G["lattice_volume"], rel=VOL_REL)
+
+
+def test_boolean_add_volume():
+    a = Voxels.sphere(radius=10)
+    c = Voxels.sphere(center=(6, 0, 0), radius=10)
+    vol, _ = (a + c).calculate_properties()
+    assert vol == pytest.approx(G["bool_add_volume"], rel=VOL_REL)
+
+
+def test_double_offset_volume():
+    v = Voxels.sphere(radius=10)
+    v.double_offset_(2.0, -2.0)            # grow then shrink (rounding)
+    vol, _ = v.calculate_properties()
+    assert vol == pytest.approx(G["double_offset_volume"], rel=VOL_REL)
+
+
+def test_negative_offset_volume():
+    vol, _ = Voxels.sphere(radius=10).offset(-2.0).calculate_properties()
+    assert vol == pytest.approx(G["offset_neg_volume"], rel=VOL_REL)
+
+
+def test_from_mesh_volume():
+    mesh = Voxels.sphere(radius=10).to_mesh()
+    vol, _ = Voxels.from_mesh(mesh).calculate_properties()
+    assert vol == pytest.approx(G["from_mesh_volume"], rel=VOL_REL)
+
+
+def test_is_inside_points():
+    sph = Voxels.sphere(radius=10)
+    pts = [(0, 0, 0), (7, 0, 0), (100, 0, 0), (9.5, 0, 0)]
+    got = [bool(sph.is_inside(p)) for p in pts]
+    assert got == [bool(b) for b in G["is_inside"]]
+
+
+def test_vdb_cross_read_from_csharp():
+    """A .vdb written by C# PicoGK loads in PicoPie and yields the same geometry."""
+    from picogk import load_vdb
+    vdb = GOLDEN.parent / "csharp_sphere.vdb"
+    if not vdb.exists():
+        pytest.skip("C# reference .vdb not generated")
+    objs = load_vdb(str(vdb))
+    name = G["vdb_field_name"]
+    assert name in objs
+    assert isinstance(objs[name], Voxels)
+    vol, _ = objs[name].calculate_properties()
+    assert vol == pytest.approx(G["vdb_sphere_volume"], rel=VOL_REL)

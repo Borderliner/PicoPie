@@ -15,7 +15,9 @@ dotnet build -c Release "$ROOT/parity" >/dev/null
 DLL="$(find "$ROOT/parity/bin/Release" -name PicoGKParity.dll | head -1)"
 
 mkdir -p "$ROOT/tests/golden"
+VDB="$ROOT/tests/golden/csharp_sphere.vdb"
 # The C# Library prints "Disposing Library" on teardown; keep only the JSON line.
-dotnet "$DLL" "$SO" 0.5 | grep -m1 '^{' > "$ROOT/tests/golden/csharp_parity.json"
+dotnet "$DLL" "$SO" 0.5 "$VDB" | grep -m1 '^{' > "$ROOT/tests/golden/csharp_parity.json"
 echo "wrote tests/golden/csharp_parity.json:"
 cat "$ROOT/tests/golden/csharp_parity.json"
+echo; echo "wrote $VDB ($(du -h "$VDB" 2>/dev/null | cut -f1))"
