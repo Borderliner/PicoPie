@@ -36,8 +36,10 @@ Early but functional. Headless modeling works end-to-end on Linux:
 - ✅ `Metadata` (string/float/vector) and `PolyLine`
 - ✅ OpenVDB file I/O — `save_vdb` / `load_vdb` round-trips voxels + fields
 - ✅ Handle lifetime management (context managers, leak-free)
-- 🔜 Compiled bulk-transfer fast path, slice/PNG export, cross-platform wheels,
-  the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
+- ✅ Compiled `_fastloop` bulk transfer (~17–28× faster mesh/field I/O) with
+  automatic pure-Python fallback
+- 🔜 Slice/PNG export, cross-platform wheels, the GLFW viewer.
+  See [`ROADMAP.md`](ROADMAP.md).
 
 See [`PLAN.md`](PLAN.md) for the full roadmap.
 
@@ -73,8 +75,9 @@ PicoPie locates the runtime automatically under `native/`, or via the
 
 ## Performance & safety notes
 
-- Mesh vertices/triangles transfer one element at a time today (Python loop). A
-  compiled fast path is planned; large meshes are slower than C# for now.
+- Mesh vertices/triangles and bulk field get/set use a compiled `_fastloop`
+  extension (built from `_fastloop.pyx`); if it isn't compiled, PicoPie falls
+  back to slower pure-Python loops automatically.
 - Implicit SDF callbacks run once **per voxel** from native code — a pure-Python
   SDF is the slow path. Prefer primitives + booleans, or compose fields inside a
   single `render_implicit_` call.

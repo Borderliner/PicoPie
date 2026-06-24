@@ -28,11 +28,13 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Abort-hardening: validity guards before CSG to reduce uncaught-native-exception aborts
 - [x] Tests for all of the above; example covering save/load + mesh import
 
-## Phase 2 — Performance: compiled bulk transfer
+## ✅ Phase 2 — Performance: compiled bulk transfer (done)
 
-- [ ] Cython/C extension: bulk mesh vertex/triangle and field get/set in compiled loops → one numpy copy
-- [ ] Benchmark suite vs the pure-Python loop; numpy-vectorized field population
-- *Removes the per-element transfer cliff. Depends on P1 fields.*
+- [x] Cython `_fastloop` extension: bulk mesh vertex/triangle read+build and field
+      get/set in `nogil` loops over native function pointers → one NumPy copy
+- [x] Pure-Python fallback when the extension isn't compiled (auto-detected)
+- [x] Benchmark suite + parity tests vs the pure-Python loop
+- *Measured ~17-18x faster mesh read, ~28x faster mesh build, ~13x field bulk set.*
 
 ## Phase 3 — Headless visualization
 
