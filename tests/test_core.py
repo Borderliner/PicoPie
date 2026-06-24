@@ -45,6 +45,19 @@ def test_offset_grows_volume():
     assert grown.volume_mm3() > a.volume_mm3()
 
 
+def test_shell_hollows():
+    # shell_ must hollow to a wall, not leave the part solid (regression: it was
+    # implemented as a no-op double offset).
+    r, t = 12.0, 1.5
+    solid = Voxels.sphere(radius=r).volume_mm3()
+    shelled = Voxels.sphere(radius=r)
+    shelled.shell_(t)
+    wall = shelled.volume_mm3()
+    assert wall < solid * 0.6
+    ideal = 4 / 3 * math.pi * r**3 - 4 / 3 * math.pi * (r - t) ** 3
+    assert wall == pytest.approx(ideal, rel=0.1)
+
+
 def test_mesh_from_voxels_and_numpy():
     v = Voxels.sphere(radius=6)
     m = v.to_mesh()

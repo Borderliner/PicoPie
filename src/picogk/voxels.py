@@ -144,13 +144,19 @@ class Voxels(NativeObject):
         return self.copy().offset_(dist_mm)
 
     def double_offset_(self, dist1_mm: float, dist2_mm: float) -> "Voxels":
+        """Two sequential offsets (grow/shrink) of the surface -- a rounding /
+        morphological op, NOT a hollow. Use :meth:`shell_` to hollow."""
         self._lib.Voxels_DoubleOffset(C.c_uint64(self._inst), C.c_uint64(self.handle),
                                       C.c_float(dist1_mm), C.c_float(dist2_mm))
         return self
 
     def shell_(self, thickness_mm: float) -> "Voxels":
-        """Hollow the volume to a wall of ``thickness_mm`` (inward)."""
-        return self.double_offset_(-thickness_mm, thickness_mm)
+        """Hollow the volume to a wall of ``thickness_mm`` (wall lies inside the
+        current surface). Implemented as ``solid - erode(solid, thickness)``."""
+        inner = self.copy().offset_(-abs(thickness_mm))   # erode the core inward
+        self.bool_subtract_(inner)                        # solid minus core = wall
+        inner.close()
+        return self
 
     def triple_offset_(self, dist_mm: float) -> "Voxels":
         self._lib.Voxels_TripleOffset(C.c_uint64(self._inst), C.c_uint64(self.handle),

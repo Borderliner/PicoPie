@@ -58,6 +58,17 @@ def test_interpolated_slice_shape(sphere):
     assert sphere.slice_z_interpolated(sz / 2.0).shape == (sy, sx)
 
 
+def test_shelled_midslice_is_annular():
+    # a hollow shell's mid slice has an inside wall but an outside (hollow) center
+    v = Voxels.sphere(radius=12)
+    v.shell_(1.5)
+    _, s = v.voxel_dimensions()
+    sl = v.slice_z(int(s[2]) // 2)
+    cy, cx = sl.shape[0] // 2, sl.shape[1] // 2
+    assert sl[cy, cx] > 0          # hollow center is outside the wall
+    assert (sl <= 0).any()         # the wall itself is present
+
+
 # --- colorize ----------------------------------------------------------------
 def test_colorize_mask():
     arr = np.array([[-1.0, 1.0], [0.0, 2.0]], dtype=np.float32)
