@@ -87,7 +87,7 @@ warn_unused_ignores = true
 [tool.cibuildwheel]
 # Build CPython 3.10-3.13; skip musl (OpenVDB build is painful there) and PyPy.
 build = "cp310-* cp311-* cp312-* cp313-*"
-skip = "*-musllinux* pp*"
+skip = "*-musllinux*"
 build-frontend = "build"
 # Per-Python: re-stage the runtime built once in before-all into the package.
 before-build = "python {project}/scripts/stage_runtime.py"
