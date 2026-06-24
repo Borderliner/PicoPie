@@ -6,6 +6,11 @@ __pycache__/
 build/
 dist/
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 # Native runtime: an upstream clone built locally (see README). Not vendored.
 /native/
