@@ -10,6 +10,10 @@ dist/
 # Native runtime: an upstream clone built locally (see README). Not vendored.
 /native/
 
+# Compiled Cython extension (generated from _fastloop.pyx)
+src/picogk/_fastloop.c
+src/picogk/*.so
+
 # Example output
 examples/_out/
 
