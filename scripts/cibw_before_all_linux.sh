@@ -29,7 +29,10 @@ fi
 # Blosc from source (matches the runtime's reference Dockerfile)
 if ! ldconfig -p | grep -q libblosc; then
   git clone --branch v1.21.6 --depth 1 https://github.com/Blosc/c-blosc.git /tmp/blosc
-  cmake -S /tmp/blosc -B /tmp/blosc/build -DCMAKE_INSTALL_PREFIX=/usr/local
+  # v1.21.6's cmake_minimum_required predates CMake 4.x's floor; allow it (same
+  # policy shim used for the runtime/OpenVDB build).
+  cmake -S /tmp/blosc -B /tmp/blosc/build -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5
   cmake --build /tmp/blosc/build --target install -j"$(nproc)"
   ldconfig
 fi
