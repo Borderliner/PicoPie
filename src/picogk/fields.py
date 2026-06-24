@@ -12,7 +12,7 @@ import ctypes as C
 
 import numpy as np
 
-from . import library
+from . import _fast, library
 from ._base import NativeObject
 from ._native.ctypes_types import PKFnTraverseActiveS, PKFnTraverseActiveV, PKVector3
 from .types import to_vec3, vec3_to_np
@@ -65,6 +65,42 @@ class ScalarField(NativeObject):
         p = to_vec3(position)
         self._lib.ScalarField_RemoveValue(self._inst, self.handle, C.byref(p))
         return self
+
+    # --- bulk get/set (compiled fast path when available) --------------------
+    def set_many(self, positions, values) -> "ScalarField":
+        """Set many values at once. ``positions`` is (N,3) mm, ``values`` (N,)."""
+        pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
+        vals = np.ascontiguousarray(values, dtype=np.float32).reshape(-1)
+        if len(pos) != len(vals):
+            raise ValueError("positions and values must have the same length")
+        if not len(pos):
+            return self
+        if _fast.lib is not None:
+            _fast.lib.scalar_set_many(_fast.addr(self._lib.ScalarField_SetValue),
+                                      self._inst, self.handle, pos, vals)
+        else:
+            for p, v in zip(pos, vals):
+                self.set(p, float(v))
+        return self
+
+    def get_many(self, positions):
+        """Sample many positions. Returns ``(values, found)``: values is (N,)
+        float32 (NaN where inactive), found is (N,) bool."""
+        pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
+        n = len(pos)
+        if not n:
+            return np.empty(0, dtype=np.float32), np.empty(0, dtype=bool)
+        if _fast.lib is not None:
+            return _fast.lib.scalar_get_many(
+                _fast.addr(self._lib.ScalarField_bGetValue),
+                self._inst, self.handle, pos)
+        out = np.full(n, np.nan, dtype=np.float32)
+        found = np.zeros(n, dtype=bool)
+        for i, p in enumerate(pos):
+            v = self.get(p)
+            if v is not None:
+                out[i], found[i] = v, True
+        return out, found
 
     # --- bulk / introspection ------------------------------------------------
     def is_valid(self) -> bool:
@@ -162,6 +198,42 @@ class VectorField(NativeObject):
         p = to_vec3(position)
         self._lib.VectorField_RemoveValue(self._inst, self.handle, C.byref(p))
         return self
+
+    # --- bulk get/set (compiled fast path when available) --------------------
+    def set_many(self, positions, values) -> "VectorField":
+        """Set many vectors at once. ``positions`` and ``values`` are (N,3)."""
+        pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
+        vals = np.ascontiguousarray(values, dtype=np.float32).reshape(-1, 3)
+        if len(pos) != len(vals):
+            raise ValueError("positions and values must have the same length")
+        if not len(pos):
+            return self
+        if _fast.lib is not None:
+            _fast.lib.vector_set_many(_fast.addr(self._lib.VectorField_SetValue),
+                                      self._inst, self.handle, pos, vals)
+        else:
+            for p, v in zip(pos, vals):
+                self.set(p, v)
+        return self
+
+    def get_many(self, positions):
+        """Sample many positions. Returns ``(values, found)``: values is (N,3)
+        float32 (NaN rows where inactive), found is (N,) bool."""
+        pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
+        n = len(pos)
+        if not n:
+            return np.empty((0, 3), dtype=np.float32), np.empty(0, dtype=bool)
+        if _fast.lib is not None:
+            return _fast.lib.vector_get_many(
+                _fast.addr(self._lib.VectorField_bGetValue),
+                self._inst, self.handle, pos)
+        out = np.full((n, 3), np.nan, dtype=np.float32)
+        found = np.zeros(n, dtype=bool)
+        for i, p in enumerate(pos):
+            v = self.get(p)
+            if v is not None:
+                out[i], found[i] = v, True
+        return out, found
 
     def is_valid(self) -> bool:
         return bool(self._lib.VectorField_bIsValid(self._inst, self.handle))

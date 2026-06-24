@@ -12,7 +12,7 @@ import struct
 
 import numpy as np
 
-from . import library
+from . import _fast, library
 from ._base import NativeObject
 from ._native.ctypes_types import PKBBox3, PKTriangle, PKVector3
 from .types import BBox3, to_vec3
@@ -35,15 +35,23 @@ class Mesh(NativeObject):
     @classmethod
     def from_arrays(cls, vertices, triangles) -> "Mesh":
         """Build a mesh from an (N,3) vertex array and an (M,3) index array."""
-        verts = np.asarray(vertices, dtype=np.float64).reshape(-1, 3)
-        tris = np.asarray(triangles, dtype=np.int64).reshape(-1, 3)
+        verts = np.ascontiguousarray(vertices, dtype=np.float32).reshape(-1, 3)
+        tris = np.ascontiguousarray(triangles, dtype=np.int32).reshape(-1, 3)
         if tris.size and (tris.max() >= len(verts) or tris.min() < 0):
             raise ValueError("triangle index out of range")
         m = cls()
-        for v in verts:
-            m.add_vertex((v[0], v[1], v[2]))
-        for t in tris:
-            m.add_triangle(int(t[0]), int(t[1]), int(t[2]))
+        if _fast.lib is not None:
+            if len(verts):
+                _fast.lib.add_vertices(_fast.addr(m._lib.Mesh_nAddVertex),
+                                       m._inst, m.handle, verts)
+            if len(tris):
+                _fast.lib.add_triangles(_fast.addr(m._lib.Mesh_nAddTriangle),
+                                        m._inst, m.handle, tris)
+        else:
+            for v in verts:
+                m.add_vertex((v[0], v[1], v[2]))
+            for t in tris:
+                m.add_triangle(int(t[0]), int(t[1]), int(t[2]))
         return m
 
     @classmethod
@@ -89,11 +97,16 @@ class Mesh(NativeObject):
     def vertices(self) -> np.ndarray:
         """(N, 3) float32 array of vertex positions in mm."""
         n = self.vertex_count()
+        if _fast.lib is not None and n:
+            return _fast.lib.read_vertices(
+                _fast.addr(self._lib.Mesh_GetVertex), self._inst, self.handle, n)
+        return self._vertices_py(n)
+
+    def _vertices_py(self, n: int) -> np.ndarray:
         out = np.empty((n, 3), dtype=np.float32)
         v = PKVector3()
         get = self._lib.Mesh_GetVertex
-        inst, h = C.c_uint64(self._inst), C.c_uint64(self.handle)
-        ref = C.byref(v)
+        inst, h, ref = C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(v)
         for i in range(n):
             get(inst, h, C.c_int32(i), ref)
             out[i, 0], out[i, 1], out[i, 2] = v.X, v.Y, v.Z
@@ -103,11 +116,16 @@ class Mesh(NativeObject):
     def triangles(self) -> np.ndarray:
         """(M, 3) int32 array of vertex indices."""
         n = self.triangle_count()
+        if _fast.lib is not None and n:
+            return _fast.lib.read_triangles(
+                _fast.addr(self._lib.Mesh_GetTriangle), self._inst, self.handle, n)
+        return self._triangles_py(n)
+
+    def _triangles_py(self, n: int) -> np.ndarray:
         out = np.empty((n, 3), dtype=np.int32)
         t = PKTriangle()
         get = self._lib.Mesh_GetTriangle
-        inst, h = C.c_uint64(self._inst), C.c_uint64(self.handle)
-        ref = C.byref(t)
+        inst, h, ref = C.c_uint64(self._inst), C.c_uint64(self.handle), C.byref(t)
         for i in range(n):
             get(inst, h, C.c_int32(i), ref)
             out[i, 0], out[i, 1], out[i, 2] = t.A, t.B, t.C
