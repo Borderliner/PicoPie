@@ -99,10 +99,13 @@ test-command = "python {project}/scripts/ci_check.py && python -m pytest {projec
 
 [tool.cibuildwheel.linux]
 before-all = "bash {project}/scripts/cibw_before_all_linux.sh"
-manylinux-x86_64-image = "manylinux_2_34"
+# full image ref (the action's pinned cibuildwheel doesn't resolve the bare alias)
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_34_x86_64:latest"
 
 [tool.cibuildwheel.macos]
 before-all = "bash {project}/scripts/cibw_before_all_macos.sh"
+# TBB's C++17 aligned new/delete needs >= 10.13; 11.0 also satisfies arm64.
+environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
 
 [tool.cibuildwheel.windows]
 before-all = "powershell {project}/scripts/cibw_before_all_windows.ps1"

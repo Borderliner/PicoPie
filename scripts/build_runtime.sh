@@ -25,6 +25,13 @@ if [[ ! -d "$NATIVE/.git" ]]; then
 fi
 
 echo ">> configuring (Release, OpenVDB static core only)"
+EXTRA_CMAKE=()
+if [[ "$OSTYPE" == darwin* ]]; then
+  # TBB's C++17 aligned new/delete requires a modern deployment target (>= 10.13);
+  # honor cibuildwheel's MACOSX_DEPLOYMENT_TARGET, default 11.0 (also covers arm64).
+  EXTRA_CMAKE+=("-DCMAKE_OSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET:-11.0}")
+fi
+
 cmake -S "$NATIVE" -B "$BUILD" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
@@ -35,7 +42,8 @@ cmake -S "$NATIVE" -B "$BUILD" -G Ninja \
   -DOPENVDB_BUILD_NANOVDB=OFF \
   -DOPENVDB_CORE_SHARED=OFF -DOPENVDB_CORE_STATIC=ON \
   -DUSE_BLOSC=ON -DUSE_ZLIB=ON \
-  -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
+  -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF \
+  "${EXTRA_CMAKE[@]}"
 
 echo ">> building"
 cmake --build "$BUILD" -j "$(nproc)"
