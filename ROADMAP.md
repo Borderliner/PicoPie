@@ -16,17 +16,17 @@ shipped as cross-platform wheels. Pure-Python idiomatic layer on top.
 - [x] Handle-lifetime management (context managers, leak-free)
 - [x] Smoke test + end-to-end example + 12 passing tests
 
-## 🚧 Phase 1 — Complete the headless data model (in progress)
+## ✅ Phase 1 — Complete the headless data model (done)
 
 Goal: every native capability reachable from idiomatic Python, plus persistence.
 
-- [ ] `ScalarField` + `VectorField` wrappers (get/set/remove, slice, traverse→numpy, build-from-voxels)
-- [ ] VDB file I/O — `VdbFile` save/load; add/get voxels + scalar + vector fields; field names & types
-- [ ] `Metadata` wrapper (string/float/vector get/set; names; types)
-- [ ] `PolyLine` wrapper (vertices, color, bbox)
-- [ ] Mesh import: STL/OBJ → `Mesh` → voxelize (`Mesh.load_stl/load_obj/from_arrays`)
-- [ ] Abort-hardening: validity guards before CSG to reduce uncaught-native-exception aborts
-- [ ] Tests for all of the above; example covering save/load + mesh import
+- [x] `ScalarField` + `VectorField` wrappers (get/set/remove, slice, traverse→numpy, build-from-voxels)
+- [x] VDB file I/O — `VdbFile` save/load; add/get voxels + scalar + vector fields; field names & types
+- [x] `Metadata` wrapper (string/float/vector get/set; names; types)
+- [x] `PolyLine` wrapper (vertices, color, bbox)
+- [x] Mesh import: STL/OBJ → `Mesh` → voxelize (`Mesh.load_stl/load_obj/from_arrays`)
+- [x] Abort-hardening: validity guards before CSG to reduce uncaught-native-exception aborts
+- [x] Tests for all of the above; example covering save/load + mesh import
 
 ## Phase 2 — Performance: compiled bulk transfer
 

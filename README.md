@@ -30,11 +30,14 @@ Early but functional. Headless modeling works end-to-end on Linux:
 - ✅ Native runtime builds & loads (OpenVDB 13, PicoGK 26.2)
 - ✅ Auto-generated ctypes bindings for **all 173** C-API functions
 - ✅ `Voxels` (primitives, booleans `+ - &`, offsets/shell, implicit SDF, queries)
-- ✅ `Mesh` (from voxels, NumPy vertices/triangles, STL/OBJ export)
+- ✅ `Mesh` (from voxels, NumPy vertices/triangles, STL/OBJ import **and** export)
 - ✅ `Lattice` (beams + spheres)
+- ✅ `ScalarField` / `VectorField` (get/set, slices, traverse→NumPy)
+- ✅ `Metadata` (string/float/vector) and `PolyLine`
+- ✅ OpenVDB file I/O — `save_vdb` / `load_vdb` round-trips voxels + fields
 - ✅ Handle lifetime management (context managers, leak-free)
-- 🔜 `ScalarField`/`VectorField`, VDB I/O, slice/PNG export, the GLFW viewer,
-  a compiled bulk-transfer fast path, and cross-platform wheels.
+- 🔜 Compiled bulk-transfer fast path, slice/PNG export, cross-platform wheels,
+  the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
 
 See [`PLAN.md`](PLAN.md) for the full roadmap.
 
