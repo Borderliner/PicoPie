@@ -38,8 +38,9 @@ Early but functional. Headless modeling works end-to-end on Linux:
 - ✅ Handle lifetime management (context managers, leak-free)
 - ✅ Compiled `_fastloop` bulk transfer (~17–28× faster mesh/field I/O) with
   automatic pure-Python fallback
-- 🔜 Slice/PNG export, cross-platform wheels, the GLFW viewer.
-  See [`ROADMAP.md`](ROADMAP.md).
+- ✅ Headless visualization (`pip install picopie[viz]`): voxel slices → PNG
+  (`save_slice_png`, `save_slice_sheet`) and 3D `mesh_preview`
+- 🔜 Cross-platform wheels, the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
 
 See [`PLAN.md`](PLAN.md) for the full roadmap.
 

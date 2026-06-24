@@ -36,11 +36,13 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Benchmark suite + parity tests vs the pure-Python loop
 - *Measured ~17-18x faster mesh read, ~28x faster mesh build, ~13x field bulk set.*
 
-## Phase 3 — Headless visualization
+## ✅ Phase 3 — Headless visualization (done)
 
-- [ ] Slice extraction (`Voxels_GetZSlice`…) → numpy → PNG (Pillow)
-- [ ] matplotlib 3D mesh preview for notebooks
-- *Independent of P2.*
+- [x] Voxel slice extraction (`slice_x/y/z` + interpolated z) → NumPy (one native call)
+- [x] Slice → PNG via Pillow (`save_slice_png`, `save_slice_sheet` montage; mask/sdf/gray)
+- [x] matplotlib 3D mesh preview (`mesh_preview`, Agg/headless)
+- [x] Optional `[viz]` extra; lazy imports so core stays dependency-free
+- *Surfaced and fixed a real `shell_` bug (it wasn't hollowing).*
 
 ## Phase 4 — Packaging & cross-platform wheels
 
