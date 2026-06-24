@@ -114,13 +114,16 @@ with Voxels.sphere(radius=5) as v:
 
 ## Safety & limits (process-termination contract)
 
-PicoPie binds a native runtime (OpenVDB-based) over a flat C ABI. **An error inside
-native code aborts the whole process** — it raises a C++ exception that cannot be
-caught across the C boundary, so it cannot become a Python exception. This is
-inherent to the ABI (upstream C# has the same property).
+PicoPie binds a native runtime (OpenVDB-based) over a flat C ABI. A C++/OpenVDB
+exception escaping that ABI would normally `std::terminate` the whole process,
+uncatchably (upstream C# has this property). **PicoPie's bundled runtime is built
+with a never-abort guard**: every C entry point is wrapped so an exception is
+captured and surfaced to Python as a `PicoGKError` instead of aborting — so *any*
+native error, even an unanticipated one, is catchable. (Building against an
+*unpatched* runtime loses this; the binding still works but can abort.)
 
-PicoPie converts the *reachable* cases into ordinary, catchable Python exceptions
-so normal use can't crash your interpreter:
+On top of that, PicoPie turns the common mistakes into specific, catchable
+exceptions *before* they reach native code:
 
 - **Out-of-range / closed handles** → `IndexError` / `InvalidHandleError`
   (VDB field indices, slice indices, ops on a closed object or after `shutdown()`).
@@ -136,12 +139,11 @@ so normal use can't crash your interpreter:
   treated as "outside" rather than corrupting the grid.
 - **Runtime version mismatch** → `PicoGKError` at `init()` (see Phase 6 version gate).
 
-**The one residual hard-abort to avoid:** calling `intersect_implicit_`
-**more than once** on the
-same volume (or a copy) leaves the grid in a non-level-set state that aborts inside
-OpenVDB. PicoPie detects the repeat and raises `PicoGKError`, but a boolean op after
-a *single* implicit intersect is not guaranteed safe. **Prefer composing the clip
-into one `render_implicit_` callback** (`max(feature_sdf, clip_sdf)`), which has none
-of these caveats. Empirically, every other operation tested — booleans, offsets,
-meshing, `calculate_properties`, and field/slice access on empty or degenerate
-geometry — is crash-safe.
+**Note on `intersect_implicit_`:** calling it **more than once** on the same volume
+(or a copy) leaves the grid in a non-level-set state. PicoPie detects the repeat and
+raises `PicoGKError` early with an actionable message; even if you bypass that, the
+runtime guard now turns the underlying OpenVDB error into a `PicoGKError` rather than
+a crash. Still, **prefer composing the clip into one `render_implicit_` callback**
+(`max(feature_sdf, clip_sdf)`) — it's correct by construction. Empirically every
+other operation — booleans, offsets, meshing, `calculate_properties`, field/slice
+access on empty or degenerate geometry — is already crash-safe.

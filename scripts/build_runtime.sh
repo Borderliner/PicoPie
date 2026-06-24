@@ -31,6 +31,11 @@ if [[ ! -d "$NATIVE/.git" ]]; then
   git -C "$NATIVE" submodule update --init --recursive --jobs 8
 fi
 
+# Never-abort guard: wrap the C ABI so OpenVDB exceptions become a settable error
+# instead of std::terminate (idempotent; see scripts/patch_runtime.py).
+echo ">> patching runtime (never-abort guard)"
+python3 "$ROOT/scripts/patch_runtime.py" "$NATIVE/Source/PicoGKLibrary.cpp"
+
 echo ">> configuring (Release, OpenVDB static core only)"
 EXTRA_CMAKE=()
 if [[ "$OSTYPE" == darwin* ]]; then

@@ -29,6 +29,10 @@ if (-not (Test-Path $vcpkg)) {
 }
 & "$vcpkg\vcpkg.exe" install boost-iostreams:x64-windows boost-interprocess:x64-windows boost-system:x64-windows tbb:x64-windows blosc:x64-windows zlib:x64-windows
 
+# Never-abort guard: wrap the C ABI so OpenVDB exceptions become a settable error
+# instead of std::terminate (idempotent; see scripts/patch_runtime.py).
+python "$root\scripts\patch_runtime.py" "$native\Source\PicoGKLibrary.cpp"
+
 # Let CMake auto-detect the installed Visual Studio (the runner's VS version
 # changes over time -- it is currently VS 18); don't hardcode the generator.
 # NB: do NOT set CMAKE_CXX_FLAGS here -- it would clobber CMake's default MSVC

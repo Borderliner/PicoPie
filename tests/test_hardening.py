@@ -197,3 +197,23 @@ def test_use_after_free_raises_not_aborts():
     v.close()
     with pytest.raises(InvalidHandleError):
         v.volume_mm3()
+
+
+# --- Phase 11a: native never-abort guard (runtime patch + errcheck) -----------
+def test_runtime_never_abort_guard_active():
+    # Wheels/dev builds must ship the patched runtime; if this fails, the runtime
+    # was built without scripts/patch_runtime.py and a native error would abort.
+    assert getattr(library.lib(), "_picogk_guarded", False), \
+        "runtime not built with the never-abort guard (run scripts/patch_runtime.py)"
+
+
+def test_native_exception_surfaces_in_process():
+    # The canonical hard-abort (a 2nd implicit intersect -> OpenVDB ValueError)
+    # must now surface as a catchable PicoGKError WITHOUT crashing the process.
+    # We bypass the Phase-7 pre-check to exercise the runtime guard itself; if it
+    # regressed, this test would SIGABRT the whole pytest run (a loud failure).
+    v = Voxels.sphere(radius=8.0)
+    v.intersect_implicit_(lambda x, y, z: x)
+    v._implicit_intersected = False          # bypass Phase-7 guard -> hit native
+    with pytest.raises(PicoGKError):
+        v.intersect_implicit_(lambda x, y, z: y)
