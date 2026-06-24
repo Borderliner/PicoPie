@@ -20,5 +20,12 @@ src/picogk/_lib/
 # Example output
 examples/_out/
 
+# C# parity harness build artifacts (the .cs/.csproj are tracked)
+parity/bin/
+parity/obj/
+
+# mkdocs build output
+site/
+
 # Claude Code local settings
 .claude/settings.local.json
