@@ -40,7 +40,10 @@ Early but functional. Headless modeling works end-to-end on Linux:
   automatic pure-Python fallback
 - ✅ Headless visualization (`pip install picopie[viz]`): voxel slices → PNG
   (`save_slice_png`, `save_slice_sheet`) and 3D `mesh_preview`
-- 🔜 Cross-platform wheels, the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
+- ✅ **Parity-validated against C# PicoGK** (same native runtime): volumes, voxel
+  dims, mesh counts/bbox match to float precision (`tests/test_parity_csharp.py`)
+- ✅ Docs site (`pip install -e ".[docs]" && mkdocs build`) — see [`docs/`](docs/)
+- 🔜 Cross-platform wheels in CI, the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
 
 See [`PLAN.md`](PLAN.md) for the full roadmap.
 

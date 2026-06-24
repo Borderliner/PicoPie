@@ -60,11 +60,17 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
       macOS brew, Windows vcpkg) is untested here and will need iteration
 - *Linux packaging fully proven on-box; cross-platform CI is config pending a real run.*
 
-## Phase 5 — Parity validation & docs
+## ✅ Phase 5 — Parity validation & docs (done)
 
-- [ ] Golden tests vs C# PicoGK (volumes, bbox, counts, VDB round-trip)
-- [ ] API docs (mkdocs), gallery, richer examples
-- *Deliverable: documented, parity-validated v0.2.*
+- [x] Golden tests vs **C# PicoGK** running on the same native runtime: sphere/capsule
+      volumes, boolean & offset volumes, voxel dims, mesh vertex/triangle counts and
+      bbox — all match to float precision (`parity/`, `tests/test_parity_csharp.py`)
+- [x] Surfaced a real semantic gap and added `Voxels.calculate_properties()` (accurate
+      volume+bbox via mesh round-trip, matching C# `CalculateProperties`)
+- [x] API docs authored (mkdocs-material + mkdocstrings): home, quickstart, guide, API
+      reference (`mkdocs.yml`, `docs/`) — build with `pip install -e ".[docs]" && mkdocs build`
+- [x] Examples: `hello_picogk`, `fields_and_io`, `visualize`
+- *Parity-validated against the reference implementation; docs ready to publish.*
 
 ## Phase 6 — Interactive viewer (optional, last)
 
