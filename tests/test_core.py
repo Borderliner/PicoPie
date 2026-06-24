@@ -58,6 +58,22 @@ def test_shell_hollows():
     assert wall == pytest.approx(ideal, rel=0.1)
 
 
+def test_shell_zero_thickness_raises():
+    with pytest.raises(ValueError):
+        Voxels.sphere(radius=8).shell_(0.0)
+    with pytest.raises(ValueError):
+        Voxels.sphere(radius=8).shell_(-1.0)
+
+
+def test_shell_thicker_than_object_stays_solid():
+    # eroding the core away entirely leaves the part solid (not empty/invalid)
+    v = Voxels.sphere(radius=8)
+    solid = v.volume_mm3()
+    v.shell_(20.0)
+    assert not v.is_empty()
+    assert v.volume_mm3() == pytest.approx(solid, rel=0.05)
+
+
 def test_mesh_from_voxels_and_numpy():
     v = Voxels.sphere(radius=6)
     m = v.to_mesh()
