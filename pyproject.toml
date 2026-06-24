@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "wheel", "Cython>=3"]
+requires = ["setuptools>=77", "wheel", "Cython>=3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,15 +8,35 @@ version = "0.1.0.dev0"
 description = "A Pythonic binding for the PicoGK computational-geometry kernel"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
-authors = [{ name = "PicoPie contributors" }]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [
+    { name = "Mohammadreza Hajianpour", email = "hajianpour.mr@gmail.com" },
+    { name = "Vish Vadlamani", email = "global.takeover7@gmail.com" },
+]
 keywords = ["geometry", "voxels", "openvdb", "implicit", "cad", "additive-manufacturing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+    "Typing :: Typed",
+]
 dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
 viz = ["pillow>=9", "matplotlib>=3.5"]
 docs = ["mkdocs-material>=9", "mkdocstrings[python]>=0.24"]
-dev = ["pytest>=7", "pytest-timeout", "pillow>=9", "matplotlib>=3.5"]
+dev = ["picopie[viz]", "pytest>=7", "pytest-timeout", "ruff>=0.6", "mypy>=1.8"]
 
 [project.urls]
 "PicoGK (upstream)" = "https://github.com/leap71/PicoGK"
@@ -30,6 +50,23 @@ picogk = ["py.typed", "_native/headers/*.h", "_lib/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+# generated file (by _gen_prototypes.py); native/ is vendored upstream
+extend-exclude = ["native", "src/picogk/_native/prototypes.py"]
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+files = ["src/picogk"]
+python_version = "3.10"
+ignore_missing_imports = true
+# The ctypes boundary is inherently dynamic; don't require full typing there.
+disallow_untyped_defs = false
+warn_unused_ignores = true
 
 [tool.cibuildwheel]
 # Build CPython 3.10-3.13; skip musl (OpenVDB build is painful there) and PyPy.
