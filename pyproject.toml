@@ -14,7 +14,8 @@ keywords = ["geometry", "voxels", "openvdb", "implicit", "cad", "additive-manufa
 dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "pytest-timeout"]
+viz = ["pillow>=9", "matplotlib>=3.5"]
+dev = ["pytest>=7", "pytest-timeout", "pillow>=9", "matplotlib>=3.5"]
 
 [project.urls]
 "PicoGK (upstream)" = "https://github.com/leap71/PicoGK"

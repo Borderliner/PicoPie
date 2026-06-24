@@ -288,6 +288,55 @@ class Voxels(NativeObject):
         self._lib.Voxels_bDiagnose(C.c_uint64(self._inst), C.c_uint64(self.handle), buf)
         return buf.value.decode(errors="replace")
 
+    # --- slices --------------------------------------------------------------
+    # Each returns a 2D float32 array of signed distances in mm (<= 0 is inside),
+    # filled by a single native call. Row 0 is the high end of the vertical axis
+    # (image-style, top-down). Index is 0-based within the active bounding box.
+    def _slice(self, fn_name: str, index: int, h: int, w: int) -> np.ndarray:
+        buf = np.empty(h * w, dtype=np.float32)
+        bg = C.c_float()
+        getattr(self._lib, fn_name)(
+            C.c_uint64(self._inst), C.c_uint64(self.handle), int(index),
+            buf.ctypes.data_as(C.POINTER(C.c_float)), C.byref(bg))
+        return buf.reshape(h, w)
+
+    def slice_z(self, index: int) -> np.ndarray:
+        """Z slice (XY plane) -> (size_y, size_x)."""
+        _, s = self.voxel_dimensions()
+        sx, sy, sz = (int(v) for v in s)
+        if not 0 <= index < sz:
+            raise IndexError(f"z index {index} out of range [0, {sz})")
+        return self._slice("Voxels_GetZSlice", index, sy, sx)
+
+    def slice_y(self, index: int) -> np.ndarray:
+        """Y slice (XZ plane) -> (size_z, size_x)."""
+        _, s = self.voxel_dimensions()
+        sx, sy, sz = (int(v) for v in s)
+        if not 0 <= index < sy:
+            raise IndexError(f"y index {index} out of range [0, {sy})")
+        return self._slice("Voxels_GetYSlice", index, sz, sx)
+
+    def slice_x(self, index: int) -> np.ndarray:
+        """X slice (YZ plane) -> (size_z, size_y)."""
+        _, s = self.voxel_dimensions()
+        sx, sy, sz = (int(v) for v in s)
+        if not 0 <= index < sx:
+            raise IndexError(f"x index {index} out of range [0, {sx})")
+        return self._slice("Voxels_GetXSlice", index, sz, sy)
+
+    def slice_z_interpolated(self, z_voxels: float) -> np.ndarray:
+        """Z slice at a fractional voxel height (BoxSampler) -> (size_y, size_x)."""
+        _, s = self.voxel_dimensions()
+        sx, sy, sz = (int(v) for v in s)
+        if not 0.0 <= z_voxels <= max(sz - 1, 0):
+            raise IndexError(f"z {z_voxels} out of range [0, {sz - 1}]")
+        buf = np.empty(sy * sx, dtype=np.float32)
+        bg = C.c_float()
+        self._lib.Voxels_GetInterpolatedZSlice(
+            C.c_uint64(self._inst), C.c_uint64(self.handle), float(z_voxels),
+            buf.ctypes.data_as(C.POINTER(C.c_float)), C.byref(bg))
+        return buf.reshape(sy, sx)
+
     # --- conversion ----------------------------------------------------------
     def to_mesh(self):
         from .mesh import Mesh
