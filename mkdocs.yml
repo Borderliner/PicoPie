@@ -1,0 +1,38 @@
+site_name: PicoPie
+site_description: A Pythonic binding for the PicoGK computational-geometry kernel
+repo_url: https://github.com/leap71/PicoGK
+docs_dir: docs
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+    - scheme: slate
+      primary: indigo
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Guide: guide.md
+  - API reference: api.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            show_root_heading: true
+            show_source: false
+            members_order: source
+            docstring_style: google
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences

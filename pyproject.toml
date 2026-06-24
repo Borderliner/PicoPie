@@ -15,6 +15,7 @@ dependencies = ["numpy>=1.23"]
 
 [project.optional-dependencies]
 viz = ["pillow>=9", "matplotlib>=3.5"]
+docs = ["mkdocs-material>=9", "mkdocstrings[python]>=0.24"]
 dev = ["pytest>=7", "pytest-timeout", "pillow>=9", "matplotlib>=3.5"]
 
 [project.urls]
