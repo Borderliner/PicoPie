@@ -47,12 +47,13 @@ class VdbFile(NativeObject):
         super().__init__(handle)
 
     @classmethod
-    def load(cls, path: str) -> "VdbFile":
+    def load(cls, path: str) -> VdbFile:
         import os
         h = library.lib().VdbFile_hCreateFromFile(
             library.instance(), str(path).encode())
         if not h:
-            hint = "file not found" if not os.path.exists(path) else "unreadable or not a valid .vdb"
+            hint = ("file not found" if not os.path.exists(path)
+                    else "unreadable or not a valid .vdb")
             raise PicoGKError(f"failed to load VDB file ({hint}): {path}")
         return cls(h)
 
@@ -133,7 +134,7 @@ class VdbFile(NativeObject):
         return VectorField(self._lib.VdbFile_hGetVectorField(
             self._inst, self.handle, int(index)))
 
-    def get(self, index: int) -> "Voxels | ScalarField | VectorField":
+    def get(self, index: int) -> Voxels | ScalarField | VectorField:
         """Return the field at ``index`` as the correct typed object."""
         t = self.field_type(index)
         if t is FieldType.VOXELS:

@@ -13,7 +13,6 @@ import numpy as np
 from ._native.ctypes_types import PKBBox3, PKColorFloat, PKVector2, PKVector3
 
 
-
 def read_voxel_dimensions(lib, fn_name: str, inst: int, handle: int):
     """Read a voxel-space bounding box via a native ``*_GetVoxelDimensions``
     function. Returns ``(origin, size)`` as int32 arrays of shape (3,)."""
@@ -57,14 +56,14 @@ def to_color(c) -> PKColorFloat:
 class BBox3:
     """An axis-aligned bounding box in millimetres."""
 
-    __slots__ = ("min", "max")
+    __slots__ = ("max", "min")
 
     def __init__(self, vmin, vmax):
         self.min = np.asarray(vmin, dtype=np.float32)
         self.max = np.asarray(vmax, dtype=np.float32)
 
     @classmethod
-    def _from_pk(cls, box: PKBBox3) -> "BBox3":
+    def _from_pk(cls, box: PKBBox3) -> BBox3:
         return cls(vec3_to_np(box.vecMin), vec3_to_np(box.vecMax))
 
     @property

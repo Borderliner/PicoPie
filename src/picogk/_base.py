@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import contextlib
 
-from ._errors import InvalidHandleError
 from . import library
+from ._errors import InvalidHandleError
 
 
 class NativeObject:

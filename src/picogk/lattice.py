@@ -17,14 +17,14 @@ class Lattice(NativeObject):
             handle = library.lib().Lattice_hCreate(library.instance())
         super().__init__(handle)
 
-    def add_sphere(self, center, radius: float) -> "Lattice":
+    def add_sphere(self, center, radius: float) -> Lattice:
         c = to_vec3(center)
         self._lib.Lattice_AddSphere(self._inst, self.handle,
                                     C.byref(c), radius)
         return self
 
     def add_beam(self, start, end, radius_start: float,
-                 radius_end: float | None = None, round_cap: bool = True) -> "Lattice":
+                 radius_end: float | None = None, round_cap: bool = True) -> Lattice:
         a, b = to_vec3(start), to_vec3(end)
         r2 = radius_start if radius_end is None else radius_end
         self._lib.Lattice_AddBeam(self._inst, self.handle,

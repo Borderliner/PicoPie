@@ -34,7 +34,7 @@ _STRLEN = 255
 # Live handle-backed wrapper objects, so shutdown() can invalidate them before
 # destroying the instance (otherwise a later op on a stale handle aborts the
 # process via an uncaught native exception).
-_live_objects: "weakref.WeakSet" = weakref.WeakSet()
+_live_objects: weakref.WeakSet = weakref.WeakSet()
 
 
 def _register(obj) -> None:
@@ -43,7 +43,7 @@ def _register(obj) -> None:
 
 
 class _Session:
-    __slots__ = ("lib", "instance", "voxel_size_mm")
+    __slots__ = ("instance", "lib", "voxel_size_mm")
 
     def __init__(self, cdll: C.CDLL, instance: int, voxel_size_mm: float):
         self.lib = cdll

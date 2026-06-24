@@ -42,18 +42,18 @@ class Voxels(NativeObject):
 
     # --- constructors --------------------------------------------------------
     @classmethod
-    def _wrap(cls, handle: int) -> "Voxels":
+    def _wrap(cls, handle: int) -> Voxels:
         return cls(handle)
 
     @classmethod
-    def sphere(cls, center=(0.0, 0.0, 0.0), radius: float = 1.0) -> "Voxels":
+    def sphere(cls, center=(0.0, 0.0, 0.0), radius: float = 1.0) -> Voxels:
         lib, inst = library.lib(), library.instance()
         c = to_vec3(center)
         h = lib.Voxels_hCreateSphere(inst, C.byref(c), radius)
         return cls(h)
 
     @classmethod
-    def capsule(cls, start, end, radius: float, radius2: float | None = None) -> "Voxels":
+    def capsule(cls, start, end, radius: float, radius2: float | None = None) -> Voxels:
         lib, inst = library.lib(), library.instance()
         a, b = to_vec3(start), to_vec3(end)
         r2 = radius if radius2 is None else radius2
@@ -62,7 +62,7 @@ class Voxels(NativeObject):
         return cls(h)
 
     @classmethod
-    def mesh_shell(cls, mesh: "Mesh", radius: float) -> "Voxels":
+    def mesh_shell(cls, mesh: Mesh, radius: float) -> Voxels:
         """A hollow shell of the given thickness around a mesh surface."""
         lib, inst = library.lib(), library.instance()
         h = lib.Voxels_hCreateMeshShell(inst,
@@ -70,24 +70,24 @@ class Voxels(NativeObject):
         return cls(h)
 
     @classmethod
-    def from_mesh(cls, mesh: "Mesh") -> "Voxels":
+    def from_mesh(cls, mesh: Mesh) -> Voxels:
         """Voxelize a closed mesh into a solid volume."""
         v = cls()
         v.render_mesh_(mesh)
         return v
 
     @classmethod
-    def from_lattice(cls, lattice: "Lattice") -> "Voxels":
+    def from_lattice(cls, lattice: Lattice) -> Voxels:
         v = cls()
         v.render_lattice_(lattice)
         return v
 
-    def copy(self) -> "Voxels":
+    def copy(self) -> Voxels:
         h = self._lib.Voxels_hCreateCopy(self._inst, self.handle)
         return Voxels(h)
 
     # --- boolean ops (in-place, return self) ---------------------------------
-    def _check_operand(self, other: "Voxels") -> None:
+    def _check_operand(self, other: Voxels) -> None:
         """Guard CSG inputs. Uncaught OpenVDB errors abort the process, so we
         reject obvious misuse (wrong type, closed handle, cross-session) before
         crossing into native code."""
@@ -99,64 +99,64 @@ class Voxels(NativeObject):
         if other._inst != self._inst:
             raise PicoGKError("cannot combine Voxels from different sessions")
 
-    def bool_add_(self, other: "Voxels") -> "Voxels":
+    def bool_add_(self, other: Voxels) -> Voxels:
         self._check_operand(other)
         self._lib.Voxels_BoolAdd(self._inst, self.handle,
                                  other.handle)
         return self
 
-    def bool_subtract_(self, other: "Voxels") -> "Voxels":
+    def bool_subtract_(self, other: Voxels) -> Voxels:
         self._check_operand(other)
         self._lib.Voxels_BoolSubtract(self._inst, self.handle,
                                       other.handle)
         return self
 
-    def bool_intersect_(self, other: "Voxels") -> "Voxels":
+    def bool_intersect_(self, other: Voxels) -> Voxels:
         self._check_operand(other)
         self._lib.Voxels_BoolIntersect(self._inst, self.handle,
                                        other.handle)
         return self
 
     # --- boolean ops (functional, return new) --------------------------------
-    def __add__(self, other: "Voxels") -> "Voxels":
+    def __add__(self, other: Voxels) -> Voxels:
         return self.copy().bool_add_(other)
 
-    def __or__(self, other: "Voxels") -> "Voxels":
+    def __or__(self, other: Voxels) -> Voxels:
         return self.copy().bool_add_(other)
 
-    def __sub__(self, other: "Voxels") -> "Voxels":
+    def __sub__(self, other: Voxels) -> Voxels:
         return self.copy().bool_subtract_(other)
 
-    def __and__(self, other: "Voxels") -> "Voxels":
+    def __and__(self, other: Voxels) -> Voxels:
         return self.copy().bool_intersect_(other)
 
-    def __iadd__(self, other: "Voxels"):
+    def __iadd__(self, other: Voxels):
         return self.bool_add_(other)
 
-    def __isub__(self, other: "Voxels"):
+    def __isub__(self, other: Voxels):
         return self.bool_subtract_(other)
 
-    def __iand__(self, other: "Voxels"):
+    def __iand__(self, other: Voxels):
         return self.bool_intersect_(other)
 
     # --- offsets -------------------------------------------------------------
-    def offset_(self, dist_mm: float) -> "Voxels":
+    def offset_(self, dist_mm: float) -> Voxels:
         """Grow (positive) / shrink (negative) the surface, in mm. In place."""
         self._lib.Voxels_Offset(self._inst, self.handle,
                                 dist_mm)
         return self
 
-    def offset(self, dist_mm: float) -> "Voxels":
+    def offset(self, dist_mm: float) -> Voxels:
         return self.copy().offset_(dist_mm)
 
-    def double_offset_(self, dist1_mm: float, dist2_mm: float) -> "Voxels":
+    def double_offset_(self, dist1_mm: float, dist2_mm: float) -> Voxels:
         """Two sequential offsets (grow/shrink) of the surface -- a rounding /
         morphological op, NOT a hollow. Use :meth:`shell_` to hollow."""
         self._lib.Voxels_DoubleOffset(self._inst, self.handle,
                                       dist1_mm, dist2_mm)
         return self
 
-    def shell_(self, thickness_mm: float) -> "Voxels":
+    def shell_(self, thickness_mm: float) -> Voxels:
         """Hollow the volume to a wall of ``thickness_mm`` (wall lies inside the
         current surface). Implemented as ``solid - erode(solid, thickness)``.
 
@@ -169,23 +169,23 @@ class Voxels(NativeObject):
         inner.close()
         return self
 
-    def triple_offset_(self, dist_mm: float) -> "Voxels":
+    def triple_offset_(self, dist_mm: float) -> Voxels:
         self._lib.Voxels_TripleOffset(self._inst, self.handle,
                                       dist_mm)
         return self
 
     # --- rendering into this volume ------------------------------------------
-    def render_mesh_(self, mesh: "Mesh") -> "Voxels":
+    def render_mesh_(self, mesh: Mesh) -> Voxels:
         self._lib.Voxels_RenderMesh(self._inst, self.handle,
                                     mesh.handle)
         return self
 
-    def render_lattice_(self, lattice: "Lattice") -> "Voxels":
+    def render_lattice_(self, lattice: Lattice) -> Voxels:
         self._lib.Voxels_RenderLattice(self._inst, self.handle,
                                        lattice.handle)
         return self
 
-    def project_z_slice_(self, z_start_mm: float, z_end_mm: float) -> "Voxels":
+    def project_z_slice_(self, z_start_mm: float, z_end_mm: float) -> Voxels:
         self._lib.Voxels_ProjectZSlice(self._inst, self.handle,
                                        z_start_mm, z_end_mm)
         return self
@@ -201,14 +201,14 @@ class Voxels(NativeObject):
             v = pcoord[0]
             try:
                 r = float(sdf(v.X, v.Y, v.Z))
-            except BaseException as exc:   # noqa: BLE001 - propagate after native call
+            except BaseException as exc:
                 if not errors:
                     errors.append(exc)
                 return 1.0e30              # large positive -> voxel stays empty
             return r if math.isfinite(r) else 1.0e30
         return _cb
 
-    def render_implicit_(self, sdf, bbox) -> "Voxels":
+    def render_implicit_(self, sdf, bbox) -> Voxels:
         """Render a signed-distance function ``sdf(x, y, z) -> float`` within
         ``bbox`` (a :class:`BBox3` or ``((xmin,ymin,zmin),(xmax,ymax,zmax))``).
 
@@ -226,7 +226,7 @@ class Voxels(NativeObject):
             raise errors[0]
         return self
 
-    def intersect_implicit_(self, sdf) -> "Voxels":
+    def intersect_implicit_(self, sdf) -> Voxels:
         """Intersect this volume with the region where ``sdf(x,y,z) <= 0``.
 
         WARNING: the resulting grid may not be a valid level set, and a
@@ -325,7 +325,7 @@ class Voxels(NativeObject):
             C.byref(o), C.byref(d), C.byref(out))
         return vec3_to_np(out) if ok else None
 
-    def equals(self, other: "Voxels") -> bool:
+    def equals(self, other: Voxels) -> bool:
         return bool(self._lib.Voxels_bIsEqual(
             self._inst, self.handle, other.handle))
 
@@ -384,7 +384,7 @@ class Voxels(NativeObject):
         return buf.reshape(sy, sx)
 
     # --- conversion ----------------------------------------------------------
-    def to_mesh(self) -> "Mesh":
+    def to_mesh(self) -> Mesh:
         from .mesh import Mesh
         return Mesh.from_voxels(self)
 

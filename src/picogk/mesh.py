@@ -27,13 +27,13 @@ class Mesh(NativeObject):
         super().__init__(handle)
 
     @classmethod
-    def from_voxels(cls, voxels) -> "Mesh":
+    def from_voxels(cls, voxels) -> Mesh:
         lib, inst = library.lib(), library.instance()
         h = lib.Mesh_hCreateFromVoxels(inst, voxels.handle)
         return cls(h)
 
     @classmethod
-    def from_arrays(cls, vertices, triangles) -> "Mesh":
+    def from_arrays(cls, vertices, triangles) -> Mesh:
         """Build a mesh from an (N,3) vertex array and an (M,3) index array."""
         verts = np.ascontiguousarray(vertices, dtype=np.float32).reshape(-1, 3)
         tris = np.ascontiguousarray(triangles, dtype=np.int32).reshape(-1, 3)
@@ -55,12 +55,12 @@ class Mesh(NativeObject):
         return m
 
     @classmethod
-    def load_stl(cls, path: str) -> "Mesh":
+    def load_stl(cls, path: str) -> Mesh:
         """Load a binary or ASCII STL file (vertices are de-duplicated)."""
         return cls.from_arrays(*_read_stl(path))
 
     @classmethod
-    def load_obj(cls, path: str) -> "Mesh":
+    def load_obj(cls, path: str) -> Mesh:
         """Load a Wavefront OBJ file (polygons are triangulated as a fan)."""
         return cls.from_arrays(*_read_obj(path))
 

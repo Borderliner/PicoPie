@@ -26,4 +26,4 @@ def lib() -> C.CDLL:
     return _BOUND
 
 
-__all__ = ["lib", "find_runtime"]
+__all__ = ["find_runtime", "lib"]

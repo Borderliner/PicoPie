@@ -23,7 +23,7 @@ class PolyLine(NativeObject):
         super().__init__(handle)
 
     @classmethod
-    def from_points(cls, points, color=(1.0, 1.0, 1.0, 1.0)) -> "PolyLine":
+    def from_points(cls, points, color=(1.0, 1.0, 1.0, 1.0)) -> PolyLine:
         pl = cls(color=color)
         for p in points:
             pl.add_vertex(p)

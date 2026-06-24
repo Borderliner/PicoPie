@@ -28,7 +28,7 @@ class ScalarField(NativeObject):
 
     # --- constructors --------------------------------------------------------
     @classmethod
-    def from_voxels(cls, voxels) -> "ScalarField":
+    def from_voxels(cls, voxels) -> ScalarField:
         """A field defined wherever ``voxels`` has data (values copied from the
         underlying signed-distance grid)."""
         h = library.lib().ScalarField_hCreateFromVoxels(
@@ -37,18 +37,18 @@ class ScalarField(NativeObject):
 
     @classmethod
     def build_from_voxels(cls, voxels, value: float,
-                          sd_threshold: float) -> "ScalarField":
+                          sd_threshold: float) -> ScalarField:
         """A field set to ``value`` for every voxel whose signed distance is
         below ``sd_threshold`` (i.e. inside / near the surface)."""
         h = library.lib().ScalarField_hBuildFromVoxels(
             library.instance(), voxels.handle, float(value), float(sd_threshold))
         return cls(h)
 
-    def copy(self) -> "ScalarField":
+    def copy(self) -> ScalarField:
         return ScalarField(self._lib.ScalarField_hCreateCopy(self._inst, self.handle))
 
     # --- per-point access ----------------------------------------------------
-    def set(self, position, value: float) -> "ScalarField":
+    def set(self, position, value: float) -> ScalarField:
         p = to_vec3(position)
         self._lib.ScalarField_SetValue(self._inst, self.handle, C.byref(p), float(value))
         return self
@@ -61,13 +61,13 @@ class ScalarField(NativeObject):
             self._inst, self.handle, C.byref(p), C.byref(out))
         return out.value if ok else None
 
-    def remove(self, position) -> "ScalarField":
+    def remove(self, position) -> ScalarField:
         p = to_vec3(position)
         self._lib.ScalarField_RemoveValue(self._inst, self.handle, C.byref(p))
         return self
 
     # --- bulk get/set (compiled fast path when available) --------------------
-    def set_many(self, positions, values) -> "ScalarField":
+    def set_many(self, positions, values) -> ScalarField:
         """Set many values at once. ``positions`` is (N,3) mm, ``values`` (N,)."""
         pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
         vals = np.ascontiguousarray(values, dtype=np.float32).reshape(-1)
@@ -162,27 +162,27 @@ class VectorField(NativeObject):
         super().__init__(handle)
 
     @classmethod
-    def from_voxels(cls, voxels) -> "VectorField":
+    def from_voxels(cls, voxels) -> VectorField:
         h = library.lib().VectorField_hCreateFromVoxels(
             library.instance(), voxels.handle)
         return cls(h)
 
     @classmethod
-    def build_from_voxels(cls, voxels, value, sd_threshold: float) -> "VectorField":
+    def build_from_voxels(cls, voxels, value, sd_threshold: float) -> VectorField:
         v = to_vec3(value)
         h = library.lib().VectorField_hBuildFromVoxels(
             library.instance(), voxels.handle, C.byref(v), float(sd_threshold))
         return cls(h)
 
-    def copy(self) -> "VectorField":
+    def copy(self) -> VectorField:
         return VectorField(self._lib.VectorField_hCreateCopy(self._inst, self.handle))
 
-    def set(self, position, value) -> "VectorField":
+    def set(self, position, value) -> VectorField:
         p, val = to_vec3(position), to_vec3(value)
         self._lib.VectorField_SetValue(self._inst, self.handle, C.byref(p), C.byref(val))
         return self
 
-    def get(self, position) -> "np.ndarray | None":
+    def get(self, position) -> np.ndarray | None:
         """Return the 3-vector at ``position`` (mm) as float32, or ``None``."""
         p = to_vec3(position)
         out = PKVector3()
@@ -190,13 +190,13 @@ class VectorField(NativeObject):
             self._inst, self.handle, C.byref(p), C.byref(out))
         return vec3_to_np(out) if ok else None
 
-    def remove(self, position) -> "VectorField":
+    def remove(self, position) -> VectorField:
         p = to_vec3(position)
         self._lib.VectorField_RemoveValue(self._inst, self.handle, C.byref(p))
         return self
 
     # --- bulk get/set (compiled fast path when available) --------------------
-    def set_many(self, positions, values) -> "VectorField":
+    def set_many(self, positions, values) -> VectorField:
         """Set many vectors at once. ``positions`` and ``values`` are (N,3)."""
         pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
         vals = np.ascontiguousarray(values, dtype=np.float32).reshape(-1, 3)

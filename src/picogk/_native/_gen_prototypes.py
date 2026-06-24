@@ -122,11 +122,8 @@ def arg_type_only(arg: str) -> str:
     has_array = "[]" in a
     a = a.replace("[]", "")
     tokens = a.split()
-    if len(tokens) <= 1:
-        type_str = a  # unnamed parameter: whole thing is the type
-    else:
-        # if last token is glued to a '*' (e.g. "*pvec") it's the name
-        type_str = " ".join(tokens[:-1])
+    # one token -> unnamed param (whole thing is the type); else drop the name
+    type_str = a if len(tokens) <= 1 else " ".join(tokens[:-1])
     if has_array:
         type_str += "[]"
     return type_str

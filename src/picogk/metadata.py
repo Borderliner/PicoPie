@@ -34,16 +34,16 @@ class Metadata(NativeObject):
 
     # Metadata is obtained from an owning object; never created bare.
     @classmethod
-    def from_voxels(cls, voxels) -> "Metadata":
+    def from_voxels(cls, voxels) -> Metadata:
         return cls(library.lib().Metadata_hFromVoxels(library.instance(), voxels.handle))
 
     @classmethod
-    def from_scalar_field(cls, field) -> "Metadata":
+    def from_scalar_field(cls, field) -> Metadata:
         return cls(library.lib().Metadata_hFromScalarField(
             library.instance(), field.handle))
 
     @classmethod
-    def from_vector_field(cls, field) -> "Metadata":
+    def from_vector_field(cls, field) -> Metadata:
         return cls(library.lib().Metadata_hFromVectorField(
             library.instance(), field.handle))
 
@@ -96,23 +96,23 @@ class Metadata(NativeObject):
         return None
 
     # --- setters -------------------------------------------------------------
-    def set_string(self, name: str, value: str) -> "Metadata":
+    def set_string(self, name: str, value: str) -> Metadata:
         self._lib.Metadata_SetStringValue(
             self._inst, self.handle, name.encode(), str(value).encode())
         return self
 
-    def set_float(self, name: str, value: float) -> "Metadata":
+    def set_float(self, name: str, value: float) -> Metadata:
         self._lib.Metadata_SetFloatValue(
             self._inst, self.handle, name.encode(), float(value))
         return self
 
-    def set_vector(self, name: str, value) -> "Metadata":
+    def set_vector(self, name: str, value) -> Metadata:
         v = to_vec3(value)
         self._lib.Metadata_SetVectorValue(
             self._inst, self.handle, name.encode(), C.byref(v))
         return self
 
-    def set(self, name: str, value) -> "Metadata":
+    def set(self, name: str, value) -> Metadata:
         """Set a value, dispatching on the Python type."""
         if isinstance(value, str):
             return self.set_string(name, value)
@@ -121,7 +121,7 @@ class Metadata(NativeObject):
         # treat anything vector-like as a 3-vector
         return self.set_vector(name, value)
 
-    def remove(self, name: str) -> "Metadata":
+    def remove(self, name: str) -> Metadata:
         self._lib.MetaData_RemoveValue(self._inst, self.handle, name.encode())
         return self
 
