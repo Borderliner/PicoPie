@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+.pytest_cache/
+
+# Native runtime: an upstream clone built locally (see README). Not vendored.
+/native/
+
+# Example output
+examples/_out/
+
+# Claude Code local settings
+.claude/settings.local.json
