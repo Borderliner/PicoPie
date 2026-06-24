@@ -39,7 +39,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+        # macos-14 = arm64 (Apple Silicon). Intel (macos-13/x86_64) is omitted:
+        # its SDK can't target the 14.0 minimum the Homebrew deps require.
+        os: [ubuntu-latest, macos-14, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - name: Build wheels

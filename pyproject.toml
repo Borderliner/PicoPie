@@ -104,8 +104,9 @@ manylinux-x86_64-image = "quay.io/pypa/manylinux_2_34_x86_64:latest"
 
 [tool.cibuildwheel.macos]
 before-all = "bash {project}/scripts/cibw_before_all_macos.sh"
-# TBB's C++17 aligned new/delete needs >= 10.13; 11.0 also satisfies arm64.
-environment = { MACOSX_DEPLOYMENT_TARGET = "11.0" }
+# Homebrew deps (boost/tbb/blosc/icu/...) are built for the runner OS (macOS 14),
+# so the wheel must target 14.0; this also satisfies TBB's C++17 aligned new/delete.
+environment = { MACOSX_DEPLOYMENT_TARGET = "14.0" }
 
 [tool.cibuildwheel.windows]
 before-all = "powershell {project}/scripts/cibw_before_all_windows.ps1"
