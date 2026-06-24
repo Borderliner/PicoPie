@@ -71,12 +71,23 @@ class VdbFile(NativeObject):
     def field_count(self) -> int:
         return int(self._lib.VdbFile_nFieldCount(self._inst, self.handle))
 
+    def _check_index(self, index: int) -> int:
+        # The native field accessors call std::vector::at(); an out-of-range
+        # index throws std::out_of_range across the C ABI and ABORTS the process
+        # (it cannot be caught in Python). Validate here and raise instead.
+        n = self.field_count()
+        if not 0 <= index < n:
+            raise IndexError(f"field index {index} out of range [0, {n})")
+        return index
+
     def field_name(self, index: int) -> str:
+        self._check_index(index)
         buf = C.create_string_buffer(_STRLEN)
         self._lib.VdbFile_GetFieldName(self._inst, self.handle, int(index), buf)
         return buf.value.decode(errors="replace")
 
     def field_type(self, index: int) -> FieldType:
+        self._check_index(index)
         return FieldType(int(self._lib.VdbFile_nFieldType(
             self._inst, self.handle, int(index))))
 
@@ -109,13 +120,16 @@ class VdbFile(NativeObject):
 
     # --- get -----------------------------------------------------------------
     def get_voxels(self, index: int) -> Voxels:
+        self._check_index(index)
         return Voxels(self._lib.VdbFile_hGetVoxels(self._inst, self.handle, int(index)))
 
     def get_scalar_field(self, index: int) -> ScalarField:
+        self._check_index(index)
         return ScalarField(self._lib.VdbFile_hGetScalarField(
             self._inst, self.handle, int(index)))
 
     def get_vector_field(self, index: int) -> VectorField:
+        self._check_index(index)
         return VectorField(self._lib.VdbFile_hGetVectorField(
             self._inst, self.handle, int(index)))
 
