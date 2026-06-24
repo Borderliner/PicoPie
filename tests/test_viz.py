@@ -57,7 +57,7 @@ def test_slice_z_orientation():
     # from the +x side and the +y side and checking where it disappears.
     px = Voxels.sphere(radius=10) - Voxels.sphere(center=(12, 0, 0), radius=8)
     _, s = px.voxel_dimensions()
-    sx, sy, sz = (int(v) for v in s)
+    sx, _, sz = (int(v) for v in s)
     m = px.slice_z(sz // 2) <= 0
     assert m[:, :sx // 2].sum() > m[:, sx // 2:].sum()   # left (-x) more solid
 

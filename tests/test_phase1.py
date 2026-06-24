@@ -5,8 +5,15 @@ import pytest
 
 import picogk
 from picogk import (
-    FieldType, Mesh, Metadata, PolyLine, ScalarField, VectorField, Voxels,
-    load_vdb, save_vdb,
+    FieldType,
+    Mesh,
+    Metadata,
+    PolyLine,
+    ScalarField,
+    VectorField,
+    Voxels,
+    load_vdb,
+    save_vdb,
 )
 
 
@@ -32,7 +39,7 @@ def test_scalarfield_active_values(sphere):
 
 def test_scalarfield_dims_and_slice(sphere):
     sf = ScalarField.from_voxels(sphere)
-    origin, size = sf.voxel_dimensions()
+    _, size = sf.voxel_dimensions()
     assert size.prod() > 0
     sl = sf.slice(int(size[2] // 2))
     assert sl.shape == (int(size[1]), int(size[0]))

@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk import Lattice, Mesh, Voxels
+from picogk import Lattice, Voxels
 
 
 def test_version_and_name():

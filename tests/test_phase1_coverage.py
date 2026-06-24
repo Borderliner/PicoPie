@@ -10,8 +10,16 @@ import pytest
 
 import picogk
 from picogk import (
-    FieldType, Mesh, Metadata, PolyLine, ScalarField, VdbFile, VectorField,
-    Voxels, load_vdb, save_vdb,
+    FieldType,
+    Mesh,
+    Metadata,
+    PolyLine,
+    ScalarField,
+    VdbFile,
+    VectorField,
+    Voxels,
+    load_vdb,
+    save_vdb,
 )
 
 VS = 0.5  # session voxel size (see conftest)
@@ -57,7 +65,7 @@ def test_metadata_survives_vdb_roundtrip(tmp_path):
 def test_scalarfield_slice_values():
     sf = ScalarField()
     sf.set((0, 0, 0), 7.0)
-    origin, size = sf.voxel_dimensions()
+    _, size = sf.voxel_dimensions()
     assert tuple(size) == (1, 1, 1)            # a single active voxel
     sl = sf.slice(0)
     assert sl.shape == (1, 1)
@@ -80,7 +88,7 @@ def test_scalarfield_build_from_voxels():
     v = Voxels.sphere(radius=6)
     sf = ScalarField.build_from_voxels(v, value=3.0, sd_threshold=0.0)
     assert sf.is_valid()
-    coords, vals = sf.active_values()
+    _, vals = sf.active_values()
     assert vals.size > 0
     assert np.any(np.isclose(vals, 3.0))
 
