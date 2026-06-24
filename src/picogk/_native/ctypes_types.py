@@ -99,3 +99,33 @@ STRUCT_TYPES = {
     "PKMatrix4x4": PKMatrix4x4,
     "PKColorFloat": PKColorFloat,
 }
+
+
+# --- layout self-check -------------------------------------------------------
+# The native ABI uses #pragma pack(1); a wrong _pack_ or field list would
+# silently corrupt every call that passes these by value/pointer. Verify the
+# packed byte sizes at import (the enforced-in-release analog of the C# port's
+# Debug.Assert(Marshal.SizeOf(...)) checks in Library's constructor).
+_EXPECTED_SIZES = {
+    PKVector2: 8,
+    PKVector3: 12,
+    PKVector4: 16,
+    PKCoord: 12,
+    PKTriangle: 12,
+    PKBBox3: 24,
+    PKMatrix4x4: 64,
+    PKColorFloat: 16,
+}
+
+
+def _assert_struct_layout() -> None:
+    for struct, expected in _EXPECTED_SIZES.items():
+        actual = C.sizeof(struct)
+        if actual != expected:
+            raise RuntimeError(
+                f"ctypes struct {struct.__name__} is {actual} bytes, expected "
+                f"{expected} (packed). The native ABI mirror is broken; check "
+                f"_pack_/_fields_ in ctypes_types.py.")
+
+
+_assert_struct_layout()

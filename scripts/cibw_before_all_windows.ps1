@@ -8,8 +8,15 @@ $ErrorActionPreference = "Stop"
 $root = (Resolve-Path "$PSScriptRoot\..").Path
 $native = Join-Path $root "native\PicoGKRuntime"
 
+# Pinned for reproducibility (see scripts/build_runtime.sh). Tag PicoGK-v2.2.0
+# -> runtime "26.2.0"; pinning the superproject commit pins its submodules too.
+$runtimeRef = "0f26321c18ed878a7820ef769c38fd5d49d39242"  # PicoGK-v2.2.0
+$vcpkgRef   = "2026.06.01"
+
 if (-not (Test-Path "$native\.git")) {
-    git clone --recurse-submodules --jobs 8 https://github.com/leap71/PicoGKRuntime $native
+    git clone https://github.com/leap71/PicoGKRuntime $native
+    git -C $native checkout --quiet $runtimeRef
+    git -C $native submodule update --init --recursive --jobs 8
 }
 
 # vcpkg deps for OpenVDB. boost-interprocess (header-only) is needed by OpenVDB's
@@ -17,7 +24,7 @@ if (-not (Test-Path "$native\.git")) {
 # so unlike a full Boost source tree it must be requested explicitly.
 $vcpkg = Join-Path $native "Install_Dependencies\vcpkg"
 if (-not (Test-Path $vcpkg)) {
-    git clone https://github.com/microsoft/vcpkg $vcpkg
+    git clone --branch $vcpkgRef --depth 1 https://github.com/microsoft/vcpkg $vcpkg
     & "$vcpkg\bootstrap-vcpkg.bat"
 }
 & "$vcpkg\vcpkg.exe" install boost-iostreams:x64-windows boost-interprocess:x64-windows boost-system:x64-windows tbb:x64-windows blosc:x64-windows zlib:x64-windows

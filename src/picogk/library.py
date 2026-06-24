@@ -31,6 +31,12 @@ from ._native.runtime import lib as _lib
 
 _STRLEN = 255
 
+# The native C ABI this binding targets, as major.minor (PicoGKRuntime is pinned
+# to tag PicoGK-v2.2.0 -> runtime "26.2.0"). init() verifies the loaded runtime
+# matches, so a stale/incompatible picogk.* DLL fails loudly instead of crashing
+# at the first mismatched call. Patch releases (26.2.x) are accepted.
+_EXPECTED_RUNTIME_VERSION = "26.2"
+
 # Live handle-backed wrapper objects, so shutdown() can invalidate them before
 # destroying the instance (otherwise a later op on a stale handle aborts the
 # process via an uncaught native exception).
@@ -72,10 +78,25 @@ def init(voxel_size_mm: float = 0.1) -> None:
                 f"mm. Call picogk.shutdown() first.")
         return
     cdll = _lib()
+    _check_runtime_version()
     handle = cdll.Library_hCreateInstance(voxel_size_mm)
     if not handle:
         raise PicoGKError("Library_hCreateInstance returned a null handle")
     _session = _Session(cdll, int(handle), float(voxel_size_mm))
+
+
+def _check_runtime_version() -> None:
+    """Fail loudly if the loaded runtime's major.minor differs from what we bind.
+
+    The C ABI can change between minor releases; an incompatible runtime would
+    otherwise crash (often a hard process abort) at the first mismatched call.
+    """
+    ver = _info_string("Library_GetVersion")
+    if ver != _EXPECTED_RUNTIME_VERSION and not ver.startswith(_EXPECTED_RUNTIME_VERSION + "."):
+        raise PicoGKError(
+            f"PicoGK runtime version mismatch: loaded {ver!r}, but this binding "
+            f"targets {_EXPECTED_RUNTIME_VERSION}.x. Rebuild the runtime at the "
+            f"pinned tag PicoGK-v2.2.0, or point $PICOGK_RUNTIME at a matching build.")
 
 
 def shutdown() -> None:

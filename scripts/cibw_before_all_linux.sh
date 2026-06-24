@@ -28,7 +28,7 @@ fi
 
 # Blosc from source (matches the runtime's reference Dockerfile)
 if ! ldconfig -p | grep -q libblosc; then
-  git clone --depth 1 https://github.com/Blosc/c-blosc.git /tmp/blosc
+  git clone --branch v1.21.6 --depth 1 https://github.com/Blosc/c-blosc.git /tmp/blosc
   cmake -S /tmp/blosc -B /tmp/blosc/build -DCMAKE_INSTALL_PREFIX=/usr/local
   cmake --build /tmp/blosc/build --target install -j"$(nproc)"
   ldconfig

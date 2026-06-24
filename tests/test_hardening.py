@@ -1,10 +1,14 @@
 """Phase 5.5 hardening: native calls that used to abort the process must now
 raise catchable Python exceptions instead."""
 
+import ctypes as C
+
 import pytest
 
 import picogk
-from picogk import VdbFile, Voxels
+from picogk import VdbFile, Voxels, library
+from picogk._errors import PicoGKError
+from picogk._native import ctypes_types
 
 
 # --- H2: out-of-range VDB field index must raise, not abort -------------------
@@ -82,3 +86,30 @@ def test_render_implicit_nonfinite_is_safe():
     v = Voxels()
     v.render_implicit_(lambda x, y, z: _m.nan, ((-2, -2, -2), (2, 2, 2)))
     assert v.is_empty()      # all voxels treated as "outside"
+
+
+# --- Phase 6: runtime version gate -------------------------------------------
+def test_runtime_version_matches_expected():
+    # the pinned/bundled runtime must report the major.minor this binding targets
+    assert library.version().startswith(library._EXPECTED_RUNTIME_VERSION)
+
+
+@pytest.mark.parametrize("bad", ["27.0.0", "26.3.0", "26.20.0", "25.2.0", "", "garbage"])
+def test_version_gate_rejects_mismatch(monkeypatch, bad):
+    monkeypatch.setattr(library, "_info_string", lambda fn: bad)
+    with pytest.raises(PicoGKError, match="version mismatch"):
+        library._check_runtime_version()
+
+
+@pytest.mark.parametrize("ok", ["26.2", "26.2.0", "26.2.5", "26.2.99"])
+def test_version_gate_accepts_patch_levels(monkeypatch, ok):
+    monkeypatch.setattr(library, "_info_string", lambda fn: ok)
+    library._check_runtime_version()             # must not raise
+
+
+# --- Phase 6: ABI struct-layout self-check -----------------------------------
+def test_struct_layout_matches_packed_abi():
+    ctypes_types._assert_struct_layout()         # must not raise
+    assert C.sizeof(ctypes_types.PKVector3) == 12
+    assert C.sizeof(ctypes_types.PKBBox3) == 24
+    assert C.sizeof(ctypes_types.PKMatrix4x4) == 64

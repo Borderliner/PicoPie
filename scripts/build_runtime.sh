@@ -14,14 +14,21 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 NATIVE="$ROOT/native/PicoGKRuntime"
 BUILD="$NATIVE/build"
 
+# Pin the upstream runtime for reproducible builds. Tag PicoGK-v2.2.0 -> the
+# runtime reports version "26.2.0" (kept in sync with _EXPECTED_RUNTIME_VERSION
+# in src/picogk/library.py). Pinning the superproject commit also pins its
+# submodules (OpenVDB/GLFW) via their recorded gitlinks.
+PICOGK_RUNTIME_REF="${PICOGK_RUNTIME_REF:-0f26321c18ed878a7820ef769c38fd5d49d39242}"  # PicoGK-v2.2.0
+
 if [[ "${1:-}" == "--clean" ]]; then
   rm -rf "$BUILD" "$NATIVE/Dist"
 fi
 
 if [[ ! -d "$NATIVE/.git" ]]; then
-  echo ">> cloning PicoGKRuntime + submodules"
-  git clone --recurse-submodules --jobs 8 \
-    https://github.com/leap71/PicoGKRuntime "$NATIVE"
+  echo ">> cloning PicoGKRuntime @ $PICOGK_RUNTIME_REF"
+  git clone https://github.com/leap71/PicoGKRuntime "$NATIVE"
+  git -C "$NATIVE" checkout --quiet "$PICOGK_RUNTIME_REF"
+  git -C "$NATIVE" submodule update --init --recursive --jobs 8
 fi
 
 echo ">> configuring (Release, OpenVDB static core only)"
