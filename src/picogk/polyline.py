@@ -59,6 +59,9 @@ class PolyLine(NativeObject):
     def is_valid(self) -> bool:
         return bool(self._lib.PolyLine_bIsValid(self._inst, self.handle))
 
+    def memory_bytes(self) -> int:
+        return int(self._lib.PolyLine_nMemUsage(self._inst, self.handle))
+
     def __repr__(self) -> str:
         return "PolyLine(<closed>)" if self._closed else \
             f"PolyLine(handle={self._h}, vertices={self.vertex_count()})"

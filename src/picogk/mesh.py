@@ -56,6 +56,14 @@ class Mesh(NativeObject):
         """Load a Wavefront OBJ file (polygons are triangulated as a fan)."""
         return cls.from_arrays(*_read_obj(path))
 
+    def is_valid(self) -> bool:
+        return bool(self._lib.Mesh_bIsValid(
+            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+
+    def memory_bytes(self) -> int:
+        return int(self._lib.Mesh_nMemUsage(
+            C.c_uint64(self._inst), C.c_uint64(self.handle)))
+
     # --- counts --------------------------------------------------------------
     def vertex_count(self) -> int:
         return int(self._lib.Mesh_nVertexCount(

@@ -82,7 +82,12 @@ class ScalarField(NativeObject):
         return origin, size
 
     def slice(self, z_index: int) -> np.ndarray:
-        """Return a (sy, sx) float32 array for the given Z voxel slice."""
+        """Return a (sy, sx) float32 array for Z slice ``z_index``.
+
+        ``z_index`` is 0-based, measured from the field's active bounding-box
+        minimum (i.e. 0 .. size_z - 1). Element [y, x] is the value at that
+        voxel column.
+        """
         _, size = self.voxel_dimensions()
         sx, sy = int(size[0]), int(size[1])
         buf = np.empty(sx * sy, dtype=np.float32)
@@ -94,9 +99,9 @@ class ScalarField(NativeObject):
     def active_values(self):
         """Return ``(coords, values)`` over all active voxels.
 
-        ``coords`` is (N, 3) float32, ``values`` is (N,) float32. Implemented
-        via a native traversal calling back into Python -- slow for large
-        fields (see roadmap Phase 2 for the compiled path).
+        ``coords`` is (N, 3) float32 **in millimetres**, ``values`` is (N,)
+        float32. Implemented via a native traversal calling back into Python --
+        slow for large fields (see roadmap Phase 2 for the compiled path).
         """
         coords: list[tuple[float, float, float]] = []
         values: list[float] = []
@@ -165,7 +170,8 @@ class VectorField(NativeObject):
         return int(self._lib.VectorField_nMemUsage(self._inst, self.handle))
 
     def active_values(self):
-        """Return ``(coords, values)``, both (N, 3) float32, over active voxels."""
+        """Return ``(coords, values)``, both (N, 3) float32, over active voxels
+        (``coords`` in millimetres)."""
         coords: list[tuple[float, float, float]] = []
         values: list[tuple[float, float, float]] = []
 

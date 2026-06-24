@@ -48,15 +48,19 @@ class VdbFile(NativeObject):
 
     @classmethod
     def load(cls, path: str) -> "VdbFile":
+        import os
         h = library.lib().VdbFile_hCreateFromFile(
             library.instance(), str(path).encode())
-        f = cls(h)
-        if not f.is_valid():
-            raise PicoGKError(f"failed to load VDB file: {path}")
-        return f
+        if not h:
+            hint = "file not found" if not os.path.exists(path) else "unreadable or not a valid .vdb"
+            raise PicoGKError(f"failed to load VDB file ({hint}): {path}")
+        return cls(h)
 
     def is_valid(self) -> bool:
         return bool(self._lib.VdbFile_bIsValid(self._inst, self.handle))
+
+    def memory_bytes(self) -> int:
+        return int(self._lib.VdbFile_nMemUsage(self._inst, self.handle))
 
     def save(self, path: str) -> None:
         ok = self._lib.VdbFile_bSaveToFile(self._inst, self.handle, str(path).encode())
