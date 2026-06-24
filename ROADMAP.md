@@ -44,15 +44,18 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Optional `[viz]` extra; lazy imports so core stays dependency-free
 - *Surfaced and fixed a real `shell_` bug (it wasn't hollowing).*
 
-## Phase 4 — Packaging & cross-platform wheels
+## 🟡 Phase 4 — Packaging & cross-platform wheels (local verified; CI authored)
 
-- [ ] Scripted, reproducible native build
-- [ ] `cibuildwheel` matrix: Linux (manylinux, build runtime in-container), macOS, Windows
-- [ ] Bundle runtime into wheels (`auditwheel`/`delocate`/`delvewheel`) under `picogk/_lib/`
-- [ ] GitHub Actions CI: build + test on all three OSes
-- [ ] CI must assert the `_fastloop` extension actually builds from the sdist/wheel
-      (a from-source install silently falls back to pure Python otherwise)
-- *Heaviest infra; loader + `_lib/` hooks already in place.*
+- [x] Scripted, reproducible native build (`scripts/build_runtime.sh` + `stage_runtime.py`)
+- [x] Bundle runtime into wheels under `picogk/_lib/` — **verified locally**: wheel installs
+      in a clean venv (no source tree, no env var) and runs off the bundled runtime
+- [x] `auditwheel repair` vendors the runtime's deps (TBB/Blosc/Boost/…) and patches RPATH;
+      confirmed all resolve to `picopie.libs/` (manylinux self-contained, even dlopen'd)
+- [x] CI asserts `_fastloop` builds from the sdist; `ci_check.py` asserts bundled runtime in wheel test
+- [x] `cibuildwheel` config + GitHub Actions matrix (Linux/macOS/Windows) authored
+- [ ] **Run the matrix in real CI** — the per-platform runtime build (manylinux deps,
+      macOS brew, Windows vcpkg) is untested here and will need iteration
+- *Linux packaging fully proven on-box; cross-platform CI is config pending a real run.*
 
 ## Phase 5 — Parity validation & docs
 

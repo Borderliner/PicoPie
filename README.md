@@ -61,18 +61,29 @@ pytest
 # system deps (Debian/Ubuntu/Mint):
 sudo apt-get install -y --no-install-recommends \
   libboost-all-dev libblosc-dev libtbb-dev extra-cmake-modules \
-  xorg-dev mesa-common-dev libgl1-mesa-dev
+  xorg-dev mesa-common-dev libgl1-mesa-dev ninja-build cmake g++ git
 
-git clone --recurse-submodules https://github.com/leap71/PicoGKRuntime native/PicoGKRuntime
-cmake -S native/PicoGKRuntime -B native/PicoGKRuntime/build -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENVDB_BUILD_BINARIES=OFF -DOPENVDB_CORE_SHARED=OFF -DOPENVDB_CORE_STATIC=ON \
-  -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF
-ninja -C native/PicoGKRuntime/build
+scripts/build_runtime.sh        # clones + builds PicoGKRuntime, stages it into the package
 ```
 
-PicoPie locates the runtime automatically under `native/`, or via the
-`$PICOGK_RUNTIME` environment variable (full path to `picogk.so`/`.dylib`/`.dll`).
+PicoPie locates the runtime automatically: bundled in the wheel (`picogk/_lib/`),
+else under `native/`, else via the `$PICOGK_RUNTIME` environment variable (full
+path to `picogk.so`/`.dylib`/`.dll`).
+
+### Wheels (self-contained)
+
+`scripts/build_runtime.sh` stages the native runtime into `picogk/_lib/` so a
+built wheel bundles it. The wheel also bundles the compiled `_fastloop`
+extension, and `auditwheel`/`delocate`/`delvewheel` vendor the runtime's C++
+deps (TBB, Blosc, Boost, …) — so `pip install` needs no system libraries:
+
+```bash
+scripts/build_runtime.sh && python -m build --wheel
+auditwheel repair dist/*.whl -w dist/repaired   # Linux -> manylinux, vendoring deps
+```
+
+Cross-platform wheels (Linux/macOS/Windows) are built in CI via
+[`cibuildwheel`](pyproject.toml) and `.github/workflows/wheels.yml`.
 
 ## Performance & safety notes
 
