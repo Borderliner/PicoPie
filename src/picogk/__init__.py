@@ -19,19 +19,25 @@ Quick start::
 from __future__ import annotations
 
 from ._errors import InvalidHandleError, NotInitializedError, PicoGKError
+from .fields import ScalarField, VectorField
 from .lattice import Lattice
 from .library import (
     build_info, init, instance, is_initialized, name, session, shutdown,
     total_memory_bytes, version, voxel_size,
 )
 from .mesh import Mesh
+from .metadata import Metadata, MetaType
+from .polyline import PolyLine
 from .types import BBox3
+from .vdb import FieldType, VdbFile, load_vdb, save_vdb
 from .voxels import Voxels
 
 __all__ = [
     "init", "shutdown", "session", "is_initialized", "voxel_size",
     "name", "version", "build_info", "instance", "total_memory_bytes",
-    "Voxels", "Mesh", "Lattice", "BBox3",
+    "Voxels", "Mesh", "Lattice", "ScalarField", "VectorField",
+    "PolyLine", "Metadata", "MetaType", "BBox3",
+    "VdbFile", "FieldType", "save_vdb", "load_vdb",
     "PicoGKError", "NotInitializedError", "InvalidHandleError",
 ]
 
