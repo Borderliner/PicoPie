@@ -32,6 +32,30 @@ class Mesh(NativeObject):
         h = lib.Mesh_hCreateFromVoxels(C.c_uint64(inst), C.c_uint64(voxels.handle))
         return cls(h)
 
+    @classmethod
+    def from_arrays(cls, vertices, triangles) -> "Mesh":
+        """Build a mesh from an (N,3) vertex array and an (M,3) index array."""
+        verts = np.asarray(vertices, dtype=np.float64).reshape(-1, 3)
+        tris = np.asarray(triangles, dtype=np.int64).reshape(-1, 3)
+        if tris.size and (tris.max() >= len(verts) or tris.min() < 0):
+            raise ValueError("triangle index out of range")
+        m = cls()
+        for v in verts:
+            m.add_vertex((v[0], v[1], v[2]))
+        for t in tris:
+            m.add_triangle(int(t[0]), int(t[1]), int(t[2]))
+        return m
+
+    @classmethod
+    def load_stl(cls, path: str) -> "Mesh":
+        """Load a binary or ASCII STL file (vertices are de-duplicated)."""
+        return cls.from_arrays(*_read_stl(path))
+
+    @classmethod
+    def load_obj(cls, path: str) -> "Mesh":
+        """Load a Wavefront OBJ file (polygons are triangulated as a fan)."""
+        return cls.from_arrays(*_read_obj(path))
+
     # --- counts --------------------------------------------------------------
     def vertex_count(self) -> int:
         return int(self._lib.Mesh_nVertexCount(
@@ -124,3 +148,51 @@ class Mesh(NativeObject):
             return "Mesh(<closed>)"
         return f"Mesh(handle={self._h}, vertices={self.vertex_count()}, " \
                f"triangles={self.triangle_count()})"
+
+
+# --- STL / OBJ readers -------------------------------------------------------
+def _dedup(triangle_verts: np.ndarray):
+    """Given (3M, 3) per-corner vertices, return (unique_verts, (M,3) indices)."""
+    n_tri = triangle_verts.shape[0] // 3
+    uniq, inv = np.unique(triangle_verts, axis=0, return_inverse=True)
+    inv = np.asarray(inv).reshape(-1)            # numpy 1.x/2.x shape-safe
+    return uniq.astype(np.float32), inv.reshape(n_tri, 3).astype(np.int64)
+
+
+def _read_stl(path: str):
+    with open(path, "rb") as f:
+        data = f.read()
+    if len(data) >= 84:
+        n = struct.unpack_from("<I", data, 80)[0]
+        if len(data) == 84 + n * 50:            # binary STL
+            dt = np.dtype([("n", "<f4", 3), ("v", "<f4", (3, 3)), ("attr", "<u2")])
+            arr = np.frombuffer(data, dtype=dt, count=n, offset=84)
+            return _dedup(arr["v"].reshape(-1, 3))
+    # ASCII STL
+    verts = []
+    for line in data.decode("ascii", errors="replace").splitlines():
+        s = line.split()
+        if s and s[0] == "vertex":
+            verts.append((float(s[1]), float(s[2]), float(s[3])))
+    return _dedup(np.array(verts, dtype=np.float32).reshape(-1, 3))
+
+
+def _read_obj(path: str):
+    verts: list[tuple[float, float, float]] = []
+    faces: list[tuple[int, int, int]] = []
+    with open(path) as f:
+        for line in f:
+            s = line.split()
+            if not s:
+                continue
+            if s[0] == "v":
+                verts.append((float(s[1]), float(s[2]), float(s[3])))
+            elif s[0] == "f":
+                idx = []
+                for tok in s[1:]:
+                    i = int(tok.split("/")[0])
+                    idx.append(i - 1 if i > 0 else len(verts) + i)
+                for k in range(1, len(idx) - 1):     # fan triangulation
+                    faces.append((idx[0], idx[k], idx[k + 1]))
+    return (np.array(verts, dtype=np.float32).reshape(-1, 3),
+            np.array(faces, dtype=np.int64).reshape(-1, 3))
