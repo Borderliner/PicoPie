@@ -81,17 +81,32 @@ class Voxels(NativeObject):
         return Voxels(h)
 
     # --- boolean ops (in-place, return self) ---------------------------------
+    def _check_operand(self, other: "Voxels") -> None:
+        """Guard CSG inputs. Uncaught OpenVDB errors abort the process, so we
+        reject obvious misuse (wrong type, closed handle, cross-session) before
+        crossing into native code."""
+        from ._errors import InvalidHandleError, PicoGKError
+        if not isinstance(other, Voxels):
+            raise TypeError(f"expected Voxels, got {type(other).__name__}")
+        if self._closed or other._closed:
+            raise InvalidHandleError("boolean op on a closed Voxels")
+        if other._inst != self._inst:
+            raise PicoGKError("cannot combine Voxels from different sessions")
+
     def bool_add_(self, other: "Voxels") -> "Voxels":
+        self._check_operand(other)
         self._lib.Voxels_BoolAdd(C.c_uint64(self._inst), C.c_uint64(self.handle),
                                  C.c_uint64(other.handle))
         return self
 
     def bool_subtract_(self, other: "Voxels") -> "Voxels":
+        self._check_operand(other)
         self._lib.Voxels_BoolSubtract(C.c_uint64(self._inst), C.c_uint64(self.handle),
                                       C.c_uint64(other.handle))
         return self
 
     def bool_intersect_(self, other: "Voxels") -> "Voxels":
+        self._check_operand(other)
         self._lib.Voxels_BoolIntersect(C.c_uint64(self._inst), C.c_uint64(self.handle),
                                        C.c_uint64(other.handle))
         return self
