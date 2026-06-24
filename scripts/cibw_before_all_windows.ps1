@@ -24,8 +24,11 @@ if (-not (Test-Path $vcpkg)) {
 
 # Let CMake auto-detect the installed Visual Studio (the runner's VS version
 # changes over time -- it is currently VS 18); don't hardcode the generator.
+# NB: do NOT set CMAKE_CXX_FLAGS here -- it would clobber CMake's default MSVC
+# flags (incl. /D_WINDOWS), making PicoGK.h take its non-Windows __attribute__
+# branch. (--parallel below gives cross-project parallelism safely.)
 cmake -S $native -B "$native\build" `
-    -DCMAKE_BUILD_TYPE=Release "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" "-DCMAKE_CXX_FLAGS=/MP" `
+    -DCMAKE_BUILD_TYPE=Release "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
     -DOPENVDB_BUILD_BINARIES=OFF -DOPENVDB_CORE_SHARED=OFF -DOPENVDB_CORE_STATIC=ON `
     -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
 cmake --build "$native\build" --config Release --parallel
