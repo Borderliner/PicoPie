@@ -50,6 +50,9 @@ picogk = ["py.typed", "_native/headers/*.h", "_lib/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "perf: relative fast-path-vs-fallback speedup checks (run locally; excluded in CI as runners are noisy)",
+]
 
 [tool.coverage.run]
 source = ["picogk"]
@@ -93,7 +96,9 @@ build-frontend = "build"
 before-build = "python {project}/scripts/stage_runtime.py"
 # Wheel must work standalone: bundled runtime + compiled extension + real geometry.
 test-requires = ["pytest", "numpy", "pillow", "matplotlib"]
-test-command = "python {project}/scripts/ci_check.py && python -m pytest {project}/tests"
+# perf tests are excluded here (CI runners are noisy); they run locally. The
+# fast-path *presence* is still asserted in CI via test_fastloop_available.
+test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf\" {project}/tests"
 # cibuildwheel auto-repairs (auditwheel/delocate/delvewheel), vendoring the
 # dlopen'd runtime's deps -- verified locally that auditwheel handles _lib/picogk.so.
 
