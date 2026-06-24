@@ -67,8 +67,9 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
       bbox — all match to float precision (`parity/`, `tests/test_parity_csharp.py`)
 - [x] Surfaced a real semantic gap and added `Voxels.calculate_properties()` (accurate
       volume+bbox via mesh round-trip, matching C# `CalculateProperties`)
-- [x] API docs authored (mkdocs-material + mkdocstrings): home, quickstart, guide, API
-      reference (`mkdocs.yml`, `docs/`) — build with `pip install -e ".[docs]" && mkdocs build`
+- [x] API docs (mkdocs-material + mkdocstrings): home, quickstart, guide, API reference
+      (`mkdocs.yml`, `docs/`) — **`mkdocs build --strict` passes** (5 pages, API auto-generated
+      from the source docstrings via griffe). Build: `pip install -e ".[docs]" && mkdocs build`
 - [x] Examples: `hello_picogk`, `fields_and_io`, `visualize`
 - *Parity-validated against the reference implementation; docs ready to publish.*
 
