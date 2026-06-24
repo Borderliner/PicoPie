@@ -51,6 +51,9 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
       in a clean venv (no source tree, no env var) and runs off the bundled runtime
 - [x] `auditwheel repair` vendors the runtime's deps (TBB/Blosc/Boost/…) and patches RPATH;
       confirmed all resolve to `picopie.libs/` (manylinux self-contained, even dlopen'd)
+- [x] **Docker-verified**: the repaired `manylinux_2_39` wheel runs a full pipeline (booleans,
+      meshing via fast path, VDB round-trip) in a bare `ubuntu:24.04` container with **no system
+      TBB/Blosc/Boost** — proven to run purely on the vendored libs
 - [x] CI asserts `_fastloop` builds from the sdist; `ci_check.py` asserts bundled runtime in wheel test
 - [x] `cibuildwheel` config + GitHub Actions matrix (Linux/macOS/Windows) authored
 - [ ] **Run the matrix in real CI** — the per-platform runtime build (manylinux deps,
