@@ -65,26 +65,26 @@ class Metadata(NativeObject):
             self._inst, self.handle, name.encode())))
 
     # --- typed getters -------------------------------------------------------
-    def get_string(self, name: str):
+    def get_string(self, name: str) -> str | None:
         n = int(self._lib.Metadata_nStringLengthAt(self._inst, self.handle, name.encode()))
         buf = C.create_string_buffer(max(n + 1, 1))
         ok = self._lib.Metadata_bGetStringAt(
             self._inst, self.handle, name.encode(), buf, len(buf))
         return buf.value.decode(errors="replace") if ok else None
 
-    def get_float(self, name: str):
+    def get_float(self, name: str) -> float | None:
         out = C.c_float()
         ok = self._lib.Metadata_bGetFloatAt(
             self._inst, self.handle, name.encode(), C.byref(out))
         return out.value if ok else None
 
-    def get_vector(self, name: str):
+    def get_vector(self, name: str) -> np.ndarray | None:
         out = PKVector3()
         ok = self._lib.Metadata_bGetVectorAt(
             self._inst, self.handle, name.encode(), C.byref(out))
         return vec3_to_np(out) if ok else None
 
-    def get(self, name: str):
+    def get(self, name: str) -> str | float | np.ndarray | None:
         """Return the value, typed automatically (str / float / np.ndarray)."""
         t = self.type_of(name)
         if t is MetaType.STRING:

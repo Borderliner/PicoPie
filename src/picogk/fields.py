@@ -53,7 +53,7 @@ class ScalarField(NativeObject):
         self._lib.ScalarField_SetValue(self._inst, self.handle, C.byref(p), float(value))
         return self
 
-    def get(self, position):
+    def get(self, position) -> float | None:
         """Return the value at ``position`` (mm), or ``None`` if inactive."""
         p = to_vec3(position)
         out = C.c_float()
@@ -83,7 +83,7 @@ class ScalarField(NativeObject):
                 self.set(p, float(v))
         return self
 
-    def get_many(self, positions):
+    def get_many(self, positions) -> tuple[np.ndarray, np.ndarray]:
         """Sample many positions. Returns ``(values, found)``: values is (N,)
         float32 (NaN where inactive), found is (N,) bool."""
         pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
@@ -128,7 +128,7 @@ class ScalarField(NativeObject):
             buf.ctypes.data_as(C.POINTER(C.c_float)))
         return buf.reshape(sy, sx)
 
-    def active_values(self):
+    def active_values(self) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(coords, values)`` over all active voxels.
 
         ``coords`` is (N, 3) float32 **in millimetres**, ``values`` is (N,)
@@ -182,7 +182,7 @@ class VectorField(NativeObject):
         self._lib.VectorField_SetValue(self._inst, self.handle, C.byref(p), C.byref(val))
         return self
 
-    def get(self, position):
+    def get(self, position) -> "np.ndarray | None":
         """Return the 3-vector at ``position`` (mm) as float32, or ``None``."""
         p = to_vec3(position)
         out = PKVector3()
@@ -212,7 +212,7 @@ class VectorField(NativeObject):
                 self.set(p, v)
         return self
 
-    def get_many(self, positions):
+    def get_many(self, positions) -> tuple[np.ndarray, np.ndarray]:
         """Sample many positions. Returns ``(values, found)``: values is (N,3)
         float32 (NaN rows where inactive), found is (N,) bool."""
         pos = np.ascontiguousarray(positions, dtype=np.float32).reshape(-1, 3)
@@ -237,7 +237,7 @@ class VectorField(NativeObject):
     def memory_bytes(self) -> int:
         return int(self._lib.VectorField_nMemUsage(self._inst, self.handle))
 
-    def active_values(self):
+    def active_values(self) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(coords, values)``, both (N, 3) float32, over active voxels
         (``coords`` in millimetres)."""
         coords: list[tuple[float, float, float]] = []

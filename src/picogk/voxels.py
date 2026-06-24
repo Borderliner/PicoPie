@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ctypes as C
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -17,6 +18,10 @@ from . import library
 from ._base import NativeObject
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
 from .types import BBox3, read_voxel_dimensions, to_vec3, vec3_to_np
+
+if TYPE_CHECKING:
+    from .lattice import Lattice
+    from .mesh import Mesh
 
 
 def _to_pkbbox(box) -> PKBBox3:
@@ -57,7 +62,7 @@ class Voxels(NativeObject):
         return cls(h)
 
     @classmethod
-    def mesh_shell(cls, mesh, radius: float) -> "Voxels":
+    def mesh_shell(cls, mesh: "Mesh", radius: float) -> "Voxels":
         """A hollow shell of the given thickness around a mesh surface."""
         lib, inst = library.lib(), library.instance()
         h = lib.Voxels_hCreateMeshShell(inst,
@@ -65,14 +70,14 @@ class Voxels(NativeObject):
         return cls(h)
 
     @classmethod
-    def from_mesh(cls, mesh) -> "Voxels":
+    def from_mesh(cls, mesh: "Mesh") -> "Voxels":
         """Voxelize a closed mesh into a solid volume."""
         v = cls()
         v.render_mesh_(mesh)
         return v
 
     @classmethod
-    def from_lattice(cls, lattice) -> "Voxels":
+    def from_lattice(cls, lattice: "Lattice") -> "Voxels":
         v = cls()
         v.render_lattice_(lattice)
         return v
@@ -170,12 +175,12 @@ class Voxels(NativeObject):
         return self
 
     # --- rendering into this volume ------------------------------------------
-    def render_mesh_(self, mesh) -> "Voxels":
+    def render_mesh_(self, mesh: "Mesh") -> "Voxels":
         self._lib.Voxels_RenderMesh(self._inst, self.handle,
                                     mesh.handle)
         return self
 
-    def render_lattice_(self, lattice) -> "Voxels":
+    def render_lattice_(self, lattice: "Lattice") -> "Voxels":
         self._lib.Voxels_RenderLattice(self._inst, self.handle,
                                        lattice.handle)
         return self
@@ -246,7 +251,7 @@ class Voxels(NativeObject):
         return float(self._lib.Voxels_fCalculateVolume(
             self._inst, self.handle))
 
-    def calculate_properties(self):
+    def calculate_properties(self) -> tuple[float, BBox3]:
         """Return ``(volume_mm3, bbox)`` measured the accurate way -- via a mesh
         round-trip that drops spurious surface voxels -- matching C# PicoGK's
         ``CalculateProperties``. ``bbox`` is the surface (mesh) bounding box."""
@@ -305,14 +310,14 @@ class Voxels(NativeObject):
             self._inst, self.handle, C.byref(p), C.byref(out))
         return vec3_to_np(out)
 
-    def closest_point(self, point):
+    def closest_point(self, point) -> np.ndarray | None:
         p = to_vec3(point)
         out = PKVector3()
         ok = self._lib.Voxels_bClosestPointOnSurface(
             self._inst, self.handle, C.byref(p), C.byref(out))
         return vec3_to_np(out) if ok else None
 
-    def ray_cast(self, origin, direction):
+    def ray_cast(self, origin, direction) -> np.ndarray | None:
         o, d = to_vec3(origin), to_vec3(direction)
         out = PKVector3()
         ok = self._lib.Voxels_bRayCastToSurface(
@@ -379,7 +384,7 @@ class Voxels(NativeObject):
         return buf.reshape(sy, sx)
 
     # --- conversion ----------------------------------------------------------
-    def to_mesh(self):
+    def to_mesh(self) -> "Mesh":
         from .mesh import Mesh
         return Mesh.from_voxels(self)
 

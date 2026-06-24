@@ -133,7 +133,7 @@ class VdbFile(NativeObject):
         return VectorField(self._lib.VdbFile_hGetVectorField(
             self._inst, self.handle, int(index)))
 
-    def get(self, index: int):
+    def get(self, index: int) -> "Voxels | ScalarField | VectorField":
         """Return the field at ``index`` as the correct typed object."""
         t = self.field_type(index)
         if t is FieldType.VOXELS:

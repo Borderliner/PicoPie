@@ -25,7 +25,7 @@ dev = ["pytest>=7", "pytest-timeout", "pillow>=9", "matplotlib>=3.5"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-picogk = ["_native/headers/*.h", "_lib/*"]
+picogk = ["py.typed", "_native/headers/*.h", "_lib/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

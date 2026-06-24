@@ -12,7 +12,6 @@ import numpy as np
 
 from ._native.ctypes_types import PKBBox3, PKColorFloat, PKVector2, PKVector3
 
-Vec3Like = "PKVector3 | Iterable[float] | np.ndarray"
 
 
 def read_voxel_dimensions(lib, fn_name: str, inst: int, handle: int):
