@@ -26,6 +26,7 @@ class NativeObject:
         if not self._h:
             raise InvalidHandleError(
                 f"{type(self).__name__} created with a null handle")
+        library._register(self)   # so shutdown() can invalidate us safely
 
     @property
     def handle(self) -> int:

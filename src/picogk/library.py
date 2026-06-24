@@ -24,11 +24,22 @@ from __future__ import annotations
 import atexit
 import contextlib
 import ctypes as C
+import weakref
 
 from ._errors import NotInitializedError, PicoGKError
 from ._native.runtime import lib as _lib
 
 _STRLEN = 255
+
+# Live handle-backed wrapper objects, so shutdown() can invalidate them before
+# destroying the instance (otherwise a later op on a stale handle aborts the
+# process via an uncaught native exception).
+_live_objects: "weakref.WeakSet" = weakref.WeakSet()
+
+
+def _register(obj) -> None:
+    """Register a NativeObject so it can be invalidated on shutdown()."""
+    _live_objects.add(obj)
 
 
 class _Session:
@@ -68,9 +79,17 @@ def init(voxel_size_mm: float = 0.1) -> None:
 
 
 def shutdown() -> None:
-    """Destroy the global library instance, if any."""
+    """Destroy the global library instance, if any.
+
+    Live wrapper objects are invalidated first so that any later use raises
+    :class:`InvalidHandleError` instead of aborting the process on a stale
+    native handle.
+    """
     global _session
     if _session is not None:
+        for obj in list(_live_objects):
+            obj._closed = True            # ops now raise InvalidHandleError; close() is a no-op
+        _live_objects.clear()
         with contextlib.suppress(Exception):
             _session.lib.Library_DestroyInstance(C.c_uint64(_session.instance))
         _session = None

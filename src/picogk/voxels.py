@@ -9,6 +9,7 @@ fast, no copy) and **functional** operators (``+ - &``, return a new volume).
 from __future__ import annotations
 
 import ctypes as C
+import math
 
 import numpy as np
 
@@ -184,22 +185,40 @@ class Voxels(NativeObject):
                                        C.c_float(z_start_mm), C.c_float(z_end_mm))
         return self
 
+    @staticmethod
+    def _wrap_sdf(sdf, errors: list):
+        """Wrap a user SDF as a native callback that never lets a Python
+        exception or non-finite value reach the native loop (which would
+        silently inject a 0.0 surface distance). Captured errors are re-raised
+        by the caller after the native call returns."""
+        @PKPFnfSdf
+        def _cb(pcoord):
+            v = pcoord[0]
+            try:
+                r = float(sdf(v.X, v.Y, v.Z))
+            except BaseException as exc:   # noqa: BLE001 - propagate after native call
+                if not errors:
+                    errors.append(exc)
+                return 1.0e30              # large positive -> voxel stays empty
+            return r if math.isfinite(r) else 1.0e30
+        return _cb
+
     def render_implicit_(self, sdf, bbox) -> "Voxels":
         """Render a signed-distance function ``sdf(x, y, z) -> float`` within
         ``bbox`` (a :class:`BBox3` or ``((xmin,ymin,zmin),(xmax,ymax,zmax))``).
 
         NOTE: ``sdf`` is invoked once per voxel from native code; a pure-Python
         callback is correspondingly slow. Prefer primitives + booleans, or a
-        compiled callback, for large volumes.
+        compiled callback, for large volumes. If ``sdf`` raises, the exception
+        is re-raised after the native pass (the volume is left partially built).
         """
-        @PKPFnfSdf
-        def _cb(pcoord):
-            v = pcoord[0]
-            return float(sdf(v.X, v.Y, v.Z))
-
+        errors: list = []
+        cb = self._wrap_sdf(sdf, errors)
         box = _to_pkbbox(bbox)
         self._lib.Voxels_RenderImplicit(C.c_uint64(self._inst), C.c_uint64(self.handle),
-                                        C.byref(box), _cb)
+                                        C.byref(box), cb)
+        if errors:
+            raise errors[0]
         return self
 
     def intersect_implicit_(self, sdf) -> "Voxels":
@@ -211,13 +230,12 @@ class Voxels(NativeObject):
         composing fields inside a single :meth:`render_implicit_` callback
         (e.g. ``max(feature_sdf, clip_sdf)``).
         """
-        @PKPFnfSdf
-        def _cb(pcoord):
-            v = pcoord[0]
-            return float(sdf(v.X, v.Y, v.Z))
-
+        errors: list = []
+        cb = self._wrap_sdf(sdf, errors)
         self._lib.Voxels_IntersectImplicit(C.c_uint64(self._inst),
-                                           C.c_uint64(self.handle), _cb)
+                                           C.c_uint64(self.handle), cb)
+        if errors:
+            raise errors[0]
         return self
 
     # --- queries -------------------------------------------------------------
