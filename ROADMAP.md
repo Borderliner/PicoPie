@@ -62,9 +62,11 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 
 ## ✅ Phase 5 — Parity validation & docs (done)
 
-- [x] Golden tests vs **C# PicoGK** running on the same native runtime: sphere/capsule
-      volumes, boolean & offset volumes, voxel dims, mesh vertex/triangle counts and
-      bbox — all match to float precision (`parity/`, `tests/test_parity_csharp.py`)
+- [x] Golden tests vs **C# PicoGK** running on the same native runtime (16 checks): sphere/
+      capsule volumes, boolean union/subtract/intersect, ±offset & double-offset, mesh→voxels,
+      voxel dims, mesh counts & bbox, `is_inside` queries, and a **VDB round-trip** (a `.vdb`
+      written by C# loads in PicoPie with matching geometry) — all match to float precision
+      (`parity/`, `tests/test_parity_csharp.py`, `tests/golden/`)
 - [x] Surfaced a real semantic gap and added `Voxels.calculate_properties()` (accurate
       volume+bbox via mesh round-trip, matching C# `CalculateProperties`)
 - [x] API docs (mkdocs-material + mkdocstrings): home, quickstart, guide, API reference
