@@ -111,3 +111,33 @@ Native objects free themselves when garbage-collected, but you can be explicit:
 with Voxels.sphere(radius=5) as v:
     ...                               # v.close() on exit
 ```
+
+## Safety & limits (process-termination contract)
+
+PicoPie binds a native runtime (OpenVDB-based) over a flat C ABI. **An error inside
+native code aborts the whole process** — it raises a C++ exception that cannot be
+caught across the C boundary, so it cannot become a Python exception. This is
+inherent to the ABI (upstream C# has the same property).
+
+PicoPie converts the *reachable* cases into ordinary, catchable Python exceptions
+so normal use can't crash your interpreter:
+
+- **Out-of-range / closed handles** → `IndexError` / `InvalidHandleError`
+  (VDB field indices, slice indices, ops on a closed object or after `shutdown()`).
+- **Wrong-type operands** → `TypeError` (e.g. a boolean op with a non-`Voxels`,
+  or `VdbFile.get_scalar_field()` on a level-set field — which would otherwise
+  return silently wrong data).
+- **Bad file paths** → `FileNotFoundError` / `PicoGKError` (load/save check first).
+- **Failing SDF callbacks** → your exception is re-raised; non-finite returns are
+  treated as "outside" rather than corrupting the grid.
+- **Runtime version mismatch** → `PicoGKError` at `init()` (see Phase 6 version gate).
+
+**The one residual hard-abort to avoid:** calling `intersect_implicit_`
+**more than once** on the
+same volume (or a copy) leaves the grid in a non-level-set state that aborts inside
+OpenVDB. PicoPie detects the repeat and raises `PicoGKError`, but a boolean op after
+a *single* implicit intersect is not guaranteed safe. **Prefer composing the clip
+into one `render_implicit_` callback** (`max(feature_sdf, clip_sdf)`), which has none
+of these caveats. Empirically, every other operation tested — booleans, offsets,
+meshing, `calculate_properties`, and field/slice access on empty or degenerate
+geometry — is crash-safe.

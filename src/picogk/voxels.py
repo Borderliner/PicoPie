@@ -16,6 +16,7 @@ import numpy as np
 
 from . import library
 from ._base import NativeObject
+from ._errors import InvalidHandleError, PicoGKError
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
 from .types import BBox3, read_voxel_dimensions, to_vec3, vec3_to_np
 
@@ -34,6 +35,12 @@ def _to_pkbbox(box) -> PKBBox3:
 
 class Voxels(NativeObject):
     _destroy_fn = "Voxels_Destroy"
+
+    # intersect_implicit_ can leave the grid as a non-level-set; a *second*
+    # implicit intersect then hard-aborts the process inside OpenVDB (and
+    # is_valid()/is_empty() don't reveal the bad state). We track it to raise
+    # a catchable error instead. See intersect_implicit_().
+    _implicit_intersected: bool = False
 
     def __init__(self, handle: int | None = None):
         if handle is None:
@@ -84,14 +91,15 @@ class Voxels(NativeObject):
 
     def copy(self) -> Voxels:
         h = self._lib.Voxels_hCreateCopy(self._inst, self.handle)
-        return Voxels(h)
+        c = Voxels(h)
+        c._implicit_intersected = self._implicit_intersected  # bad CSG state copies too
+        return c
 
     # --- boolean ops (in-place, return self) ---------------------------------
     def _check_operand(self, other: Voxels) -> None:
         """Guard CSG inputs. Uncaught OpenVDB errors abort the process, so we
         reject obvious misuse (wrong type, closed handle, cross-session) before
         crossing into native code."""
-        from ._errors import InvalidHandleError, PicoGKError
         if not isinstance(other, Voxels):
             raise TypeError(f"expected Voxels, got {type(other).__name__}")
         if self._closed or other._closed:
@@ -229,16 +237,25 @@ class Voxels(NativeObject):
     def intersect_implicit_(self, sdf) -> Voxels:
         """Intersect this volume with the region where ``sdf(x,y,z) <= 0``.
 
-        WARNING: the resulting grid may not be a valid level set, and a
-        subsequent boolean op can raise an OpenVDB error that the native C
-        layer does not catch -- aborting the process. For clipping, prefer
+        WARNING: the resulting grid may not be a valid level set. Calling this a
+        second time on the same volume (or a copy of it) raises
+        :class:`PicoGKError` -- the underlying OpenVDB CSG would otherwise abort
+        the whole process, uncatchably. A boolean op after one implicit
+        intersect is usually fine but not guaranteed. For clipping, prefer
         composing fields inside a single :meth:`render_implicit_` callback
-        (e.g. ``max(feature_sdf, clip_sdf)``).
+        (e.g. ``max(feature_sdf, clip_sdf)``), which has none of these caveats.
         """
+        if self._implicit_intersected:
+            raise PicoGKError(
+                "intersect_implicit_() called twice on the same volume: the grid "
+                "is no longer a valid level set and a second implicit intersect "
+                "aborts the process. Compose the clip into one render_implicit_ "
+                "callback instead, e.g. max(feature_sdf, clip_sdf).")
         errors: list = []
         cb = self._wrap_sdf(sdf, errors)
         self._lib.Voxels_IntersectImplicit(self._inst,
                                            self.handle, cb)
+        self._implicit_intersected = True
         if errors:
             raise errors[0]
         return self

@@ -81,6 +81,17 @@ class VdbFile(NativeObject):
             raise IndexError(f"field index {index} out of range [0, {n})")
         return index
 
+    def _check_field_type(self, index: int, expected: FieldType) -> None:
+        # The typed getters wrap the same OpenVDB grid as a different Python type.
+        # A mismatch is at best a null handle (cryptic) and at worst silently
+        # wrong data (a level set read as a scalar field -- both are FloatGrids).
+        # Reject it with a clear error pointing at the right accessor.
+        actual = self.field_type(index)
+        if actual is not expected:
+            raise TypeError(
+                f"field {index} is {actual.name}, not {expected.name}; "
+                f"use get_{actual.name.lower()}* or .get({index})")
+
     def field_name(self, index: int) -> str:
         self._check_index(index)
         buf = C.create_string_buffer(_STRLEN)
@@ -122,15 +133,18 @@ class VdbFile(NativeObject):
     # --- get -----------------------------------------------------------------
     def get_voxels(self, index: int) -> Voxels:
         self._check_index(index)
+        self._check_field_type(index, FieldType.VOXELS)
         return Voxels(self._lib.VdbFile_hGetVoxels(self._inst, self.handle, int(index)))
 
     def get_scalar_field(self, index: int) -> ScalarField:
         self._check_index(index)
+        self._check_field_type(index, FieldType.SCALAR)
         return ScalarField(self._lib.VdbFile_hGetScalarField(
             self._inst, self.handle, int(index)))
 
     def get_vector_field(self, index: int) -> VectorField:
         self._check_index(index)
+        self._check_field_type(index, FieldType.VECTOR)
         return VectorField(self._lib.VdbFile_hGetVectorField(
             self._inst, self.handle, int(index)))
 
