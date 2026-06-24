@@ -1,0 +1,52 @@
+name: wheels
+
+# Build the sdist and cross-platform wheels (runtime bundled). Runs on tags and
+# on demand. NOTE: the per-platform native runtime build (cibuildwheel before-all)
+# is expected to need iteration in real CI -- especially the manylinux deps.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  sdist:
+    name: sdist (+ assert fastloop builds from source)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist
+        run: pipx run build --sdist
+      - name: Assert the _fastloop extension builds from the sdist
+        # Importing the extension forces a from-source compile; it does not need
+        # the native runtime (only init() does), so this isolates the build check
+        # that a from-source install must not silently skip.
+        run: |
+          python -m venv /tmp/v
+          /tmp/v/bin/pip install numpy dist/*.tar.gz
+          /tmp/v/bin/python -c "import picogk._fastloop; print('fastloop built from sdist OK')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  wheels:
+    name: wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21
+        # Config (build set, before-all runtime build, test command incl.
+        # ci_check + pytest) lives in [tool.cibuildwheel] in pyproject.toml.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl

@@ -29,3 +29,28 @@ picogk = ["_native/headers/*.h", "_lib/*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.cibuildwheel]
+# Build CPython 3.10-3.13; skip musl (OpenVDB build is painful there) and PyPy.
+build = "cp310-* cp311-* cp312-* cp313-*"
+skip = "*-musllinux* pp*"
+build-frontend = "build"
+# Per-Python: re-stage the runtime built once in before-all into the package.
+before-build = "python {project}/scripts/stage_runtime.py"
+# Wheel must work standalone: bundled runtime + compiled extension + real geometry.
+test-requires = ["pytest", "numpy", "pillow", "matplotlib"]
+test-command = "python {project}/scripts/ci_check.py && python -m pytest {project}/tests"
+# cibuildwheel auto-repairs (auditwheel/delocate/delvewheel), vendoring the
+# dlopen'd runtime's deps -- verified locally that auditwheel handles _lib/picogk.so.
+
+[tool.cibuildwheel.linux]
+before-all = "bash {project}/scripts/cibw_before_all_linux.sh"
+manylinux-x86_64-image = "manylinux_2_34"
+
+[tool.cibuildwheel.macos]
+before-all = "bash {project}/scripts/cibw_before_all_macos.sh"
+
+[tool.cibuildwheel.windows]
+before-all = "powershell {project}/scripts/cibw_before_all_windows.ps1"
+# delvewheel may need --add-path for the dlopen'd picogk.dll's deps:
+# repair-wheel-command = "delvewheel repair --add-path native/PicoGKRuntime/build -w {dest_dir} {wheel}"
