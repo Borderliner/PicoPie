@@ -91,6 +91,11 @@ def load_runtime() -> C.CDLL:
     global _LIB
     if _LIB is None:
         path = find_runtime()
+        if sys.platform == "win32":
+            # The runtime is dlopen'd, so Windows won't search its own directory
+            # for its (bundled) deps -- tbb/blosc/boost/zlib live beside it in
+            # _lib. Add that dir to the DLL search path before loading.
+            os.add_dll_directory(str(Path(path).resolve().parent))
         _LIB = C.CDLL(path)
         _LIB._picogk_path = path  # type: ignore[attr-defined]
     return _LIB
