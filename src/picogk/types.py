@@ -62,7 +62,8 @@ class BBox3:
 
     @property
     def size(self) -> np.ndarray:
-        return self.max - self.min
+        # float64 avoids overflow for the degenerate "empty" box (FLT_MAX/-FLT_MAX)
+        return self.max.astype(np.float64) - self.min.astype(np.float64)
 
     @property
     def center(self) -> np.ndarray:
