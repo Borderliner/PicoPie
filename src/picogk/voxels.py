@@ -152,8 +152,13 @@ class Voxels(NativeObject):
 
     def shell_(self, thickness_mm: float) -> "Voxels":
         """Hollow the volume to a wall of ``thickness_mm`` (wall lies inside the
-        current surface). Implemented as ``solid - erode(solid, thickness)``."""
-        inner = self.copy().offset_(-abs(thickness_mm))   # erode the core inward
+        current surface). Implemented as ``solid - erode(solid, thickness)``.
+
+        A ``thickness_mm`` >= the object's half-extent leaves it solid (the core
+        erodes away entirely)."""
+        if thickness_mm <= 0:
+            raise ValueError("shell thickness must be > 0")
+        inner = self.copy().offset_(-thickness_mm)        # erode the core inward
         self.bool_subtract_(inner)                        # solid minus core = wall
         inner.close()
         return self

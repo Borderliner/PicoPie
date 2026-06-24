@@ -100,11 +100,17 @@ def save_slice_sheet(voxels, path: str, axis: str = "z", count: int = 16,
 
 
 def mesh_preview(mesh, path: str | None = None, elev: float = 25.0,
-                 azim: float = -60.0, color: str = "#6699cc", size: int = 800):
+                 azim: float = -60.0, color: str = "#6699cc", size: int = 800,
+                 close: bool | None = None):
     """Render a 3D preview of a mesh with matplotlib (Agg, headless).
 
     Saves a PNG if ``path`` is given; returns the matplotlib Figure either way.
+    ``close`` controls whether the figure is closed before returning (frees
+    memory; the file is already written). Defaults to closing when ``path`` is
+    given (batch/headless) and keeping it open otherwise (notebook display).
     """
+    if close is None:
+        close = path is not None
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -138,4 +144,6 @@ def mesh_preview(mesh, path: str | None = None, elev: float = 25.0,
     fig.tight_layout(pad=0)
     if path:
         fig.savefig(path, dpi=dpi, bbox_inches="tight", pad_inches=0)
+    if close:
+        plt.close(fig)
     return fig
