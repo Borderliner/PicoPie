@@ -20,7 +20,9 @@ if (-not (Test-Path $vcpkg)) {
 }
 & "$vcpkg\vcpkg.exe" install boost-iostreams:x64-windows tbb:x64-windows blosc:x64-windows zlib:x64-windows
 
-cmake -S $native -B "$native\build" -G "Visual Studio 17 2022" -A x64 `
+# Let CMake auto-detect the installed Visual Studio (the runner's VS version
+# changes over time -- it is currently VS 18); don't hardcode the generator.
+cmake -S $native -B "$native\build" `
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 `
     -DOPENVDB_BUILD_BINARIES=OFF -DOPENVDB_CORE_SHARED=OFF -DOPENVDB_CORE_STATIC=ON `
     -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF
