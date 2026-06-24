@@ -10,7 +10,7 @@ from __future__ import annotations
 import ctypes as C
 
 try:
-    from . import _fastloop as lib
+    from . import _fastloop as lib  # type: ignore[attr-defined]  # compiled ext, no stub
 except ImportError:  # extension not compiled -> pure-Python fallback
     lib = None
 
@@ -20,5 +20,7 @@ def available() -> bool:
 
 
 def addr(fn) -> int:
-    """Raw address of a ctypes CDLL function pointer."""
-    return C.cast(fn, C.c_void_p).value
+    """Raw address of a ctypes CDLL function pointer (never null for a CDLL fn)."""
+    a = C.cast(fn, C.c_void_p).value
+    assert a is not None, "null function pointer"
+    return a

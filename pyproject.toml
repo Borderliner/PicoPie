@@ -62,7 +62,9 @@ select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
 files = ["src/picogk"]
-python_version = "3.10"
+# Target the dev/runtime interpreter; numpy's stubs require >=3.12. Source stays
+# 3.10-compatible at runtime via `from __future__ import annotations`.
+python_version = "3.12"
 ignore_missing_imports = true
 # The ctypes boundary is inherently dynamic; don't require full typing there.
 disallow_untyped_defs = false

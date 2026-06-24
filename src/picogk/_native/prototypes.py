@@ -8,6 +8,7 @@ from ctypes import (  # noqa: F401
     CDLL, POINTER, c_bool, c_char_p, c_int, c_int32, c_int64, c_uint64,
     c_float, c_double, c_void_p,
 )
+from typing import Any
 
 from .ctypes_types import (  # noqa: F401
     PKVector2, PKVector3, PKVector4, PKCoord, PKTriangle, PKBBox3,
@@ -16,7 +17,7 @@ from .ctypes_types import (  # noqa: F401
 )
 
 # name -> (restype, [argtypes])  as ctypes objects
-SIGNATURES = {
+SIGNATURES: dict[str, tuple[Any, list[Any]]] = {
     "Library_GetName": (None, [c_char_p]),
     "Library_GetVersion": (None, [c_char_p]),
     "Library_GetBuildInfo": (None, [c_char_p]),
@@ -197,7 +198,7 @@ FUNCTIONS = tuple(SIGNATURES)
 
 def apply(lib: CDLL) -> list[str]:
     """Set restype/argtypes on every function. Returns names not found in lib."""
-    missing = []
+    missing: list[str] = []
     for name, (restype, argtypes) in SIGNATURES.items():
         try:
             fn = getattr(lib, name)
