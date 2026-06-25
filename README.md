@@ -43,11 +43,14 @@ x86-64), macOS (Apple Silicon), and Windows (x64)**.
 
 ## Documentation
 
-- **[Quickstart](docs/quickstart.md)** · **[Guide](docs/guide.md)** · **[API reference](docs/api.md)**
-- **Tutorials** — [Novice](docs/tutorials/novice/), [Intermediate](docs/tutorials/intermediate/),
-  [Advanced](docs/tutorials/advanced/)
+- **Tutorials** — a leveled path:
+  [Novice](docs/tutorials/novice/01-setup.md) (uv setup + install → shapes → booleans),
+  [Intermediate](docs/tutorials/intermediate/01-implicit-modeling.md) (implicit modeling,
+  meshes/files, fields), [Advanced](docs/tutorials/advanced/01-performance.md)
+  (performance, reliability, viewer)
 - **[QuickLearn](docs/tutorials/QuickLearn.md)** — the whole API in one annotated file
   (learn-x-in-y-minutes style)
+- **[API reference](docs/api.md)** · docs build with `mkdocs build` (`pip install -e ".[docs]"`)
 
 ## Features
 

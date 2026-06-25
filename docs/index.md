@@ -38,13 +38,21 @@ is the identical, battle-tested kernel.
 - `Lattice`: beams + spheres
 - `ScalarField` / `VectorField`, `Metadata`, `PolyLine`
 - OpenVDB file I/O (`save_vdb` / `load_vdb`)
-- Compiled bulk transfer (`_fastloop`, ~17–28× faster mesh/field I/O) with a
+- Compiled bulk transfer (`_fastloop`, ~13–28× faster mesh/field I/O) with a
   pure-Python fallback
 - Headless visualization (`save_slice_png`, `save_slice_sheet`, `mesh_preview`)
+- Interactive viewer (`show`, `render_png`) — GLFW/OpenGL, orbit camera
+- Hardened: native errors surface as catchable `PicoGKError` (never aborts)
 
-See the [Quickstart](quickstart.md) to install and build your first model, the
-[Guide](guide.md) for the full API in context, and the
-[API reference](api.md) for details.
+## Learn it
+
+- **Tutorials** — a leveled path:
+  [Novice](tutorials/novice/01-setup.md) (uv setup + install → shapes → booleans),
+  [Intermediate](tutorials/intermediate/01-implicit-modeling.md) (implicit modeling,
+  meshes/files, fields), [Advanced](tutorials/advanced/01-performance.md)
+  (performance, reliability, viewer).
+- **[QuickLearn](tutorials/QuickLearn.md)** — the whole API in one annotated file.
+- **[API reference](api.md)** — auto-generated from the source docstrings.
 
 ## Verified against C# PicoGK
 

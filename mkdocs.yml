@@ -16,8 +16,6 @@ theme:
 
 nav:
   - Home: index.md
-  - Quickstart: quickstart.md
-  - Guide: guide.md
   - Tutorials:
     - QuickLearn: tutorials/QuickLearn.md
     - Novice:

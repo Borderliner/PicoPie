@@ -2,7 +2,8 @@
 
 PicoPie binds PicoGK's native GLFW/OpenGL viewer for real-time, PBR-lit display.
 It needs a window system + OpenGL — on a headless machine (CI, a server) creating
-one raises `PicoGKError`, so use the [headless PNG helpers](../../guide.md) there.
+one raises `PicoGKError`, so use the [headless PNG helpers](#headless-use-the-png-helpers-instead)
+(below) there.
 
 ![A rendered part](../../images/viewer_example.png)
 
