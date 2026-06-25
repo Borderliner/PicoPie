@@ -31,7 +31,10 @@ if (-not (Test-Path $vcpkg)) {
 
 # Never-abort guard: wrap the C ABI so OpenVDB exceptions become a settable error
 # instead of std::terminate (idempotent; see scripts/patch_runtime.py).
+# ErrorActionPreference=Stop does NOT catch native exit codes, so check explicitly
+# -- otherwise a failed patch would silently produce an unguarded runtime.
 python "$root\scripts\patch_runtime.py" "$native\Source\PicoGKLibrary.cpp"
+if ($LASTEXITCODE -ne 0) { throw "patch_runtime.py failed ($LASTEXITCODE)" }
 
 # Let CMake auto-detect the installed Visual Studio (the runner's VS version
 # changes over time -- it is currently VS 18); don't hardcode the generator.

@@ -122,11 +122,13 @@ def patch(src: str) -> tuple[str, int]:
 def main(argv: list[str]) -> int:
     path = (Path(argv[1]) if len(argv) > 1
             else Path("native/PicoGKRuntime/Source/PicoGKLibrary.cpp"))
-    out, n = patch(path.read_text())
+    # The runtime source is UTF-8 (curly quotes in its license header); be explicit
+    # so this doesn't fall back to a locale codec (cp1252) on Windows.
+    out, n = patch(path.read_text(encoding="utf-8"))
     if n < 0:
         print(f"already patched: {path}")
         return 0
-    path.write_text(out)
+    path.write_text(out, encoding="utf-8")
     print(f"patched {path}: wrapped {n} PICOGK_API functions")
     return 0
 
