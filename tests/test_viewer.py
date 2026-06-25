@@ -49,3 +49,32 @@ def test_viewer_add_rejects_wrong_type(tmp_path):
             v.add(object())
     finally:
         v.close()
+
+
+@pytest.mark.viewer
+def test_viewer_camera_change_changes_render(tmp_path):
+    v = _viewer_or_skip(size=(400, 300))
+    try:
+        v.add(Voxels.sphere(radius=10))
+        a = np.asarray(__import__("PIL.Image", fromlist=["Image"])
+                       .open(v.screenshot(str(tmp_path / "a.png"))).convert("RGB"))
+        v._azimuth += 1.0          # orbit + tilt (what a mouse drag does)
+        v._elevation += 0.3
+        v._autofit = False
+        b = np.asarray(__import__("PIL.Image", fromlist=["Image"])
+                       .open(v.screenshot(str(tmp_path / "b.png"))).convert("RGB"))
+        assert a.shape == b.shape
+        assert not np.array_equal(a, b)     # the camera move must change the image
+    finally:
+        v.close()
+
+
+# --- camera math (headless: no display needed) -------------------------------
+def test_camera_math_view_is_orthonormal():
+    from picogk.viewer import _look_at, _perspective
+    eye = np.array([40.0, 30.0, 25.0], np.float32)
+    m = _look_at(eye, np.zeros(3, np.float32), np.array([0, 0, 1], np.float32))
+    rot = m[:3, :3]                          # the 3 basis columns must be orthonormal
+    assert np.allclose(rot.T @ rot, np.eye(3), atol=1e-4)
+    p = _perspective(np.radians(35), 1.5, 1.0, 1000.0)
+    assert p[2, 3] == -1.0 and p[0, 0] > 0 and p[1, 1] > 0

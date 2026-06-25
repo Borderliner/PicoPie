@@ -89,13 +89,17 @@ class Viewer:
         self._lib = library.lib()
         self._inst = library.instance()
         self._closed = True
-        # camera state (made interactive in a later phase)
+        # orbit-camera state (driven by the mouse/scroll callbacks below)
         self._target = np.zeros(3, np.float32)
         self._radius = 10.0
         self._azimuth = math.radians(45.0)
         self._elevation = math.radians(25.0)
         self._zoom = 1.0
         self._autofit = True
+        # interaction state
+        self._drag_button: int | None = None
+        self._mouse = (0.0, 0.0)
+        self._orbit_speed = 0.008
         self._bg = PKColorFloat(0.16, 0.16, 0.20, 1.0)
         self._cb_error: list[BaseException] = []
 
@@ -205,14 +209,34 @@ class Viewer:
         return str(out)
 
     # --- camera --------------------------------------------------------------
-    def _view_projection(self, aspect: float) -> tuple[np.ndarray, np.ndarray]:
-        dist = self._radius / math.sin(self._FOV_Y * 0.5) * 1.1 * self._zoom
+    def _distance(self) -> float:
+        return self._radius / math.sin(self._FOV_Y * 0.5) * 1.1 * self._zoom
+
+    def _basis(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(view direction target->eye, camera right, camera up) for the orbit."""
         ce, se = math.cos(self._elevation), math.sin(self._elevation)
         ca, sa = math.cos(self._azimuth), math.sin(self._azimuth)
-        eye = self._target + np.array([ce * ca, ce * sa, se], np.float32) * dist
+        d = np.array([ce * ca, ce * sa, se], np.float32)        # = z axis in look_at
+        right = np.cross(_UP, d)
+        right = right / (np.linalg.norm(right) or 1.0)
+        up_cam = np.cross(d, right)
+        return d, right, up_cam
+
+    def _view_projection(self, aspect: float) -> tuple[np.ndarray, np.ndarray]:
+        dist = self._distance()
+        d, _, _ = self._basis()
+        eye = self._target + d * dist
         near = max(dist * 0.01, 1e-2)
         far = dist * 10.0 + 1000.0
         return _look_at(eye, self._target, _UP) @ _perspective(self._FOV_Y, aspect, near, far), eye
+
+    def reset_view(self) -> Viewer:
+        """Re-enable auto-framing of the scene at the default angle."""
+        self._autofit = True
+        self._zoom = 1.0
+        self._azimuth, self._elevation = math.radians(45.0), math.radians(25.0)
+        self._request_update()
+        return self
 
     # --- callbacks (must never raise into native code) -----------------------
     def _on_info(self, msg, fatal):
@@ -237,18 +261,47 @@ class Viewer:
             self._cb_error.append(exc)
 
     def _on_key(self, viewer, key, scancode, action, mods):
-        # GLFW: action 1 == press. 256 == Escape, 81 == 'Q', 83 == 'S'.
-        if action == 1 and key in (256, 81):
+        # GLFW key codes: 256 Esc, 81 Q, 70 F, 83 S; action 1 == press.
+        if action != 1:
+            return
+        if key in (256, 81):                 # Esc / Q -> close
             self._lib.Viewer_RequestClose(self._h)
+        elif key == 70:                      # F -> re-fit the view
+            self.reset_view()
+        elif key == 83:                      # S -> screenshot
+            try:
+                self.screenshot("picopie_screenshot.png")
+            except BaseException as exc:
+                self._cb_error.append(exc)
 
     def _on_mouse_moved(self, viewer, pos, shift, ctrl, alt, sup):
-        pass
+        px, py = float(pos[0].X), float(pos[0].Y)
+        dx, dy = px - self._mouse[0], py - self._mouse[1]
+        self._mouse = (px, py)
+        if self._drag_button is None:
+            return
+        self._autofit = False                # user took control of the camera
+        pan = self._drag_button in (1, 2) or (self._drag_button == 0 and shift)
+        if pan:
+            _, right, up_cam = self._basis()
+            scale = self._distance() * 0.0015
+            self._target = self._target + (-dx * right + dy * up_cam) * np.float32(scale)
+        else:                                # orbit
+            self._azimuth -= dx * self._orbit_speed
+            lim = math.pi / 2 - 1e-3
+            self._elevation = max(-lim, min(lim, self._elevation + dy * self._orbit_speed))
+        self._request_update()
 
     def _on_mouse_button(self, viewer, button, action, mods, pos):
-        pass
+        if action == 1:                      # press
+            self._drag_button = int(button)
+            self._mouse = (float(pos[0].X), float(pos[0].Y))
+        else:                                # release
+            self._drag_button = None
 
     def _on_scroll(self, viewer, offset, pos, shift, ctrl, alt, sup):
-        pass
+        self._zoom = max(0.05, min(20.0, self._zoom * (1.0 - 0.1 * float(offset[0].Y))))
+        self._request_update()
 
     def _on_window_size(self, viewer, size):
         self._request_update()
