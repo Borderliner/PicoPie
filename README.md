@@ -4,9 +4,9 @@ A **Pythonic binding for [PicoGK](https://github.com/leap71/PicoGK)** — LEAP 7
 compact computational-geometry kernel for engineering (voxel / level-set modeling
 on OpenVDB).
 
-PicoPie binds the *same native runtime* the official C# library uses (so you get
-identical geometry and performance), then wraps it in an idiomatic, NumPy-friendly
-Python API. No .NET required.
+PicoPie binds the *same native runtime* the official C# library uses — so you get
+identical geometry and performance — then wraps it in an idiomatic, NumPy-friendly
+Python API. No .NET, no compiler, no system libraries: just `pip install picopie`.
 
 ```python
 import picogk
@@ -16,90 +16,95 @@ picogk.init(voxel_size_mm=0.2)
 
 body = Voxels.sphere(radius=10)
 hole = Voxels.sphere(center=(6, 0, 0), radius=6)
-part = (body - hole)        # boolean subtract → new Voxels
+part = body - hole          # boolean subtract → new Voxels
 part.shell_(1.0)            # hollow to a 1 mm wall (in place)
 
-print(part.volume_mm3())
+vol, bbox = part.calculate_properties()
+print(f"{vol:.1f} mm³")
 part.to_mesh().save_stl("part.stl")
 ```
 
-## Status
-
-Early but functional. Headless modeling works end-to-end on Linux:
-
-- ✅ Native runtime builds & loads (OpenVDB 13, PicoGK 26.2)
-- ✅ Auto-generated ctypes bindings for **all 173** C-API functions
-- ✅ `Voxels` (primitives, booleans `+ - &`, offsets/shell, implicit SDF, queries)
-- ✅ `Mesh` (from voxels, NumPy vertices/triangles, STL/OBJ import **and** export)
-- ✅ `Lattice` (beams + spheres)
-- ✅ `ScalarField` / `VectorField` (get/set, slices, traverse→NumPy)
-- ✅ `Metadata` (string/float/vector) and `PolyLine`
-- ✅ OpenVDB file I/O — `save_vdb` / `load_vdb` round-trips voxels + fields
-- ✅ Handle lifetime management (context managers, leak-free)
-- ✅ Compiled `_fastloop` bulk transfer (~17–28× faster mesh/field I/O) with
-  automatic pure-Python fallback
-- ✅ Headless visualization (`pip install picopie[viz]`): voxel slices → PNG
-  (`save_slice_png`, `save_slice_sheet`) and 3D `mesh_preview`
-- ✅ **Parity-validated against C# PicoGK** (same native runtime): volumes, voxel
-  dims, mesh counts/bbox match to float precision (`tests/test_parity_csharp.py`)
-- ✅ Docs site (`pip install -e ".[docs]" && mkdocs build`) — see [`docs/`](docs/)
-- 🔜 Cross-platform wheels in CI, the GLFW viewer. See [`ROADMAP.md`](ROADMAP.md).
-
-See [`PLAN.md`](PLAN.md) for the full roadmap.
-
-## Install (development)
-
-The native runtime must be built once (see below), then:
+## Install
 
 ```bash
+pip install picopie            # core
+pip install "picopie[viz]"     # + headless slice/mesh PNG helpers (Pillow, matplotlib)
+```
+
+or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add picopie
+```
+
+Wheels are self-contained — the native runtime (OpenVDB 13, PicoGK 26.2) and all
+its C++ deps are bundled. Prebuilt for CPython 3.10–3.13 on **Linux (manylinux
+x86-64), macOS (Apple Silicon), and Windows (x64)**.
+
+## Documentation
+
+- **[Quickstart](docs/quickstart.md)** · **[Guide](docs/guide.md)** · **[API reference](docs/api.md)**
+- **Tutorials** — [Novice](docs/tutorials/novice/), [Intermediate](docs/tutorials/intermediate/),
+  [Advanced](docs/tutorials/advanced/)
+- **[QuickLearn](docs/tutorials/QuickLearn.md)** — the whole API in one annotated file
+  (learn-x-in-y-minutes style)
+
+## Features
+
+- **`Voxels`** — primitives (`sphere`, `capsule`), booleans (`+ - &`), offsets,
+  `shell_` (hollow), implicit SDF modeling, and queries (`is_inside`,
+  `closest_point`, `surface_normal`, `ray_cast`, `calculate_properties`).
+- **`Mesh`** — from voxels (marching cubes), NumPy `vertices`/`triangles`, STL/OBJ
+  import **and** export.
+- **`Lattice`** (beams + spheres), **`ScalarField`** / **`VectorField`** (bulk
+  `set_many`/`get_many`), **`Metadata`**, **`PolyLine`**.
+- **File I/O** — `save_vdb` / `load_vdb` round-trips voxels + fields (OpenVDB).
+- **Headless viz** (`[viz]`) — `save_slice_png`, `save_slice_sheet`, `mesh_preview`.
+- **Interactive viewer** — `picogk.show(part)` (GLFW/OpenGL, orbit camera) and
+  `render_png(part, "out.png")` for offscreen renders.
+- **Fast path** — a compiled `_fastloop` extension (~13–28× faster bulk mesh/field
+  transfer) with automatic pure-Python fallback.
+
+## Reliability
+
+PicoPie is validated against the reference and hardened well beyond a naive binding:
+
+- **Parity-tested vs C# PicoGK** on the same runtime — volumes, dims, mesh
+  counts/bbox, and geometric queries match to float precision.
+- **Never aborts** — the native runtime is patched so a C++/OpenVDB error surfaces
+  as a catchable `PicoGKError` instead of killing the process; non-finite inputs are
+  rejected up front. Verified against thousands of fuzzed inputs.
+- **Reproducible & auditable** — every upstream dependency is version-pinned; builds
+  ship an SBOM (`sbom.cdx.json`) and hash-pinned build deps.
+- Green CI across Linux/macOS/Windows; mypy + ruff clean; ~190 tests.
+
+## Development
+
+```bash
+git clone https://github.com/Borderliner/PicoPie && cd PicoPie
 python -m venv .venv && source .venv/bin/activate
+scripts/build_runtime.sh         # build + stage the native runtime (see below)
 pip install -e ".[dev]"
-PYTHONPATH=src python examples/hello_picogk.py
 pytest
 ```
 
-### Building the native runtime (Linux)
+Building the native runtime (Linux) needs system deps:
 
 ```bash
-# system deps (Debian/Ubuntu/Mint):
 sudo apt-get install -y --no-install-recommends \
   libboost-all-dev libblosc-dev libtbb-dev extra-cmake-modules \
   xorg-dev mesa-common-dev libgl1-mesa-dev ninja-build cmake g++ git
-
-scripts/build_runtime.sh        # clones + builds PicoGKRuntime, stages it into the package
+scripts/build_runtime.sh
 ```
 
 PicoPie locates the runtime automatically: bundled in the wheel (`picogk/_lib/`),
-else under `native/`, else via the `$PICOGK_RUNTIME` environment variable (full
-path to `picogk.so`/`.dylib`/`.dll`).
+else under `native/`, else via `$PICOGK_RUNTIME` (full path to the shared library).
+Cross-platform wheels are built by `cibuildwheel` in `.github/workflows/wheels.yml`.
 
-### Wheels (self-contained)
-
-`scripts/build_runtime.sh` stages the native runtime into `picogk/_lib/` so a
-built wheel bundles it. The wheel also bundles the compiled `_fastloop`
-extension, and `auditwheel`/`delocate`/`delvewheel` vendor the runtime's C++
-deps (TBB, Blosc, Boost, …) — so `pip install` needs no system libraries:
-
-```bash
-scripts/build_runtime.sh && python -m build --wheel
-auditwheel repair dist/*.whl -w dist/repaired   # Linux -> manylinux, vendoring deps
-```
-
-Cross-platform wheels (Linux/macOS/Windows) are built in CI via
-[`cibuildwheel`](pyproject.toml) and `.github/workflows/wheels.yml`.
-
-## Performance & safety notes
-
-- Mesh vertices/triangles and bulk field get/set use a compiled `_fastloop`
-  extension (built from `_fastloop.pyx`); if it isn't compiled, PicoPie falls
-  back to slower pure-Python loops automatically.
-- Implicit SDF callbacks run once **per voxel** from native code — a pure-Python
-  SDF is the slow path. Prefer primitives + booleans, or compose fields inside a
-  single `render_implicit_` call.
-- Some native functions let OpenVDB exceptions escape (e.g. a CSG boolean on a
-  non-level-set grid), which **aborts the process**. Feed valid level sets;
-  prefer composed-SDF clipping over `intersect_implicit_` + boolean.
+See [`ROADMAP.md`](ROADMAP.md) for the (now-complete) phase history and
+[`PLAN.md`](PLAN.md) for the architecture rationale.
 
 ## License
 
-PicoPie is Apache-2.0, matching upstream PicoGK / PicoGKRuntime.
+Apache-2.0, matching upstream PicoGK / PicoGKRuntime. Ported by
+Mohammadreza Hajianpour and Vish Vadlamani.

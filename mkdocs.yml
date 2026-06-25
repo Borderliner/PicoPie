@@ -1,6 +1,6 @@
 site_name: PicoPie
 site_description: A Pythonic binding for the PicoGK computational-geometry kernel
-repo_url: https://github.com/leap71/PicoGK
+repo_url: https://github.com/Borderliner/PicoPie
 docs_dir: docs
 
 theme:
@@ -18,6 +18,20 @@ nav:
   - Home: index.md
   - Quickstart: quickstart.md
   - Guide: guide.md
+  - Tutorials:
+    - QuickLearn: tutorials/QuickLearn.md
+    - Novice:
+      - 1 · Setup with uv: tutorials/novice/01-setup.md
+      - 2 · First shapes: tutorials/novice/02-first-shapes.md
+      - 3 · Booleans & export: tutorials/novice/03-booleans-and-export.md
+    - Intermediate:
+      - 1 · Implicit modeling: tutorials/intermediate/01-implicit-modeling.md
+      - 2 · Meshes & files: tutorials/intermediate/02-meshes-and-files.md
+      - 3 · Fields & metadata: tutorials/intermediate/03-fields-and-metadata.md
+    - Advanced:
+      - 1 · Performance: tutorials/advanced/01-performance.md
+      - 2 · Reliability: tutorials/advanced/02-reliability.md
+      - 3 · Viewer: tutorials/advanced/03-viewer.md
   - API reference: api.md
 
 plugins:

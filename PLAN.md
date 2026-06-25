@@ -4,6 +4,10 @@
 > NumPy-friendly API — by binding the **same native runtime** the C# library uses,
 > not by reimplementing the kernel.
 
+**Status: shipped.** Released on PyPI as `picopie`; all phases in [`ROADMAP.md`](ROADMAP.md)
+are complete (cross-platform wheels, parity-validated, hardened, interactive viewer).
+This document records the architecture decisions that got us there.
+
 ## 1. Strategy (decided)
 
 | Decision | Choice | Consequence |

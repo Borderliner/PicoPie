@@ -1,6 +1,9 @@
 # PicoPie Roadmap
 
-Ordered, phased plan. See [`PLAN.md`](PLAN.md) for the architecture rationale.
+**Status: complete — released on PyPI as [`picopie`](https://pypi.org/project/picopie).**
+Every phase below is done; the binding is feature-complete vs C# PicoGK (including
+the interactive viewer) and hardened beyond it. See [`PLAN.md`](PLAN.md) for the
+architecture rationale.
 
 Strategy (decided): bind the native PicoGK runtime via **ctypes**, headless-first,
 shipped as cross-platform wheels. Pure-Python idiomatic layer on top.
@@ -44,7 +47,7 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Optional `[viz]` extra; lazy imports so core stays dependency-free
 - *Surfaced and fixed a real `shell_` bug (it wasn't hollowing).*
 
-## 🟡 Phase 4 — Packaging & cross-platform wheels (local verified; CI authored)
+## ✅ Phase 4 — Packaging & cross-platform wheels (done)
 
 - [x] Scripted, reproducible native build (`scripts/build_runtime.sh` + `stage_runtime.py`)
 - [x] Bundle runtime into wheels under `picogk/_lib/` — **verified locally**: wheel installs
@@ -56,9 +59,11 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
       TBB/Blosc/Boost** — proven to run purely on the vendored libs
 - [x] CI asserts `_fastloop` builds from the sdist; `ci_check.py` asserts bundled runtime in wheel test
 - [x] `cibuildwheel` config + GitHub Actions matrix (Linux/macOS/Windows) authored
-- [ ] **Run the matrix in real CI** — the per-platform runtime build (manylinux deps,
-      macOS brew, Windows vcpkg) is untested here and will need iteration
-- *Linux packaging fully proven on-box; cross-platform CI is config pending a real run.*
+- [x] **Matrix green in real CI** — Linux (manylinux_2_34), macOS (Apple Silicon),
+      Windows (x64), cp310–cp313; each wheel runs the full test suite. Required
+      per-platform fixes: Boost-1.86-from-source on AlmaLinux 9, deployment-target
+      14.0 on macOS, vcpkg + an upstream `strncpy_s`/`_WINDOWS` fix on Windows.
+- *Cross-platform wheels build, test, and publish from CI.*
 
 ## ✅ Phase 5 — Parity validation & docs (done)
 
@@ -75,11 +80,27 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Examples: `hello_picogk`, `fields_and_io`, `visualize`
 - *Parity-validated against the reference implementation; docs ready to publish.*
 
-## Phase 6 — Interactive viewer (optional, last)
+## ✅ Phase R — Reliability hardening (done)
 
-- [ ] Wrap the 33 viewer fns; GUI-thread/GIL/main-thread-GL model (viewer on main, model on worker)
-- *Hardest integration; do only if wanted.*
+- [x] **Never-abort runtime**: a build-time patch wraps all 173 C ABI functions so a
+      C++/OpenVDB exception becomes a catchable `PicoGKError` instead of `SIGABRT`;
+      a ctypes `errcheck` raises it on the Python side (the Cython fast loop bypasses it)
+- [x] **Fuzzing** (Hypothesis + a subprocess campaign, 12k+ ops) — found a NaN-capsule
+      segfault and an inf-offset hang; fixed by rejecting non-finite geometry inputs
+- [x] **Type safety** at every native boundary (`require_type`), reserved-metadata guard,
+      runtime version gate, ABI struct-size self-check
+- [x] **Reproducible/auditable supply chain**: pinned PicoGKRuntime / vcpkg / c-blosc /
+      Boost / homebrew-core; CycloneDX SBOM; hash-pinned Python build deps
+- [x] Perf-regression guard + trend ledger (`scripts/perf_trend.py`)
 
-## Phase 7 — Higher-level kernel (future)
+## ✅ Phase 10 — Interactive viewer (done)
+
+- [x] Bound the native GLFW/OpenGL viewer: `Viewer` (window, PBR materials, IBL
+      lighting), orbit camera (mouse/scroll/keys), `picogk.show()` one-liner,
+      offscreen `render_png()`, `screenshot()`
+- [x] Main-thread affinity guard, use-after-close protection, leak-free lifetime
+- *Closes the last C# feature gap; headless usage still preferred for batch/CI.*
+
+## Phase 7 — Higher-level kernel (future, not started)
 
 - [ ] Port LEAP71 ShapeKernel (pure C# atop PicoGK) to Python on our core
