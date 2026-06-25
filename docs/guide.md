@@ -96,6 +96,47 @@ save_slice_sheet(part, "sheet.png", count=16)
 mesh_preview(part.to_mesh(), "preview.png")           # close=True when saving
 ```
 
+## Interactive viewer
+
+PicoPie also binds PicoGK's native real-time viewer (GLFW/OpenGL, PBR-lit). It
+needs a display + OpenGL — on a headless machine creating one raises
+`PicoGKError`; use the headless helpers above for image-only output.
+
+![Viewer render](images/viewer_example.png)
+
+```python
+import picogk
+picogk.init(0.2)
+part = picogk.Voxels.sphere(radius=12) - picogk.Voxels.sphere(center=(8, 0, 0), radius=7)
+
+picogk.show(part)                       # one-liner: open an interactive window
+picogk.show(body, holes)                # several objects, auto-colored
+```
+
+Mouse: left-drag orbits, right/middle-drag (or Shift+left) pans, scroll zooms.
+Keys: `Esc`/`Q` close, `F` re-fit, `S` screenshot.
+
+For finer control, drive the `Viewer` directly:
+
+```python
+from picogk import Viewer
+with Viewer(title="part", size=(1280, 800)) as v:
+    v.add(part)
+    v.set_group_material(0, (0.35, 0.6, 0.95), metallic=0.1, roughness=0.4)
+    v.screenshot("part.png")            # render to an image (TGA→PNG via Pillow)
+    v.run()                             # blocks until the window closes (main thread)
+```
+
+One-shot render without an event loop:
+
+```python
+picogk.render_png(part, "part.png", size=(1920, 1080))
+```
+
+The viewer must be created and run on the **main thread** (a GLFW requirement,
+mandatory on macOS). The window/loop are interactive; for batch/server use prefer
+the headless `picogk.viz` helpers.
+
 ## Performance notes
 
 - Mesh and bulk field transfer use a compiled `_fastloop` extension (~17–28×);

@@ -360,3 +360,29 @@ def show(*objects, title: str = "PicoPie", size: tuple[int, int] = (1280, 800),
     if block:
         v.run()
     return v
+
+
+def render_png(obj, path: str, *, size: tuple[int, int] = (1280, 800),
+               background=None, frames: int = 12) -> str:
+    """Render object(s) to an image in one shot, without an interactive loop.
+
+    ``obj`` is a single ``Voxels``/``Mesh``/``PolyLine`` or a list of them
+    (each gets a palette color)::
+
+        picogk.render_png(part, "part.png")
+        picogk.render_png([body, holes], "scene.png", size=(1920, 1080))
+
+    Still needs a display + OpenGL (raises :class:`PicoGKError` otherwise); for
+    truly headless image output use :mod:`picogk.viz`. Returns the written path.
+    """
+    objs = list(obj) if isinstance(obj, (list, tuple)) else [obj]
+    v = Viewer(size=size)
+    try:
+        if background is not None:
+            v.set_background(background)
+        for i, o in enumerate(objs):
+            v.add(o, group=i)
+            v.set_group_material(i, _PALETTE[i % len(_PALETTE)])
+        return v.screenshot(str(path), frames=frames)
+    finally:
+        v.close()

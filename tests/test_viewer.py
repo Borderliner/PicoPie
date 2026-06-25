@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk import Viewer, Voxels, show
+from picogk import Viewer, Voxels, render_png, show
 from picogk._errors import PicoGKError
 
 
@@ -84,6 +84,16 @@ def test_show_non_blocking_multi(tmp_path):
         assert len(np.unique(a.reshape(-1, 3), axis=0)) > 50
     finally:
         v.close()
+
+
+@pytest.mark.viewer
+def test_render_png_oneshot(tmp_path):
+    try:
+        out = render_png(Voxels.sphere(radius=10), str(tmp_path / "r.png"), size=(400, 300))
+    except Exception as e:
+        pytest.skip(f"no interactive display: {e}")
+    a = np.asarray(__import__("PIL.Image", fromlist=["Image"]).open(out).convert("RGB"))
+    assert len(np.unique(a.reshape(-1, 3), axis=0)) > 50
 
 
 # --- headless (no display needed): thread guard + camera math ----------------
