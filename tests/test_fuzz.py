@@ -24,6 +24,12 @@ import contextlib
 
 import numpy as np
 import pytest
+
+# Hypothesis is a dev-only dep (not in the wheel test-requires); CI runs these
+# with -m "not fuzz". But pytest imports every module at collection time, before
+# the marker filter applies, so skip the whole module if hypothesis is absent.
+pytest.importorskip("hypothesis")
+
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
