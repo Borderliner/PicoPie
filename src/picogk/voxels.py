@@ -315,7 +315,12 @@ class Voxels(NativeObject):
             self._lib, "Voxels_GetVoxelDimensions", self._inst, self.handle)
 
     def bounding_box(self) -> BBox3:
-        """Bounding box in millimetres (derived from the voxel extent)."""
+        """Bounding box in mm of the active *voxel grid* extent (includes the
+        narrow-band padding, so it is looser than the surface).
+
+        For the tight *surface* bounding box -- what C# PicoGK's
+        ``oCalculateBoundingBox`` returns -- use :meth:`calculate_properties`,
+        whose second return value is the mesh bounding box."""
         origin, size = self.voxel_dimensions()
         lib, inst = self._lib, self._inst
         lo_v = PKVector3(float(origin[0]), float(origin[1]), float(origin[2]))

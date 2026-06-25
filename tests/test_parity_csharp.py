@@ -133,3 +133,32 @@ def test_vdb_cross_read_from_csharp():
     assert isinstance(objs[name], Voxels)
     vol, _ = objs[name].calculate_properties()
     assert vol == pytest.approx(G["vdb_sphere_volume"], rel=VOL_REL)
+
+
+# --- geometric queries (same probe points as parity/Program.cs) --------------
+def test_closest_point_parity():
+    v = Voxels.sphere(radius=10)
+    got = [v.closest_point(p).tolist() for p in [(20, 0, 0), (0, 15, 0), (0, 0, 18)]]
+    assert np.allclose(got, G["closest_point"], atol=1e-3)
+
+
+def test_surface_normal_parity():
+    v = Voxels.sphere(radius=10)
+    got = [v.surface_normal(p).tolist() for p in [(10, 0, 0), (0, 10, 0), (0, 0, 10)]]
+    assert np.allclose(got, G["surface_normal"], atol=1e-3)
+
+
+def test_ray_cast_parity():
+    v = Voxels.sphere(radius=10)
+    rays = [((20, 0, 0), (-1, 0, 0)), ((0, 20, 0), (0, -1, 0))]
+    got = [v.ray_cast(o, d).tolist() for o, d in rays]
+    assert np.allclose(got, G["ray_cast"], atol=1e-3)
+
+
+def test_surface_bbox_parity():
+    # C#'s oCalculateBoundingBox() is the *surface* (mesh) bbox, which PicoPie
+    # exposes via calculate_properties() -- not bounding_box() (that's the looser
+    # voxel-grid extent, parity-verified via the exact voxel_dimensions match).
+    _, bb = Voxels.sphere(radius=10).calculate_properties()
+    got = [*bb.min.tolist(), *bb.max.tolist()]
+    assert np.allclose(got, G["sphere_bbox"], rtol=VOL_REL, atol=1e-4)

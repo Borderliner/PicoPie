@@ -88,6 +88,22 @@ var pts = new[] { new Vector3(0, 0, 0), new Vector3(7, 0, 0),
                   new Vector3(100, 0, 0), new Vector3(9.5f, 0, 0) };
 r["is_inside"] = pts.Select(p => sph.bIsInside(p)).ToArray();
 
+// --- geometric queries on a fresh r=10 sphere (closest point / normal / raycast / bbox) ---
+var sphQ = Voxels.voxSphere(lib, new Vector3(0, 0, 0), 10f);
+static float[] V3(Vector3 v) => new[] { v.X, v.Y, v.Z };
+
+var cpPts = new[] { new Vector3(20, 0, 0), new Vector3(0, 15, 0), new Vector3(0, 0, 18) };
+r["closest_point"] = cpPts.Select(p => V3(sphQ.vecClosestPointOnSurface(p))).ToArray();
+
+var snPts = new[] { new Vector3(10, 0, 0), new Vector3(0, 10, 0), new Vector3(0, 0, 10) };
+r["surface_normal"] = snPts.Select(p => V3(sphQ.vecSurfaceNormal(p))).ToArray();
+
+var rays = new[] { (new Vector3(20, 0, 0), new Vector3(-1, 0, 0)),
+                   (new Vector3(0, 20, 0), new Vector3(0, -1, 0)) };
+r["ray_cast"] = rays.Select(rd => V3(sphQ.vecRayCastToSurface(rd.Item1, rd.Item2))).ToArray();
+
+r["sphere_bbox"] = Bb(sphQ.oCalculateBoundingBox());
+
 // --- write a .vdb for cross-implementation read parity (args[2] = path) ---
 if (args.Length > 2)
 {
