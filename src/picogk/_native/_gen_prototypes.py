@@ -42,9 +42,8 @@ STRUCTS = {"PKVector2", "PKVector3", "PKVector4", "PKCoord",
 CALLBACKS = {"PKPFnfSdf", "PKFnTraverseActiveS", "PKFnTraverseActiveV", "PKFInfo",
              "PKPFUpdateRequested", "PKPFKeyPressed", "PKPFMouseMoved",
              "PKPFMouseButton", "PKPFScrollWheel", "PKPFWindowSize"}
-# Viewer-only callbacks we don't model yet -> treat as opaque void* pointers.
-CALLBACKS_MODELED = {"PKPFnfSdf", "PKFnTraverseActiveS",
-                     "PKFnTraverseActiveV", "PKFInfo"}
+# All callbacks are modeled (Viewer callbacks added in Phase 10).
+CALLBACKS_MODELED = set(CALLBACKS)
 
 SCALARS = {
     "void": "None", "bool": "c_bool", "int": "c_int",
@@ -175,6 +174,8 @@ from .ctypes_types import (  # noqa: F401
     PKVector2, PKVector3, PKVector4, PKCoord, PKTriangle, PKBBox3,
     PKMatrix4x4, PKColorFloat,
     PKPFnfSdf, PKFnTraverseActiveS, PKFnTraverseActiveV, PKFInfo,
+    PKPFUpdateRequested, PKPFKeyPressed, PKPFMouseMoved, PKPFMouseButton,
+    PKPFScrollWheel, PKPFWindowSize,
 )
 
 # name -> (restype, [argtypes])  as ctypes objects

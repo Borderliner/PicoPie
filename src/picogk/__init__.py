@@ -38,6 +38,7 @@ from .metadata import Metadata, MetaType
 from .polyline import PolyLine
 from .types import BBox3
 from .vdb import FieldType, VdbFile, load_vdb, save_vdb
+from .viewer import Viewer
 from .viz import colorize, mesh_preview, save_slice_png, save_slice_sheet
 from .voxels import Voxels
 
@@ -55,6 +56,7 @@ __all__ = [
     "ScalarField",
     "VdbFile",
     "VectorField",
+    "Viewer",
     "Voxels",
     "build_info",
     "colorize",

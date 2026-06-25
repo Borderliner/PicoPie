@@ -2,3 +2,4 @@
 include src/picogk/_fastloop.pyx
 include README.md PLAN.md ROADMAP.md
 recursive-include src/picogk/_native/headers *.h
+recursive-include src/picogk/_assets *.zip

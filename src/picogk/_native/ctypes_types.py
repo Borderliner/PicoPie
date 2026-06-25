@@ -80,6 +80,26 @@ PKFnTraverseActiveV = C.CFUNCTYPE(None, C.POINTER(PKVector3), C.POINTER(PKVector
 # void (*PKFInfo)(const char*, bool)
 PKFInfo = C.CFUNCTYPE(None, C.c_char_p, C.c_bool)
 
+# --- Viewer callbacks (PicoGKApiTypes.h) -------------------------------------
+# void (*PKPFUpdateRequested)(void*, const PKVector2* viewport, PKColorFloat* bg,
+#                             PKMatrix4x4* viewProjection, PKVector3* eye)  [out params]
+PKPFUpdateRequested = C.CFUNCTYPE(None, C.c_void_p, C.POINTER(PKVector2),
+                                  C.POINTER(PKColorFloat), C.POINTER(PKMatrix4x4),
+                                  C.POINTER(PKVector3))
+# void (*PKPFKeyPressed)(void*, int key, int scancode, int action, int mods)
+PKPFKeyPressed = C.CFUNCTYPE(None, C.c_void_p, C.c_int32, C.c_int32, C.c_int32, C.c_int32)
+# void (*PKPFMouseMoved)(void*, const PKVector2* pos, bool shift, ctrl, alt, super)
+PKPFMouseMoved = C.CFUNCTYPE(None, C.c_void_p, C.POINTER(PKVector2),
+                             C.c_bool, C.c_bool, C.c_bool, C.c_bool)
+# void (*PKPFMouseButton)(void*, int button, int action, int mods, const PKVector2* pos)
+PKPFMouseButton = C.CFUNCTYPE(None, C.c_void_p, C.c_int32, C.c_int32, C.c_int32,
+                              C.POINTER(PKVector2))
+# void (*PKPFScrollWheel)(void*, const PKVector2* offset, const PKVector2* pos, bools...)
+PKPFScrollWheel = C.CFUNCTYPE(None, C.c_void_p, C.POINTER(PKVector2), C.POINTER(PKVector2),
+                              C.c_bool, C.c_bool, C.c_bool, C.c_bool)
+# void (*PKPFWindowSize)(void*, const PKVector2* size)
+PKPFWindowSize = C.CFUNCTYPE(None, C.c_void_p, C.POINTER(PKVector2))
+
 
 # Name used by the prototype generator to resolve typedef'd argument types.
 CALLBACK_TYPES = {
@@ -87,6 +107,12 @@ CALLBACK_TYPES = {
     "PKFnTraverseActiveS": PKFnTraverseActiveS,
     "PKFnTraverseActiveV": PKFnTraverseActiveV,
     "PKFInfo": PKFInfo,
+    "PKPFUpdateRequested": PKPFUpdateRequested,
+    "PKPFKeyPressed": PKPFKeyPressed,
+    "PKPFMouseMoved": PKPFMouseMoved,
+    "PKPFMouseButton": PKPFMouseButton,
+    "PKPFScrollWheel": PKPFScrollWheel,
+    "PKPFWindowSize": PKPFWindowSize,
 }
 
 STRUCT_TYPES = {

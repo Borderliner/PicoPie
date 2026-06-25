@@ -49,7 +49,7 @@ dev = ["picopie[viz]", "pytest>=7", "pytest-timeout", "pytest-cov", "ruff>=0.6",
 where = ["src"]
 
 [tool.setuptools.package-data]
-picogk = ["py.typed", "_native/headers/*.h", "_lib/*"]
+picogk = ["py.typed", "_native/headers/*.h", "_lib/*", "_assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -57,6 +57,7 @@ addopts = "-ra"
 markers = [
     "perf: relative fast-path-vs-fallback speedup checks (run locally; excluded in CI as runners are noisy)",
     "fuzz: Hypothesis property fuzzing of the abort surface (run locally; excluded from per-wheel CI)",
+    "viewer: interactive viewer render tests (need a display/OpenGL; excluded from headless CI)",
 ]
 
 [tool.coverage.run]
@@ -104,7 +105,7 @@ test-requires = ["pytest", "numpy", "pillow", "matplotlib"]
 # perf + fuzz tests are excluded here (slow / not per-wheel gates); they run
 # locally and via scripts/fuzz_abort.py. The fast-path *presence* and the
 # never-abort guard *presence* are still asserted in CI (unmarked tests).
-test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf and not fuzz\" {project}/tests"
+test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf and not fuzz and not viewer\" {project}/tests"
 # cibuildwheel auto-repairs (auditwheel/delocate/delvewheel), vendoring the
 # dlopen'd runtime's deps -- verified locally that auditwheel handles _lib/picogk.so.
 

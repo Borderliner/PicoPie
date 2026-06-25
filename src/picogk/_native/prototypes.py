@@ -14,6 +14,8 @@ from .ctypes_types import (  # noqa: F401
     PKVector2, PKVector3, PKVector4, PKCoord, PKTriangle, PKBBox3,
     PKMatrix4x4, PKColorFloat,
     PKPFnfSdf, PKFnTraverseActiveS, PKFnTraverseActiveV, PKFInfo,
+    PKPFUpdateRequested, PKPFKeyPressed, PKPFMouseMoved, PKPFMouseButton,
+    PKPFScrollWheel, PKPFWindowSize,
 )
 
 # name -> (restype, [argtypes])  as ctypes objects
@@ -158,7 +160,7 @@ SIGNATURES: dict[str, tuple[Any, list[Any]]] = {
     "Metadata_SetFloatValue": (None, [c_uint64, c_uint64, c_char_p, c_float]),
     "Metadata_SetVectorValue": (None, [c_uint64, c_uint64, c_char_p, POINTER(PKVector3)]),
     "MetaData_RemoveValue": (None, [c_uint64, c_uint64, c_char_p]),
-    "Viewer_hCreate": (c_void_p, [c_char_p, POINTER(PKVector2), PKFInfo, c_void_p, c_void_p, c_void_p, c_void_p, c_void_p, c_void_p]),
+    "Viewer_hCreate": (c_void_p, [c_char_p, POINTER(PKVector2), PKFInfo, PKPFUpdateRequested, PKPFKeyPressed, PKPFMouseMoved, PKPFMouseButton, PKPFScrollWheel, PKPFWindowSize]),
     "Viewer_bIsValid": (c_bool, [c_void_p]),
     "Viewer_Destroy": (None, [c_void_p]),
     "Viewer_RequestUpdate": (None, [c_void_p]),
