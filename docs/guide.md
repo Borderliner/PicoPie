@@ -134,6 +134,12 @@ exceptions *before* they reach native code:
   rejected rather than returning silently wrong data.
 - **Reserved metadata** → `ValueError`: writing/removing a `PicoGK.`-prefixed
   name (the runtime's internal fields) is refused so you can't corrupt grid state.
+- **Non-finite geometry inputs** → `ValueError`: NaN/inf coordinates, radii, or
+  offset distances are rejected up front. Unlike a C++ exception, these reach
+  native code as a hard `SIGSEGV` or an unbounded loop that the guard *can't*
+  catch (found by fuzzing -- see scripts/fuzz_abort.py). Note this covers
+  non-finite values, not huge-but-finite ones: asking for a kilometre sphere at
+  micron resolution is a resource limit, your responsibility.
 - **Bad file paths** → `FileNotFoundError` / `PicoGKError` (load/save check first).
 - **Failing SDF callbacks** → your exception is re-raised; non-finite returns are
   treated as "outside" rather than corrupting the grid.

@@ -18,7 +18,7 @@ from . import library
 from ._base import NativeObject, require_type
 from ._errors import InvalidHandleError, PicoGKError
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
-from .types import BBox3, read_voxel_dimensions, to_vec3, vec3_to_np
+from .types import BBox3, read_voxel_dimensions, require_finite, to_vec3, vec3_to_np
 
 if TYPE_CHECKING:
     from .lattice import Lattice
@@ -54,6 +54,7 @@ class Voxels(NativeObject):
 
     @classmethod
     def sphere(cls, center=(0.0, 0.0, 0.0), radius: float = 1.0) -> Voxels:
+        require_finite("radius", radius)
         lib, inst = library.lib(), library.instance()
         c = to_vec3(center)
         h = lib.Voxels_hCreateSphere(inst, C.byref(c), radius)
@@ -61,9 +62,10 @@ class Voxels(NativeObject):
 
     @classmethod
     def capsule(cls, start, end, radius: float, radius2: float | None = None) -> Voxels:
+        r2 = radius if radius2 is None else radius2
+        require_finite("radius", radius, r2)
         lib, inst = library.lib(), library.instance()
         a, b = to_vec3(start), to_vec3(end)
-        r2 = radius if radius2 is None else radius2
         h = lib.Voxels_hCreateCapsule(inst, C.byref(a), C.byref(b),
                                       radius, r2)
         return cls(h)
@@ -152,6 +154,7 @@ class Voxels(NativeObject):
     # --- offsets -------------------------------------------------------------
     def offset_(self, dist_mm: float) -> Voxels:
         """Grow (positive) / shrink (negative) the surface, in mm. In place."""
+        require_finite("dist_mm", dist_mm)
         self._lib.Voxels_Offset(self._inst, self.handle,
                                 dist_mm)
         return self
@@ -162,6 +165,7 @@ class Voxels(NativeObject):
     def double_offset_(self, dist1_mm: float, dist2_mm: float) -> Voxels:
         """Two sequential offsets (grow/shrink) of the surface -- a rounding /
         morphological op, NOT a hollow. Use :meth:`shell_` to hollow."""
+        require_finite("dist_mm", dist1_mm, dist2_mm)
         self._lib.Voxels_DoubleOffset(self._inst, self.handle,
                                       dist1_mm, dist2_mm)
         return self
@@ -172,6 +176,7 @@ class Voxels(NativeObject):
 
         A ``thickness_mm`` >= the object's half-extent leaves it solid (the core
         erodes away entirely)."""
+        require_finite("thickness_mm", thickness_mm)
         if thickness_mm <= 0:
             raise ValueError("shell thickness must be > 0")
         inner = self.copy().offset_(-thickness_mm)        # erode the core inward

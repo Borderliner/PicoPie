@@ -7,10 +7,23 @@ array of shape (3,). Returned vectors are NumPy ``float32`` arrays.
 from __future__ import annotations
 
 import ctypes as C
+import math
 
 import numpy as np
 
 from ._native.ctypes_types import PKBBox3, PKColorFloat, PKVector2, PKVector3
+
+
+def require_finite(name: str, *values: float) -> None:
+    """Reject NaN/inf numeric geometry inputs before they reach native code.
+
+    Non-finite coordinates/sizes don't raise a catchable C++ exception in the
+    runtime -- they cause a hard ``SIGSEGV`` or an unbounded loop, neither of
+    which the never-abort guard can intercept. Found by Phase-11b fuzzing (e.g.
+    a NaN capsule endpoint segfaults; an inf offset hangs)."""
+    for v in values:
+        if not math.isfinite(v):
+            raise ValueError(f"{name} must be finite, got {v!r}")
 
 
 def read_voxel_dimensions(lib, fn_name: str, inst: int, handle: int):
@@ -24,11 +37,13 @@ def read_voxel_dimensions(lib, fn_name: str, inst: int, handle: int):
 
 
 def to_vec3(v) -> PKVector3:
-    """Coerce a vector-like value into a ``PKVector3``."""
+    """Coerce a vector-like value into a ``PKVector3`` (must be finite)."""
     if isinstance(v, PKVector3):
         return v
     x, y, z = v  # works for tuple/list/ndarray; raises clearly otherwise
-    return PKVector3(float(x), float(y), float(z))
+    x, y, z = float(x), float(y), float(z)
+    require_finite("vector component", x, y, z)
+    return PKVector3(x, y, z)
 
 
 def vec3_to_np(v: PKVector3) -> np.ndarray:

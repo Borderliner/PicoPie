@@ -36,7 +36,8 @@ dependencies = ["numpy>=1.23"]
 [project.optional-dependencies]
 viz = ["pillow>=9", "matplotlib>=3.5"]
 docs = ["mkdocs-material>=9", "mkdocstrings[python]>=0.24"]
-dev = ["picopie[viz]", "pytest>=7", "pytest-timeout", "pytest-cov", "ruff>=0.6", "mypy>=1.8"]
+dev = ["picopie[viz]", "pytest>=7", "pytest-timeout", "pytest-cov", "ruff>=0.6", "mypy>=1.8",
+       "hypothesis>=6"]
 
 [project.urls]
 "PicoGK (upstream)" = "https://github.com/leap71/PicoGK"
@@ -52,6 +53,7 @@ testpaths = ["tests"]
 addopts = "-ra"
 markers = [
     "perf: relative fast-path-vs-fallback speedup checks (run locally; excluded in CI as runners are noisy)",
+    "fuzz: Hypothesis property fuzzing of the abort surface (run locally; excluded from per-wheel CI)",
 ]
 
 [tool.coverage.run]
@@ -96,9 +98,10 @@ build-frontend = "build"
 before-build = "python {project}/scripts/stage_runtime.py"
 # Wheel must work standalone: bundled runtime + compiled extension + real geometry.
 test-requires = ["pytest", "numpy", "pillow", "matplotlib"]
-# perf tests are excluded here (CI runners are noisy); they run locally. The
-# fast-path *presence* is still asserted in CI via test_fastloop_available.
-test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf\" {project}/tests"
+# perf + fuzz tests are excluded here (slow / not per-wheel gates); they run
+# locally and via scripts/fuzz_abort.py. The fast-path *presence* and the
+# never-abort guard *presence* are still asserted in CI (unmarked tests).
+test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf and not fuzz\" {project}/tests"
 # cibuildwheel auto-repairs (auditwheel/delocate/delvewheel), vendoring the
 # dlopen'd runtime's deps -- verified locally that auditwheel handles _lib/picogk.so.
 
