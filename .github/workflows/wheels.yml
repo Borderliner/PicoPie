@@ -18,6 +18,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Generate SBOM (CycloneDX, from the pinned components)
+        run: python scripts/gen_sbom.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
       - name: Build sdist
         run: pipx run build --sdist
       - name: Assert the _fastloop extension builds from the sdist

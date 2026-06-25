@@ -156,3 +156,17 @@ a crash. Still, **prefer composing the clip into one `render_implicit_` callback
 (`max(feature_sdf, clip_sdf)`) — it's correct by construction. Empirically every
 other operation — booleans, offsets, meshing, `calculate_properties`, field/slice
 access on empty or degenerate geometry — is already crash-safe.
+
+## Provenance & supply chain
+
+Every build input is pinned: the native runtime (`PicoGKRuntime` at a fixed tag,
+with its OpenVDB/GLFW submodules), and the dependency providers (vcpkg commit,
+`c-blosc`/Boost versions, a `homebrew-core` commit). Two artifacts make that
+auditable and verifiable:
+
+- **`sbom.cdx.json`** — a CycloneDX SBOM inventorying the bundled native
+  components (OpenVDB, GLFW, Boost, TBB, Blosc, zlib) with versions and licenses;
+  regenerate with `python scripts/gen_sbom.py` (also emitted as a CI artifact).
+- **`build-constraints.txt`** — exact, SHA256-hash-pinned Python build
+  dependencies. Build reproducibly and supply-chain-verified with
+  `PIP_CONSTRAINT=build-constraints.txt python -m build`.

@@ -1,0 +1,262 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-06-25T08:49:54Z",
+    "tools": [
+      {
+        "name": "picopie gen_sbom.py"
+      }
+    ],
+    "component": {
+      "type": "library",
+      "name": "picopie",
+      "version": "0.1.0.dev0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "purl": "pkg:pypi/picopie@0.1.0.dev0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "PicoGKRuntime",
+      "version": "26.2.0",
+      "purl": "pkg:github/leap71/PicoGKRuntime@PicoGK-v2.2.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/leap71/PicoGKRuntime"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "commit 0f26321c18ed878a7820ef769c38fd5d49d39242"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "OpenVDB",
+      "version": "13.0.0",
+      "purl": "pkg:github/AcademySoftwareFoundation/openvdb@v13.0.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "MPL-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/AcademySoftwareFoundation/openvdb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "GLFW",
+      "version": "3.4",
+      "purl": "pkg:github/glfw/glfw@3.4",
+      "licenses": [
+        {
+          "license": {
+            "id": "Zlib"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/glfw/glfw"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "submodule commit b00e6a8a"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "Boost",
+      "version": "1.86.0",
+      "purl": "pkg:generic/boost@1.86.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSL-1.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://www.boost.org"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "Linux: 1.86.0 (source); macOS: brew (homebrew-core pin); Windows: vcpkg"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "oneTBB",
+      "version": "varies",
+      "purl": "pkg:github/oneapi-src/oneTBB",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/oneapi-src/oneTBB"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "Linux: distro tbb-devel; macOS: brew 2023.0.0; Windows: vcpkg 2026.06.01"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "c-blosc",
+      "version": "1.21.6",
+      "purl": "pkg:github/Blosc/c-blosc@v1.21.6",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://github.com/Blosc/c-blosc"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "Linux/macOS 1.21.6; Windows: vcpkg 2026.06.01"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "zlib",
+      "version": "varies",
+      "purl": "pkg:generic/zlib",
+      "licenses": [
+        {
+          "license": {
+            "id": "Zlib"
+          }
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "website",
+          "url": "https://zlib.net"
+        }
+      ],
+      "properties": [
+        {
+          "name": "picopie:note",
+          "value": "distro / brew / vcpkg provided"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "numpy",
+      "version": "numpy>=1.23",
+      "purl": "pkg:pypi/numpy",
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "setuptools",
+      "version": "setuptools>=77",
+      "purl": "pkg:pypi/setuptools",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "wheel",
+      "version": "wheel>=0.43",
+      "purl": "pkg:pypi/wheel",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "Cython",
+      "version": "Cython>=3.0,<4",
+      "purl": "pkg:pypi/cython",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "packaging",
+      "version": "packaging>=24.2",
+      "purl": "pkg:pypi/packaging",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    }
+  ]
+}

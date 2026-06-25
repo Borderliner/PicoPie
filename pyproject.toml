@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=77", "wheel", "Cython>=3", "packaging>=24.2"]
+# Bounds tested in CI; the Cython<4 cap guards our .pyx build against a future
+# major bump. For reproducible, hash-verified builds use the pinned set in
+# build-constraints.txt (PIP_CONSTRAINT=build-constraints.txt). See also sbom.cdx.json.
+requires = ["setuptools>=77", "wheel>=0.43", "Cython>=3.0,<4", "packaging>=24.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
