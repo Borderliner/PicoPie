@@ -134,8 +134,12 @@ picogk.render_png(part, "part.png", size=(1920, 1080))
 ```
 
 The viewer must be created and run on the **main thread** (a GLFW requirement,
-mandatory on macOS). The window/loop are interactive; for batch/server use prefer
-the headless `picogk.viz` helpers.
+mandatory on macOS), and **always released** — use `with Viewer(...)`, `run()`, or
+`render_png()` (all close for you), or call `close()` yourself; using a viewer
+after close raises rather than crashing. Other methods: `remove(obj)`,
+`set_group_visible`, `set_group_matrix`/`set_object_matrix` (a 4×4 transform),
+`is_valid()`. The window/loop are interactive; for batch/server use prefer the
+headless `picogk.viz` helpers.
 
 ## Performance notes
 

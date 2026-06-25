@@ -11,8 +11,8 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk import Viewer, Voxels, render_png, show
-from picogk._errors import PicoGKError
+from picogk import Viewer, Voxels, library, render_png, show
+from picogk._errors import InvalidHandleError, PicoGKError
 
 
 def _viewer_or_skip(**kw) -> Viewer:
@@ -96,6 +96,84 @@ def test_render_png_oneshot(tmp_path):
     assert len(np.unique(a.reshape(-1, 3), axis=0)) > 50
 
 
+# --- Phase 10e: hardening (need a display -> viewer-marked) -------------------
+@pytest.mark.viewer
+def test_use_after_close_raises_not_segfaults():
+    v = _viewer_or_skip(size=(320, 240))
+    v.add(Voxels.sphere(radius=5))
+    v.close()
+    # every native-touching method must raise, not dereference a freed handle
+    for op in (lambda: v.add(Voxels.sphere(radius=3)),
+               lambda: v.poll(),
+               lambda: v.set_background((0, 0, 0)),
+               lambda: v.remove_all(),
+               lambda: v.screenshot("x.png")):
+        with pytest.raises(InvalidHandleError):
+            op()
+
+
+@pytest.mark.viewer
+def test_viewer_registered_and_is_valid():
+    v = _viewer_or_skip(size=(320, 240))
+    try:
+        assert v in library._live_objects      # so shutdown() can invalidate it
+        assert v.is_valid()
+    finally:
+        v.close()
+    assert not v.is_valid()                     # False once closed (no crash)
+
+
+@pytest.mark.viewer
+def test_interaction_updates_camera():
+    v = _viewer_or_skip(size=(320, 240))
+    try:
+        az, el, tgt = v._azimuth, v._elevation, v._target.copy()
+        v._apply_orbit(50.0, 20.0)
+        assert v._azimuth != az and v._elevation != el and v._autofit is False
+        z = v._zoom
+        v._apply_zoom(1.0)                       # scroll up -> zoom in
+        assert v._zoom < z
+        v._apply_pan(40.0, 0.0)
+        assert not np.array_equal(v._target, tgt)
+    finally:
+        v.close()
+
+
+@pytest.mark.viewer
+def test_screenshot_no_temp_leak(tmp_path):
+    import glob
+    v = _viewer_or_skip(size=(320, 240))
+    try:
+        v.add(Voxels.sphere(radius=5))
+        before = set(glob.glob("/tmp/tmp*"))
+        for i in range(3):
+            v.screenshot(str(tmp_path / f"s{i}.png"))
+        assert set(glob.glob("/tmp/tmp*")) == before    # no leaked temp dirs
+    finally:
+        v.close()
+
+
+@pytest.mark.viewer
+def test_remove_and_group_matrix(tmp_path):
+    v = _viewer_or_skip(size=(400, 300))
+    try:
+        s = Voxels.sphere(radius=8)
+        v.add(s)
+        a = np.asarray(__import__("PIL.Image", fromlist=["Image"])
+                       .open(v.screenshot(str(tmp_path / "a.png"))).convert("RGB"))
+        # translate the group far sideways -> the render must change
+        mat = np.eye(4, dtype=np.float32)
+        mat[3, 0] = 25.0                         # row-major translation (System.Numerics)
+        v.set_group_matrix(0, mat)
+        b = np.asarray(__import__("PIL.Image", fromlist=["Image"])
+                       .open(v.screenshot(str(tmp_path / "b.png"))).convert("RGB"))
+        assert not np.array_equal(a, b)
+        v.remove(s)                              # removal must not crash
+        v.screenshot(str(tmp_path / "c.png"))
+    finally:
+        v.close()
+
+
 # --- headless (no display needed): thread guard + camera math ----------------
 def test_viewer_requires_main_thread():
     # the main-thread check fires before any GL, so this runs headless (CI too)
@@ -123,3 +201,11 @@ def test_camera_math_view_is_orthonormal():
     assert np.allclose(rot.T @ rot, np.eye(3), atol=1e-4)
     p = _perspective(np.radians(35), 1.5, 1.0, 1000.0)
     assert p[2, 3] == -1.0 and p[0, 0] > 0 and p[1, 1] > 0
+
+
+def test_perspective_degenerate_near_far_no_nan():
+    from picogk.viewer import _perspective, _to_mat4
+    p = _perspective(np.radians(35), 1.0, 5.0, 5.0)   # near == far -> guarded
+    assert np.all(np.isfinite(p))
+    m = _to_mat4(np.eye(4))                            # identity round-trips
+    assert (m.vec1.X, m.vec2.Y, m.vec3.Z, m.vec4.W) == (1.0, 1.0, 1.0, 1.0)
