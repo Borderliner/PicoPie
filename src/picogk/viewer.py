@@ -21,6 +21,7 @@ import ctypes as C
 import math
 import shutil
 import tempfile
+import threading
 import zipfile
 from pathlib import Path
 
@@ -86,6 +87,11 @@ class Viewer:
     _FOV_Y = math.radians(35.0)
 
     def __init__(self, title: str = "PicoPie", size: tuple[int, int] = (1280, 800)):
+        # GLFW requires the window + its event loop on the process main thread
+        # (mandatory on macOS); enforce it for portable behaviour.
+        if threading.current_thread() is not threading.main_thread():
+            raise PicoGKError("Viewer must be created on the main thread")
+        self._thread = threading.get_ident()
         self._lib = library.lib()
         self._inst = library.instance()
         self._closed = True
@@ -172,8 +178,13 @@ class Viewer:
     def _request_update(self) -> None:
         self._lib.Viewer_RequestUpdate(self._h)
 
+    def _check_thread(self) -> None:
+        if threading.get_ident() != self._thread:
+            raise PicoGKError("Viewer must be polled/closed on the thread that created it")
+
     def poll(self) -> bool:
         """Process one batch of window events + render. Returns False once closed."""
+        self._check_thread()
         alive = bool(self._lib.Viewer_bPoll(self._h))
         if self._cb_error:
             err = self._cb_error.pop(0)
@@ -317,3 +328,35 @@ class Viewer:
 
     def __exit__(self, *exc) -> None:
         self.close()
+
+
+# A few distinct, readable colors for show()'s default groups.
+_PALETTE = [
+    (0.35, 0.60, 0.95), (0.95, 0.55, 0.30), (0.45, 0.80, 0.45),
+    (0.85, 0.45, 0.75), (0.90, 0.80, 0.35), (0.50, 0.75, 0.90),
+]
+
+
+def show(*objects, title: str = "PicoPie", size: tuple[int, int] = (1280, 800),
+         background=None, block: bool = True) -> Viewer:
+    """Open an interactive viewer for one or more objects (a one-liner).
+
+    Each object goes in its own group with a color from a default palette::
+
+        picogk.show(part)
+        picogk.show(body, holes)          # two objects, two colors
+
+    With ``block=True`` (default) this runs the window's event loop until it is
+    closed (main thread); pass ``block=False`` to drive :meth:`Viewer.poll`
+    yourself. Returns the :class:`Viewer`. Requires a display -- for headless
+    image output use :meth:`Viewer.screenshot` or :mod:`picogk.viz`.
+    """
+    v = Viewer(title=title, size=size)
+    if background is not None:
+        v.set_background(background)
+    for i, obj in enumerate(objects):
+        v.add(obj, group=i)
+        v.set_group_material(i, _PALETTE[i % len(_PALETTE)])
+    if block:
+        v.run()
+    return v

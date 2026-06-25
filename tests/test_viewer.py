@@ -11,7 +11,8 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk import Viewer, Voxels
+from picogk import Viewer, Voxels, show
+from picogk._errors import PicoGKError
 
 
 def _viewer_or_skip(**kw) -> Viewer:
@@ -69,7 +70,41 @@ def test_viewer_camera_change_changes_render(tmp_path):
         v.close()
 
 
-# --- camera math (headless: no display needed) -------------------------------
+@pytest.mark.viewer
+def test_show_non_blocking_multi(tmp_path):
+    v = None
+    try:
+        v = show(Voxels.sphere(radius=8),
+                 Voxels.sphere(center=(12, 0, 0), radius=5), block=False)
+    except Exception as e:
+        pytest.skip(f"no interactive display: {e}")
+    try:
+        a = np.asarray(__import__("PIL.Image", fromlist=["Image"])
+                       .open(v.screenshot(str(tmp_path / "s.png"))).convert("RGB"))
+        assert len(np.unique(a.reshape(-1, 3), axis=0)) > 50
+    finally:
+        v.close()
+
+
+# --- headless (no display needed): thread guard + camera math ----------------
+def test_viewer_requires_main_thread():
+    # the main-thread check fires before any GL, so this runs headless (CI too)
+    import threading
+    errs: list[BaseException] = []
+
+    def worker():
+        try:
+            Viewer()
+        except BaseException as e:
+            errs.append(e)
+
+    t = threading.Thread(target=worker)
+    t.start()
+    t.join()
+    assert errs and isinstance(errs[0], PicoGKError)
+    assert "main thread" in str(errs[0])
+
+
 def test_camera_math_view_is_orthonormal():
     from picogk.viewer import _look_at, _perspective
     eye = np.array([40.0, 30.0, 25.0], np.float32)
