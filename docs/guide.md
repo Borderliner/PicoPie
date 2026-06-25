@@ -102,6 +102,9 @@ mesh_preview(part.to_mesh(), "preview.png")           # close=True when saving
   if it isn't built, PicoPie falls back to pure-Python loops automatically.
 - Implicit SDF callbacks and per-element field set/get are inherently per-point —
   prefer native primitives + booleans, or the bulk `*_many` field APIs.
+- `scripts/perf_trend.py` records the fast-path speedups to `benchmarks/history.jsonl`
+  and flags regressions vs the last like-for-like baseline — run it (on a consistent
+  machine) before releases to catch gradual drift the 2× CI floor wouldn't.
 
 ## Lifetime
 
