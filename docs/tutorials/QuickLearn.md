@@ -111,6 +111,38 @@ with Viewer() as viewer:              # 'with' guarantees cleanup (close() is re
     viewer.screenshot("shot.png")
     # viewer.run()                    # blocks until the window closes
 
+# ---- PARAMETRIC SHAPES  (picogk.shapes: a Pythonic ShapeKernel port) -------
+from picogk.shapes import (Sphere, Box, Cylinder, Cone, Ring, Lens, Pipe,
+                           PipeSegment, Revolve, LocalFrame, Frames)
+# Build engineering primitives from a local frame; .to_voxels() / .to_mesh().
+f = LocalFrame(position=(0, 0, 0))            # position + orthonormal x/y/z axes
+ball   = Sphere(f, radius=10).to_voxels()
+box    = Box(f, length=20, width=10, depth=8).to_voxels()
+cyl    = Cylinder(f, length=30, radius=8).to_voxels()
+cone   = Cone(f, 30, start_radius=8, end_radius=2).to_voxels()
+ring   = Ring(f, ring_radius=20, radius=5).to_voxels()          # torus
+tube   = Pipe(f, length=30, inner_radius=4, outer_radius=8).to_voxels()  # hollow
+
+# Dimensions accept a number, a numpy lambda, or a Modulation (the parametric part):
+wavy   = Sphere(radius=lambda phi, theta: 20 + 3 * np.cos(6 * phi)).to_voxels()
+fluted = Cylinder(f, 40, radius=lambda phi, lr: 10 - 3 * np.cos(8 * lr)).to_voxels()
+
+# SPINED: follow a curve. Frames carry local frames along a spline.
+from picogk.shapes import ControlPointSpline
+spine  = Frames.aligned_to_x(ControlPointSpline([[0,0,0],[0,40,0],[0,50,30]]).points(500),
+                             target_x=(0, 1, 0))
+bent   = Pipe(frames=spine, inner_radius=3, outer_radius=6).to_voxels()
+
+# LATTICES + IMPLICITS (SDFs you can render or intersect):
+from picogk.shapes import LatticePipe, ImplicitGyroid
+lat    = LatticePipe(f, length=60, radius=8).to_voxels()        # tube of beams
+gyroid = ImplicitGyroid(unit_size=3, thickness_ratio=1).intersect(ball)  # TPMS-filled
+
+# MEASURE + COLOUR:
+from picogk.shapes import measure as me, Palette
+print(me.volume(ball), me.surface_area(ball), me.centre_of_gravity(ball))
+picogk.show(box) if False else None           # colours are RGB 0..1 (Palette.BLUE, ...)
+
 # ---- RELIABILITY -----------------------------------------------------------
 # Native errors are CATCHABLE, never fatal:
 from picogk._errors import PicoGKError, InvalidHandleError
@@ -129,4 +161,5 @@ picogk.shutdown()                     # end the session (also runs atexit)
 
 For deeper, narrative coverage see the tutorials:
 [Novice](novice/01-setup.md) · [Intermediate](intermediate/01-implicit-modeling.md) ·
-[Advanced](advanced/01-performance.md).
+[Advanced](advanced/01-performance.md) · [Shapes](shapes/01-parametric-shapes.md),
+and the [gallery](../gallery.md).

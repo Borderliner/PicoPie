@@ -101,6 +101,29 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] Main-thread affinity guard, use-after-close protection, leak-free lifetime
 - *Closes the last C# feature gap; headless usage still preferred for batch/CI.*
 
-## Phase 7 — Higher-level kernel (future, not started)
+## ✅ Phase 12 — ShapeKernel port (done, 0.3.0)
 
-- [ ] Port LEAP71 ShapeKernel (pure C# atop PicoGK) to Python on our core
+A full, Pythonic port of LEAP 71's [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel)
+(pure C# atop PicoGK) onto the PicoPie core — `picogk.shapes`. Pinned at tag
+`ShapeKernel-v2.1.0` and **parity-tested vs the reference C#** (geometry to float
+precision; `parity-shapekernel/` → `tests/golden/shapekernel_parity.json`).
+
+- [x] Support layer: `LocalFrame`/`Frames`, `LineModulation`/`SurfaceModulation`,
+      `VecOperations`, splines (`ControlPointSpline`/`Surface`, tangential/cylindrical),
+      `SplineOperations`, bisection, lists, grids, formulas
+- [x] All 10 base shapes: `Sphere`, `Box`, `Cylinder`, `Cone`, `Ring`, `Lens`,
+      `Pipe`, `PipeSegment`, `Revolve`, `LogoBox` — frames + modulations + spines,
+      exact-tessellation parity
+- [x] Lattices (`LatticePipe`/`LatticeManifold`) + lattice builders; implicit SDFs
+      (`ImplicitGyroid`/`Sphere`/`Genus`/`SuperEllipsoid`)
+- [x] Measurement (volume/area/centre-of-gravity/inertia), mesh utilities, CSV/export
+- [x] Visualization: colour palette/scales + `MeshPainter`
+- [x] Runnable example gallery (port of the upstream Examples) + headless integration test
+- [x] Hardening: finite-validation on shape dimensions; property-fuzzed; never aborts
+- *~50 parity checks + ~120 offline/fuzz tests; ruff + mypy clean.*
+
+## Phase 13 — Web viewer (future, not started)
+
+- [ ] A browser/WebGL viewer (three.js in an anywidget): compute in Python, stream
+      the mesh as glTF, render in the browser — fills the GLFW-needs-a-local-display
+      gap (works over SSH / Colab / cloud).

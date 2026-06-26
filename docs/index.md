@@ -42,6 +42,8 @@ is the identical, battle-tested kernel.
   pure-Python fallback
 - Headless visualization (`save_slice_png`, `save_slice_sheet`, `mesh_preview`)
 - Interactive viewer (`show`, `render_png`) — GLFW/OpenGL, orbit camera
+- Parametric shapes (`picogk.shapes`) — a Pythonic ShapeKernel port (frames,
+  modulations, splines, lattices, implicit SDFs, measurement), parity-tested vs C#
 - Hardened: native errors surface as catchable `PicoGKError` (never aborts)
 
 ## Learn it
@@ -50,7 +52,9 @@ is the identical, battle-tested kernel.
   [Novice](tutorials/novice/01-setup.md) (uv setup + install → shapes → booleans),
   [Intermediate](tutorials/intermediate/01-implicit-modeling.md) (implicit modeling,
   meshes/files, fields), [Advanced](tutorials/advanced/01-performance.md)
-  (performance, reliability, viewer).
+  (performance, reliability, viewer),
+  [Shapes](tutorials/shapes/01-parametric-shapes.md) (the parametric ShapeKernel layer).
+- **[Gallery](gallery.md)** — rendered parametric-shape examples.
 - **[QuickLearn](tutorials/QuickLearn.md)** — the whole API in one annotated file.
 - **[API reference](api.md)** — auto-generated from the source docstrings.
 

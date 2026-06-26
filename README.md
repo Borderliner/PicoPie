@@ -24,6 +24,10 @@ print(f"{vol:.1f} mm³")
 part.to_mesh().save_stl("part.stl")
 ```
 
+[![Parametric shapes gallery](docs/images/gallery/gyroid_sphere.png)](docs/gallery.md)
+
+*A gyroid-filled sphere built with `picogk.shapes` — see the [gallery](docs/gallery.md).*
+
 ## Install
 
 ```bash
@@ -47,7 +51,9 @@ x86-64), macOS (Apple Silicon), and Windows (x64)**.
   [Novice](docs/tutorials/novice/01-setup.md) (uv setup + install → shapes → booleans),
   [Intermediate](docs/tutorials/intermediate/01-implicit-modeling.md) (implicit modeling,
   meshes/files, fields), [Advanced](docs/tutorials/advanced/01-performance.md)
-  (performance, reliability, viewer)
+  (performance, reliability, viewer), and
+  [Shapes](docs/tutorials/shapes/01-parametric-shapes.md) (the parametric ShapeKernel layer)
+- **[Gallery](docs/gallery.md)** — rendered parametric-shape examples
 - **[QuickLearn](docs/tutorials/QuickLearn.md)** — the whole API in one annotated file
   (learn-x-in-y-minutes style)
 - **[API reference](docs/api.md)** · docs build with `mkdocs build` (`pip install -e ".[docs]"`)
@@ -65,6 +71,13 @@ x86-64), macOS (Apple Silicon), and Windows (x64)**.
 - **Headless viz** (`[viz]`) — `save_slice_png`, `save_slice_sheet`, `mesh_preview`.
 - **Interactive viewer** — `picogk.show(part)` (GLFW/OpenGL, orbit camera) and
   `render_png(part, "out.png")` for offscreen renders.
+- **Parametric shapes** (`picogk.shapes`) — a Pythonic port of LEAP 71's
+  [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel): `Sphere`/`Box`/
+  `Cylinder`/`Cone`/`Ring`/`Lens`/`Pipe`/`PipeSegment`/`Revolve`/`LogoBox` defined by
+  local frames + modulations, spines/splines, lattices, implicit SDFs (gyroid,
+  super-ellipsoid, …), measurement (volume/area/CoG/inertia), and colour/painter
+  helpers — **parity-tested vs C# ShapeKernel**. See the
+  [Shapes tutorials](docs/tutorials/shapes/01-parametric-shapes.md) and [gallery](docs/gallery.md).
 - **Fast path** — a compiled `_fastloop` extension (~13–28× faster bulk mesh/field
   transfer) with automatic pure-Python fallback.
 

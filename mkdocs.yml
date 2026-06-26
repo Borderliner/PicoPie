@@ -30,6 +30,11 @@ nav:
       - 1 · Performance: tutorials/advanced/01-performance.md
       - 2 · Reliability: tutorials/advanced/02-reliability.md
       - 3 · Viewer: tutorials/advanced/03-viewer.md
+    - Shapes (ShapeKernel):
+      - 1 · Parametric shapes: tutorials/shapes/01-parametric-shapes.md
+      - 2 · Frames & spines: tutorials/shapes/02-frames-and-spines.md
+      - 3 · Lattices & implicits: tutorials/shapes/03-lattices-and-implicits.md
+  - Gallery: gallery.md
   - API reference: api.md
 
 plugins:
