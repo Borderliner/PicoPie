@@ -20,13 +20,14 @@ Example::
 
 The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
 :mod:`~picogk.shapes.formulas`, :mod:`~picogk.shapes.lists`,
-:mod:`~picogk.shapes.grids`.
+:mod:`~picogk.shapes.grids`, :mod:`~picogk.shapes.spline_ops`,
+:mod:`~picogk.shapes.decimation`.
 """
 
-from . import formulas, grids, lists, vectors
+from . import decimation, formulas, grids, lists, spline_ops, vectors
 from ._base import BaseShape
 from .bisection import Bisection, BisectionError
-from .frames import LocalFrame
+from .frames import Frames, LocalFrame
 from .modulations import (
     Distribution,
     GenericContour,
@@ -34,19 +35,34 @@ from .modulations import (
     SurfaceModulation,
 )
 from .sphere import Sphere
+from .splines import (
+    ControlPointSpline,
+    ControlPointSurface,
+    CylindricalControlSpline,
+    ISpline,
+    TangentialControlSpline,
+)
 
 __all__ = [
     "BaseShape",
     "Bisection",
     "BisectionError",
+    "ControlPointSpline",
+    "ControlPointSurface",
+    "CylindricalControlSpline",
     "Distribution",
+    "Frames",
     "GenericContour",
+    "ISpline",
     "LineModulation",
     "LocalFrame",
     "Sphere",
     "SurfaceModulation",
+    "TangentialControlSpline",
+    "decimation",
     "formulas",
     "grids",
     "lists",
+    "spline_ops",
     "vectors",
 ]

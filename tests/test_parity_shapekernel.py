@@ -17,7 +17,17 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk.shapes import Bisection, LineModulation, LocalFrame, Sphere
+from picogk.shapes import (
+    Bisection,
+    ControlPointSpline,
+    ControlPointSurface,
+    Frames,
+    LineModulation,
+    LocalFrame,
+    Sphere,
+    TangentialControlSpline,
+)
+from picogk.shapes import spline_ops as SO
 from picogk.shapes import vectors as V
 
 GOLDEN = Path(__file__).parent / "golden" / "shapekernel_parity.json"
@@ -135,3 +145,46 @@ def test_bisection_matches_csharp():
     got = Bisection(lambda x: x * x, 0, 2, 2, epsilon=1e-4).solve()
     # both approximate sqrt(2); float32-vs-float64 paths agree within ~epsilon
     assert got == pytest.approx(G["bisection_sqrt2"], abs=2e-4)
+
+
+# --- 12c spline / frames parity ------------------------------------------------
+@needs_golden
+def test_control_point_spline_matches_csharp():
+    cps = ControlPointSpline([[0, 0, 0], [5, 10, 0], [10, 0, 0], [15, 10, 0]])
+    got = [cps.point_at(t).tolist() for t in (0, 0.25, 0.5, 0.75, 1)]
+    assert np.allclose(got, G["cps_samples"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_control_point_spline_closed_matches_csharp():
+    cps = ControlPointSpline([[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]], closed=True)
+    got = [cps.point_at(t).tolist() for t in (0, 0.25, 0.5, 0.75, 1)]
+    assert np.allclose(got, G["cps_closed_samples"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_control_point_surface_matches_csharp():
+    grid = np.array([[[u * 5.0, v * 5.0, u + v] for v in range(3)] for u in range(3)])
+    assert np.allclose(ControlPointSurface(grid).point_at(0.3, 0.7),
+                       G["surf_point"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_tangential_spline_matches_csharp():
+    tcs = TangentialControlSpline([0, 0, 0], [10, 0, 0], [0, 1, 0], [0, -1, 0])
+    assert np.allclose(tcs.points(5), G["tcs_samples"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_reparametrized_spline_matches_csharp():
+    rep = SO.reparametrized([[0, 0, 0], [10, 0, 0], [10, 10, 0]], 8)
+    assert len(rep) == G["reparam_len"]
+    assert np.allclose(rep, G["reparam_pts"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_frames_extrude_matches_csharp():
+    fr = Frames.extrude(20.0, LocalFrame((0, 0, 0)), spacing=1.0)
+    assert np.allclose(fr.spine_at(0.5), G["frames_spine_05"], rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(fr.local_z_at(0.5), G["frames_z_05"], rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(fr.local_x_at(0.5), G["frames_x_05"], rtol=MATH_RTOL, atol=MATH_ATOL)

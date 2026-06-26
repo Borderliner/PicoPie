@@ -77,4 +77,45 @@ r["line_mod_samples"] = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f }
 var oBis = new Bisection((x) => x * x, 0f, 2f, 2f, 1e-4f);
 r["bisection_sqrt2"] = oBis.fFindOptimalInput();
 
+// --- Splines (Phase 12c) ---
+var oCps = new ControlPointSpline(new List<Vector3>() {
+    new Vector3(0, 0, 0), new Vector3(5, 10, 0),
+    new Vector3(10, 0, 0), new Vector3(15, 10, 0) });
+r["cps_samples"] = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f }
+    .Select(t => V3(oCps.vecGetPointAt(t))).ToArray();
+
+var oCpsClosed = new ControlPointSpline(new List<Vector3>() {
+    new Vector3(0, 0, 0), new Vector3(10, 0, 0),
+    new Vector3(10, 10, 0), new Vector3(0, 10, 0) },
+    2, ControlPointSpline.EEnds.CLOSED);
+r["cps_closed_samples"] = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f }
+    .Select(t => V3(oCpsClosed.vecGetPointAt(t))).ToArray();
+
+var aGrid = new List<List<Vector3>>();
+for (int u = 0; u < 3; u++)
+{
+    var row = new List<Vector3>();
+    for (int v = 0; v < 3; v++)
+        row.Add(new Vector3(u * 5f, v * 5f, u + v));
+    aGrid.Add(row);
+}
+r["surf_point"] = V3(new ControlPointSurface(aGrid).vecGetPointAt(0.3f, 0.7f));
+
+var oTcs = new TangentialControlSpline(
+    new Vector3(0, 0, 0), new Vector3(10, 0, 0),
+    new Vector3(0, 1, 0), new Vector3(0, -1, 0));
+r["tcs_samples"] = oTcs.aGetPoints(5).Select(p => V3(p)).ToArray();
+
+var aRaw = new List<Vector3>() {
+    new Vector3(0, 0, 0), new Vector3(10, 0, 0), new Vector3(10, 10, 0) };
+var aRep = SplineOperations.aGetReparametrizedSpline(aRaw, (uint)8);
+r["reparam_len"] = aRep.Count;
+r["reparam_pts"] = aRep.Select(p => V3(p)).ToArray();
+
+// --- Frames: straight extrude (exact; const axes) ---
+var oFrames = new Frames(20f, new LocalFrame(new Vector3(0, 0, 0)), 1f);
+r["frames_spine_05"] = V3(oFrames.vecGetSpineAlongLength(0.5f));
+r["frames_z_05"] = V3(oFrames.vecGetLocalZAlongLength(0.5f));
+r["frames_x_05"] = V3(oFrames.vecGetLocalXAlongLength(0.5f));
+
 Console.WriteLine(JsonSerializer.Serialize(r));

@@ -2,8 +2,6 @@
 
 Smooth (tanh) transitions, random sampling, and Fibonacci point distributions.
 
-Note: the BSpline-based ``fTransFixed`` / ``vecTransFixed`` depend on
-``ControlPointSpline`` and are added in Phase 12c with the spline layer.
 Randomness here uses Python's ``random`` (pass an ``rng`` for reproducibility);
 unlike the deterministic geometry, random outputs are not parity-tested.
 """
@@ -14,6 +12,31 @@ import math
 import random as _random
 
 import numpy as np
+
+_trans_bspline = None
+
+
+def _get_trans_bspline():
+    """Cached open BSpline driving the fixed-endpoint transition (lazy import)."""
+    global _trans_bspline
+    if _trans_bspline is None:
+        from .splines import ControlPointSpline
+        _trans_bspline = ControlPointSpline(
+            [[0, 0, 0.0], [0, 0, 0.5], [1, 0, 0.5], [1, 0, 1.0]])
+    return _trans_bspline
+
+
+def trans_fixed(value1: float, value2: float, s: float) -> float:
+    """Blend two values across ``s`` along a fixed-endpoint BSpline transition."""
+    ratio = float(_get_trans_bspline().point_at(s)[0])
+    return value1 + ratio * (value2 - value1)
+
+
+def vec_trans_fixed(p1, p2, s: float) -> np.ndarray:
+    """Vector form of :func:`trans_fixed` (per-component, endpoints fixed)."""
+    p1 = np.asarray(p1, dtype=np.float64).reshape(3)
+    p2 = np.asarray(p2, dtype=np.float64).reshape(3)
+    return np.array([trans_fixed(p1[k], p2[k], s) for k in range(3)])
 
 
 def _normalized_tanh(s: float, transition_s: float, smooth: float) -> float:
