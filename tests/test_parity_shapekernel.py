@@ -19,11 +19,16 @@ import pytest
 import picogk
 from picogk.shapes import (
     Bisection,
+    Box,
+    Cone,
     ControlPointSpline,
     ControlPointSurface,
+    Cylinder,
     Frames,
+    Lens,
     LineModulation,
     LocalFrame,
+    Ring,
     Sphere,
     TangentialControlSpline,
 )
@@ -188,3 +193,40 @@ def test_frames_extrude_matches_csharp():
     assert np.allclose(fr.spine_at(0.5), G["frames_spine_05"], rtol=MATH_RTOL, atol=MATH_ATOL)
     assert np.allclose(fr.local_z_at(0.5), G["frames_z_05"], rtol=MATH_RTOL, atol=MATH_ATOL)
     assert np.allclose(fr.local_x_at(0.5), G["frames_x_05"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+# --- 12d frame-based shapes: voxel volume + surface bbox parity -----------------
+def _vol_bbox(shape):
+    vol, bbox = shape.to_voxels().calculate_properties()
+    return vol, [*bbox.min.tolist(), *bbox.max.tolist()]
+
+
+def _assert_shape(shape, vol_key, bbox_key):
+    vol, bbox = _vol_bbox(shape)
+    assert vol == pytest.approx(G[vol_key], rel=VOL_REL)
+    assert np.allclose(bbox, G[bbox_key], rtol=VOL_REL, atol=1e-3)
+
+
+@needs_golden
+def test_box_matches_csharp():
+    _assert_shape(Box(LocalFrame((0, 0, 0)), 20, 10, 8), "box_volume", "box_bbox")
+
+
+@needs_golden
+def test_cylinder_matches_csharp():
+    _assert_shape(Cylinder(LocalFrame((0, 0, 0)), 20, 10), "cyl_volume", "cyl_bbox")
+
+
+@needs_golden
+def test_cone_matches_csharp():
+    _assert_shape(Cone(LocalFrame((0, 0, 0)), 20, 10, 0), "cone_volume", "cone_bbox")
+
+
+@needs_golden
+def test_ring_matches_csharp():
+    _assert_shape(Ring(LocalFrame((0, 0, 0)), 30, 5), "ring_volume", "ring_bbox")
+
+
+@needs_golden
+def test_lens_matches_csharp():
+    _assert_shape(Lens(LocalFrame((0, 0, 0)), 4, 0, 10), "lens_volume", "lens_bbox")

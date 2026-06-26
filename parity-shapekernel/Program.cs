@@ -118,4 +118,27 @@ r["frames_spine_05"] = V3(oFrames.vecGetSpineAlongLength(0.5f));
 r["frames_z_05"] = V3(oFrames.vecGetLocalZAlongLength(0.5f));
 r["frames_x_05"] = V3(oFrames.vecGetLocalXAlongLength(0.5f));
 
+// --- frame-based shapes (Phase 12d): volume + surface bbox ---
+var oOriginFrame = new LocalFrame(new Vector3(0, 0, 0));
+
+new BaseBox(oOriginFrame, 20f, 10f, 8f).voxConstruct()
+    .CalculateProperties(out float boxVol, out BBox3 boxBox);
+r["box_volume"] = boxVol; r["box_bbox"] = Bb(boxBox);
+
+new BaseCylinder(oOriginFrame, 20f, 10f).voxConstruct()
+    .CalculateProperties(out float cylVol, out BBox3 cylBox);
+r["cyl_volume"] = cylVol; r["cyl_bbox"] = Bb(cylBox);
+
+new BaseCone(oOriginFrame, 20f, 10f, 0f).voxConstruct()
+    .CalculateProperties(out float coneVol, out BBox3 coneBox);
+r["cone_volume"] = coneVol; r["cone_bbox"] = Bb(coneBox);
+
+new BaseRing(oOriginFrame, 30f, 5f).voxConstruct()
+    .CalculateProperties(out float ringVol, out BBox3 ringBox);
+r["ring_volume"] = ringVol; r["ring_bbox"] = Bb(ringBox);
+
+new BaseLens(oOriginFrame, 4f, 0f, 10f).voxConstruct()
+    .CalculateProperties(out float lensVol, out BBox3 lensBox);
+r["lens_volume"] = lensVol; r["lens_bbox"] = Bb(lensBox);
+
 Console.WriteLine(JsonSerializer.Serialize(r));

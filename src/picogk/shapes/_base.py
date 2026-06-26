@@ -52,6 +52,13 @@ class BaseShape:
                 f"{pts.shape}, got {out.shape}")
         return out
 
+    def _xform_grid(self, grid: np.ndarray) -> np.ndarray:
+        """Apply :attr:`transform` to an ``(A, B, 3)`` grid of points."""
+        if self._transform is None:
+            return grid
+        a, b, _ = grid.shape
+        return self._apply_transform(grid.reshape(-1, 3)).reshape(a, b, 3)
+
     def to_mesh(self) -> Mesh:
         """Sample the shape's surface into a triangle mesh."""
         raise NotImplementedError
@@ -59,6 +66,48 @@ class BaseShape:
     def to_voxels(self) -> Voxels:
         """Construct the shape as voxels (renders :meth:`to_mesh`)."""
         return Voxels.from_mesh(self.to_mesh())
+
+
+class SurfaceMeshBuilder:
+    """Accumulates quad-grid surface patches into a single :class:`Mesh`.
+
+    Each ``add(grid, flip)`` triangulates an ``(A, B, 3)`` grid into two
+    triangles per cell with ShapeKernel's corner order
+    ``pt0=g[i,j] pt1=g[i,j+1] pt2=g[i+1,j+1] pt3=g[i,j+1]``; ``flip`` reverses
+    the winding (used to keep every face's normal pointing outward, which the
+    mesh->voxels rasteriser relies on).
+    """
+
+    def __init__(self) -> None:
+        self._verts: list[np.ndarray] = []
+        self._tris: list[np.ndarray] = []
+        self._offset = 0
+
+    def add(self, grid: np.ndarray, flip: bool = False) -> SurfaceMeshBuilder:
+        grid = np.ascontiguousarray(grid, dtype=np.float64)
+        if grid.ndim != 3 or grid.shape[2] != 3 or grid.shape[0] < 2 or grid.shape[1] < 2:
+            return self
+        p0 = grid[:-1, :-1].reshape(-1, 3)
+        p1 = grid[:-1, 1:].reshape(-1, 3)
+        p2 = grid[1:, 1:].reshape(-1, 3)
+        p3 = grid[1:, :-1].reshape(-1, 3)
+        nc = p0.shape[0]
+        v = np.empty((nc * 6, 3), dtype=np.float32)
+        if flip:
+            v[0::6], v[1::6], v[2::6] = p0, p2, p1
+            v[3::6], v[4::6], v[5::6] = p0, p3, p2
+        else:
+            v[0::6], v[1::6], v[2::6] = p0, p1, p2
+            v[3::6], v[4::6], v[5::6] = p0, p2, p3
+        self._verts.append(v)
+        self._tris.append(np.arange(nc * 6, dtype=np.int32).reshape(-1, 3) + self._offset)
+        self._offset += nc * 6
+        return self
+
+    def build(self) -> Mesh:
+        if not self._verts:
+            return Mesh.from_arrays(np.zeros((0, 3), np.float32), np.zeros((0, 3), np.int32))
+        return Mesh.from_arrays(np.concatenate(self._verts), np.concatenate(self._tris))
 
 
 def quad_grid_to_mesh(grid: np.ndarray) -> Mesh:

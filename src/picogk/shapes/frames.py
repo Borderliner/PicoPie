@@ -225,6 +225,15 @@ class Frames:
         return LocalFrame(self.spine_at(length_ratio),
                           self.local_z_at(length_ratio), self.local_x_at(length_ratio))
 
+    def samples(self, ratios):
+        """Sample ``(spine, local_x, local_y, local_z)`` at each ratio (each ``(N, 3)``)."""
+        ratios = np.atleast_1d(np.asarray(ratios, dtype=np.float64))
+        spine = np.array([self.spine_at(r) for r in ratios])
+        lx = np.array([self.local_x_at(r) for r in ratios])
+        ly = np.array([self.local_y_at(r) for r in ratios])
+        lz = np.array([self.local_z_at(r) for r in ratios])
+        return spine, lx, ly, lz
+
     @property
     def points(self) -> np.ndarray:
         return self._points

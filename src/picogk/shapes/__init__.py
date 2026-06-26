@@ -27,13 +27,18 @@ The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
 from . import decimation, formulas, grids, lists, spline_ops, vectors
 from ._base import BaseShape
 from .bisection import Bisection, BisectionError
+from .box import Box
+from .cylinder import Cone, Cylinder
 from .frames import Frames, LocalFrame
+from .lens import Lens
+from .logobox import LogoBox
 from .modulations import (
     Distribution,
     GenericContour,
     LineModulation,
     SurfaceModulation,
 )
+from .ring import Ring
 from .sphere import Sphere
 from .splines import (
     ControlPointSpline,
@@ -47,15 +52,21 @@ __all__ = [
     "BaseShape",
     "Bisection",
     "BisectionError",
+    "Box",
+    "Cone",
     "ControlPointSpline",
     "ControlPointSurface",
+    "Cylinder",
     "CylindricalControlSpline",
     "Distribution",
     "Frames",
     "GenericContour",
     "ISpline",
+    "Lens",
     "LineModulation",
     "LocalFrame",
+    "LogoBox",
+    "Ring",
     "Sphere",
     "SurfaceModulation",
     "TangentialControlSpline",
