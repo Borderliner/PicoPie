@@ -28,6 +28,8 @@ examples/_out/
 # C# parity harness build artifacts (the .cs/.csproj are tracked)
 parity/bin/
 parity/obj/
+parity-shapekernel/bin/
+parity-shapekernel/obj/
 
 # mkdocs build output
 site/

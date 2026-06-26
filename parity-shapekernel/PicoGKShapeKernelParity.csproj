@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- ShapeKernel golden-value generator: compiles the PINNED LEAP71 ShapeKernel
+       (native/LEAP71_ShapeKernel, tag ShapeKernel-v2.1.0) against the reference
+       C# PicoGK wrapper, run headlessly against the SAME native runtime PicoPie
+       binds — so any divergence is in our Python port, not the kernel.
+       Build/run with scripts/gen_shapekernel_golden.sh. Visualizations/ are
+       excluded (viewer/preview helpers, not needed for geometry goldens). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RollForward>Major</RollForward>
+    <AssemblyName>PicoGKShapeKernelParity</AssemblyName>
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../native/PicoGK_csharp/PicoGK.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../native/LEAP71_ShapeKernel/ShapeKernel/**/*.cs"
+             Exclude="../native/LEAP71_ShapeKernel/ShapeKernel/Visualizations/**/*.cs" />
+  </ItemGroup>
+
+</Project>
