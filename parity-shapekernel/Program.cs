@@ -177,6 +177,10 @@ r["imp_genus"] = aImpPts.Select(p => gen.fSignedDistance(p)).ToArray();
 var se = new ImplicitSuperEllipsoid(new Vector3(0, 0, 0), 5f, 5f, 5f, 1f, 1f);
 r["imp_superellipsoid"] = aImpPts.Select(p => se.fSignedDistance(p)).ToArray();
 
+// --- Measure: surface area (deterministic, same mesh as Python) ---
+r["sphere_surface_area"] = Measure.fGetSurfaceArea(
+    Voxels.voxSphere(lib, new Vector3(0, 0, 0), 10f));
+
 // --- supershape / polygon radii ---
 float[] aPhis = { 0f, 0.5f, 1.2f, 3.0f };
 r["supershape_custom"] = aPhis.Select(ph => Uf.fGetSuperShapeRadius(ph, 6f, 2f, 1.2f, 1.2f)).ToArray();

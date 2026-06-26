@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import picogk
+from picogk import Voxels
 from picogk.shapes import (
     Bisection,
     Box,
@@ -42,6 +43,7 @@ from picogk.shapes import (
     TangentialControlSpline,
 )
 from picogk.shapes import formulas as FM
+from picogk.shapes import measure as ME
 from picogk.shapes import spline_ops as SO
 from picogk.shapes import vectors as V
 
@@ -305,6 +307,13 @@ def test_implicit_sdf_values_match_csharp():
 
 
 # --- 12f supershape / polygon radii --------------------------------------------
+@needs_golden
+def test_surface_area_matches_csharp():
+    # same primitive sphere + same native mesh as C# -> areas match to float precision
+    area = ME.surface_area(Voxels.sphere(radius=10))
+    assert area == pytest.approx(G["sphere_surface_area"], rel=VOL_REL)
+
+
 @needs_golden
 def test_supershape_and_polygon_radii_match_csharp():
     assert np.allclose([FM.super_shape_radius(p, 6, 2, 1.2, 1.2) for p in _PHIS],
