@@ -17,17 +17,36 @@ Example::
 
     picogk.init(0.5)
     part = Sphere(LocalFrame(position=(0, 0, 0)), radius=10).to_voxels()
+
+The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
+:mod:`~picogk.shapes.formulas`, :mod:`~picogk.shapes.lists`,
+:mod:`~picogk.shapes.grids`.
 """
 
+from . import formulas, grids, lists, vectors
 from ._base import BaseShape
+from .bisection import Bisection, BisectionError
 from .frames import LocalFrame
-from .modulations import LineModulation, SurfaceModulation
+from .modulations import (
+    Distribution,
+    GenericContour,
+    LineModulation,
+    SurfaceModulation,
+)
 from .sphere import Sphere
 
 __all__ = [
     "BaseShape",
+    "Bisection",
+    "BisectionError",
+    "Distribution",
+    "GenericContour",
     "LineModulation",
     "LocalFrame",
     "Sphere",
     "SurfaceModulation",
+    "formulas",
+    "grids",
+    "lists",
+    "vectors",
 ]

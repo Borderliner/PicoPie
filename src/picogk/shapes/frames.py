@@ -4,11 +4,16 @@ A :class:`LocalFrame` is a position plus an orthonormal ``(x, y, z)`` basis,
 with ``y = cross(z, x)`` (a right-handed system), exactly as in ShapeKernel.
 Shapes are defined in their frame's local axes, so moving/orienting the frame
 moves/orients the shape.
+
+(The ``Frames`` spine — a field of frames along a path — is added in Phase 12c
+together with the spline layer it is built on.)
 """
 
 from __future__ import annotations
 
 import numpy as np
+
+from . import vectors
 
 
 def _vec(v) -> np.ndarray:
@@ -25,14 +30,6 @@ def _normalize(v: np.ndarray, name: str) -> np.ndarray:
     return v / n
 
 
-def _orthogonal_dir(z: np.ndarray) -> np.ndarray:
-    """An arbitrary unit vector orthogonal to ``z`` (Gram-Schmidt off the least
-    aligned cardinal axis). Exact parity with ShapeKernel's
-    ``VecOperations.vecGetOrthogonalDir`` is refined in Phase 12b."""
-    axis = np.eye(3)[int(np.argmin(np.abs(z)))]
-    return _normalize(axis - np.dot(axis, z) * z, "orthogonal direction")
-
-
 class LocalFrame:
     """A position and a right-handed orthonormal basis."""
 
@@ -45,7 +42,7 @@ class LocalFrame:
             x = np.array([1.0, 0.0, 0.0])
         elif local_x is None:
             z = _normalize(_vec(local_z), "local_z")
-            x = _orthogonal_dir(z)
+            x = vectors.orthogonal_dir(z)
         else:
             z = _normalize(_vec(local_z), "local_z")
             x = _normalize(_vec(local_x), "local_x")
@@ -70,9 +67,26 @@ class LocalFrame:
     def local_z(self) -> np.ndarray:
         return self._z
 
+    @staticmethod
+    def get_local_y(local_z, local_x) -> np.ndarray:
+        """Right-handed Y from Z and X (``cross(z, x)``)."""
+        return np.cross(_vec(local_z), _vec(local_x))
+
     def translated(self, offset) -> LocalFrame:
-        """A copy of this frame moved by ``offset`` (axes unchanged)."""
+        """A copy moved by ``offset`` (axes unchanged)."""
         return LocalFrame(self._pos + _vec(offset), self._z, self._x)
+
+    def rotated(self, angle: float, axis) -> LocalFrame:
+        """A copy with all axes rotated by ``angle`` (rad) about ``axis`` (position fixed)."""
+        new_x = vectors.rotate_around_axis(self._x, angle, axis)
+        new_z = vectors.rotate_around_axis(self._z, angle, axis)
+        return LocalFrame(self._pos, new_z, new_x)
+
+    def inverted(self, mirror_z: bool, mirror_x: bool) -> LocalFrame:
+        """A copy with Z and/or X negated (position fixed)."""
+        new_z = -self._z if mirror_z else self._z
+        new_x = -self._x if mirror_x else self._x
+        return LocalFrame(self._pos, new_z, new_x)
 
     def __repr__(self) -> str:
         return (f"LocalFrame(position={self._pos.tolist()}, "

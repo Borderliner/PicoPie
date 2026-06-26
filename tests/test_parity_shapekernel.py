@@ -17,7 +17,8 @@ import numpy as np
 import pytest
 
 import picogk
-from picogk.shapes import LocalFrame, Sphere
+from picogk.shapes import Bisection, LineModulation, LocalFrame, Sphere
+from picogk.shapes import vectors as V
 
 GOLDEN = Path(__file__).parent / "golden" / "shapekernel_parity.json"
 G = json.loads(GOLDEN.read_text()) if GOLDEN.exists() else {}
@@ -72,3 +73,65 @@ def test_sphere_bbox_matches_csharp():
     _, bbox = vox.calculate_properties()
     got = [*bbox.min.tolist(), *bbox.max.tolist()]
     assert np.allclose(got, G["sphere_bbox"], rtol=VOL_REL, atol=1e-3)
+
+
+# --- 12b math-core parity (float32 C# vs float64 Python; tight tolerance) -------
+MATH_RTOL, MATH_ATOL = 1e-5, 1e-6
+
+
+@needs_golden
+def test_vec_rotate_around_axis_matches_csharp():
+    got = V.rotate_around_axis([1, 0, 0], np.pi / 3, [0, 0, 1])
+    assert np.allclose(got, G["vec_rotate_axis"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_vec_orthogonal_dir_matches_csharp():
+    got = V.orthogonal_dir([0.3, 0.4, 0.5])
+    assert np.allclose(got, G["vec_orthogonal_dir"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_vec_angles_match_csharp():
+    assert V.angle_between([1, 0, 0], [1, 1, 0]) == pytest.approx(
+        G["vec_angle_between"], abs=MATH_ATOL)
+    assert V.signed_angle_between([1, 0, 0], [0, 1, 0], [0, 0, 1]) == pytest.approx(
+        G["vec_signed_angle"], abs=MATH_ATOL)
+
+
+@needs_golden
+def test_vec_interpolations_match_csharp():
+    assert np.allclose(V.cylindrical_interpolation([5, 0, 0], [0, 5, 2], 0.3),
+                       G["vec_cyl_interp"], rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(V.spherical_interpolation([5, 0, 0], [0, 5, 2], 0.3),
+                       G["vec_sph_interp"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_vec_coord_points_match_csharp():
+    assert np.allclose(V.cyl_point(5, np.pi / 4, 2), G["vec_cyl_point"],
+                       rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(V.sph_point(5, np.pi / 4, np.pi / 6), G["vec_sph_point"],
+                       rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_local_frame_tilted_axes_match_csharp():
+    f = LocalFrame((0, 0, 0), local_z=[0.3, 0.4, 0.5])
+    assert np.allclose(f.local_x, G["frame_local_x"], rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(f.local_y, G["frame_local_y"], rtol=MATH_RTOL, atol=MATH_ATOL)
+    assert np.allclose(f.local_z, G["frame_local_z"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_line_modulation_samples_match_csharp():
+    lm = LineModulation.from_points([[0, 0, 0], [0.5, 2, 0], [1, 1, 0]], values="y", axis="x")
+    got = [float(lm(t)) for t in (0, 0.25, 0.5, 0.75, 1)]
+    assert np.allclose(got, G["line_mod_samples"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_bisection_matches_csharp():
+    got = Bisection(lambda x: x * x, 0, 2, 2, epsilon=1e-4).solve()
+    # both approximate sqrt(2); float32-vs-float64 paths agree within ~epsilon
+    assert got == pytest.approx(G["bisection_sqrt2"], abs=2e-4)
