@@ -104,7 +104,9 @@ def test_append_combines_triangles():
 
 # --- io_utils ------------------------------------------------------------------
 def test_export_path():
-    assert io_utils.export_path("stl", "part", "/tmp") == "/tmp/part.stl"
+    # os.path.join uses the platform separator, so don't hardcode "/" (Windows uses "\")
+    p = io_utils.export_path("stl", "part", "/tmp")
+    assert p.startswith("/tmp") and p.endswith("part.stl")
     assert io_utils.export_path("VDB", "x").endswith("x.vdb")
 
 
