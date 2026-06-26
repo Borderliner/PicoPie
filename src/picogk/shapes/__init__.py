@@ -25,6 +25,7 @@ The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
 """
 
 from . import (
+    colors,
     decimation,
     formulas,
     functions,
@@ -33,12 +34,14 @@ from . import (
     lists,
     measure,
     mesh_utils,
+    painter,
     spline_ops,
     vectors,
 )
 from ._base import BaseShape
 from .bisection import Bisection, BisectionError
 from .box import Box
+from .colors import Palette
 from .cylinder import Cone, Cylinder
 from .frames import Frames, LocalFrame
 from .implicits import (
@@ -94,6 +97,7 @@ __all__ = [
     "LineModulation",
     "LocalFrame",
     "LogoBox",
+    "Palette",
     "Pipe",
     "PipeSegment",
     "Revolve",
@@ -101,6 +105,7 @@ __all__ = [
     "Sphere",
     "SurfaceModulation",
     "TangentialControlSpline",
+    "colors",
     "decimation",
     "formulas",
     "functions",
@@ -109,6 +114,7 @@ __all__ = [
     "lists",
     "measure",
     "mesh_utils",
+    "painter",
     "spline_ops",
     "vectors",
 ]
