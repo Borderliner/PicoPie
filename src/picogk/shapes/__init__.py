@@ -38,6 +38,8 @@ from .modulations import (
     LineModulation,
     SurfaceModulation,
 )
+from .pipe import Pipe, PipeSegment
+from .revolve import Revolve
 from .ring import Ring
 from .sphere import Sphere
 from .splines import (
@@ -66,6 +68,9 @@ __all__ = [
     "LineModulation",
     "LocalFrame",
     "LogoBox",
+    "Pipe",
+    "PipeSegment",
+    "Revolve",
     "Ring",
     "Sphere",
     "SurfaceModulation",

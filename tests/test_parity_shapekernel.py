@@ -28,6 +28,9 @@ from picogk.shapes import (
     Lens,
     LineModulation,
     LocalFrame,
+    Pipe,
+    PipeSegment,
+    Revolve,
     Ring,
     Sphere,
     TangentialControlSpline,
@@ -230,3 +233,27 @@ def test_ring_matches_csharp():
 @needs_golden
 def test_lens_matches_csharp():
     _assert_shape(Lens(LocalFrame((0, 0, 0)), 4, 0, 10), "lens_volume", "lens_bbox")
+
+
+# --- 12e spined / revolve shapes -----------------------------------------------
+@needs_golden
+def test_pipe_matches_csharp():
+    _assert_shape(Pipe(LocalFrame((0, 0, 0)), 20, 5, 10), "pipe_volume", "pipe_bbox")
+
+
+@needs_golden
+def test_pipe_segment_matches_csharp():
+    seg = PipeSegment(LocalFrame((0, 0, 0)), 20, 5, 10, start=0, end=np.pi / 2,
+                      method="start_end")
+    _assert_shape(seg, "seg_volume", "seg_bbox")
+
+
+@needs_golden
+def test_revolve_matches_csharp():
+    # rotation-heavy + a degenerate axis (inner=0): float32-vs-float64 paths
+    # agree to ~1e-3 rather than the 1e-4 the other shapes hit.
+    rev = Revolve(LocalFrame((0, 0, 0)), Frames.extrude(20, LocalFrame((0, 0, 0))), 0, 5)
+    vol, bbox = rev.to_voxels().calculate_properties()
+    assert vol == pytest.approx(G["revolve_volume"], rel=1e-3)
+    got = [*bbox.min.tolist(), *bbox.max.tolist()]
+    assert np.allclose(got, G["revolve_bbox"], rtol=1e-3, atol=5e-3)

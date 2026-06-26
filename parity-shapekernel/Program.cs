@@ -141,4 +141,20 @@ new BaseLens(oOriginFrame, 4f, 0f, 10f).voxConstruct()
     .CalculateProperties(out float lensVol, out BBox3 lensBox);
 r["lens_volume"] = lensVol; r["lens_bbox"] = Bb(lensBox);
 
+// --- spined / revolve shapes (Phase 12e) ---
+new BasePipe(oOriginFrame, 20f, 5f, 10f).voxConstruct()
+    .CalculateProperties(out float pipeVol, out BBox3 pipeBox);
+r["pipe_volume"] = pipeVol; r["pipe_bbox"] = Bb(pipeBox);
+
+new BasePipeSegment(oOriginFrame, 20f, 5f, 10f,
+    new LineModulation(0f), new LineModulation(MathF.PI / 2f),
+    BasePipeSegment.EMethod.START_END).voxConstruct()
+    .CalculateProperties(out float segVol, out BBox3 segBox);
+r["seg_volume"] = segVol; r["seg_bbox"] = Bb(segBox);
+
+var oRevFrames = new Frames(20f, new LocalFrame(new Vector3(0, 0, 0)));
+new BaseRevolve(new LocalFrame(new Vector3(0, 0, 0)), oRevFrames, 0f, 5f).voxConstruct()
+    .CalculateProperties(out float revVol, out BBox3 revBox);
+r["revolve_volume"] = revVol; r["revolve_bbox"] = Bb(revBox);
+
 Console.WriteLine(JsonSerializer.Serialize(r));
