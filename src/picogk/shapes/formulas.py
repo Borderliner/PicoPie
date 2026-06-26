@@ -102,3 +102,39 @@ def fibonacci_sphere_points(outer_radius: float, n_samples: int) -> np.ndarray:
         np.sin(angle) * np.sin(phi),
         np.cos(phi),
     ])
+
+
+# --- supershape / polygon radii (port of SuperShapes / PolygonalShapes) --------
+#: Preset supershape parameters ``(m, n1, n2, n3)`` (``"round"`` -> unit circle).
+SUPER_SHAPES = {"hex": (6.0, 2.0, 1.2, 1.2), "quad": (4.0, 20.0, 15.0, 15.0),
+                "tri": (3.0, 3.0, 4.0, 4.0)}
+
+
+def super_shape_radius(phi, m: float, n1: float, n2: float, n3: float):
+    """Superformula radius at angle ``phi`` (reference radius 1; vectorised)."""
+    phi = np.asarray(phi, dtype=np.float64)
+    a = np.abs(np.cos(0.25 * m * phi)) ** n2
+    b = np.abs(np.sin(0.25 * m * phi)) ** n3
+    return (a + b) ** (-1.0 / n1)
+
+
+def super_shape_radius_preset(phi, kind: str = "round"):
+    """Superformula radius for a named preset (``round|hex|quad|tri``)."""
+    if kind == "round":
+        return np.ones_like(np.asarray(phi, dtype=np.float64))
+    return super_shape_radius(phi, *SUPER_SHAPES[kind])
+
+
+def polygon_radius(phi, n: int):
+    """Radius of a regular ``n``-gon (inscribed in the unit circle) at ``phi``."""
+    phi = np.asarray(phi, dtype=np.float64)
+    d_phi = np.mod(phi, 2.0 * math.pi / n)
+    return np.cos(math.pi / n) / np.cos(d_phi - math.pi / n)
+
+
+def polygon_radius_preset(phi, kind: str = "round"):
+    """Regular-polygon radius for a named preset (``round|hex|quad|tri``)."""
+    sides = {"hex": 6, "quad": 4, "tri": 3}
+    if kind == "round":
+        return np.ones_like(np.asarray(phi, dtype=np.float64))
+    return polygon_radius(phi, sides[kind])

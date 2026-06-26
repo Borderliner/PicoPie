@@ -157,4 +157,31 @@ new BaseRevolve(new LocalFrame(new Vector3(0, 0, 0)), oRevFrames, 0f, 5f).voxCon
     .CalculateProperties(out float revVol, out BBox3 revBox);
 r["revolve_volume"] = revVol; r["revolve_bbox"] = Bb(revBox);
 
+// --- lattice shapes (Phase 12f) ---
+new LatticePipe(oOriginFrame, 20f, 5f).voxConstruct()
+    .CalculateProperties(out float latPipeVol, out BBox3 latPipeBox);
+r["latpipe_volume"] = latPipeVol; r["latpipe_bbox"] = Bb(latPipeBox);
+
+new LatticeManifold(oOriginFrame, 20f, 5f, 45f).voxConstruct()
+    .CalculateProperties(out float latManVol, out BBox3 latManBox);
+r["latman_volume"] = latManVol; r["latman_bbox"] = Bb(latManBox);
+
+// --- implicit signed-distance values ---
+var aImpPts = new[] { new Vector3(0, 0, 0), new Vector3(3, 1, 2), new Vector3(5, 5, 5) };
+var gyr = new ImplicitGyroid(5f, 0.3f);
+r["imp_gyroid"] = aImpPts.Select(p => gyr.fSignedDistance(p)).ToArray();
+var impSphere = new ImplicitSphere(new Vector3(0, 0, 0), 8f);
+r["imp_sphere"] = aImpPts.Select(p => impSphere.fSignedDistance(p)).ToArray();
+var gen = new ImplicitGenus(0.5f);
+r["imp_genus"] = aImpPts.Select(p => gen.fSignedDistance(p)).ToArray();
+var se = new ImplicitSuperEllipsoid(new Vector3(0, 0, 0), 5f, 5f, 5f, 1f, 1f);
+r["imp_superellipsoid"] = aImpPts.Select(p => se.fSignedDistance(p)).ToArray();
+
+// --- supershape / polygon radii ---
+float[] aPhis = { 0f, 0.5f, 1.2f, 3.0f };
+r["supershape_custom"] = aPhis.Select(ph => Uf.fGetSuperShapeRadius(ph, 6f, 2f, 1.2f, 1.2f)).ToArray();
+r["supershape_hex"] = aPhis.Select(ph => Uf.fGetSuperShapeRadius(ph, Uf.ESuperShape.HEX)).ToArray();
+r["polygon_custom"] = aPhis.Select(ph => Uf.fGetPolygonRadius(ph, 6u)).ToArray();
+r["polygon_tri"] = aPhis.Select(ph => Uf.fGetPolygonRadius(ph, Uf.EPolygon.TRI)).ToArray();
+
 Console.WriteLine(JsonSerializer.Serialize(r));

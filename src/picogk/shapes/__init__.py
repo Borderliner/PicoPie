@@ -24,12 +24,19 @@ The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
 :mod:`~picogk.shapes.decimation`.
 """
 
-from . import decimation, formulas, grids, lists, spline_ops, vectors
+from . import decimation, formulas, functions, grids, lists, spline_ops, vectors
 from ._base import BaseShape
 from .bisection import Bisection, BisectionError
 from .box import Box
 from .cylinder import Cone, Cylinder
 from .frames import Frames, LocalFrame
+from .implicits import (
+    ImplicitGenus,
+    ImplicitGyroid,
+    ImplicitSphere,
+    ImplicitSuperEllipsoid,
+)
+from .lattice_shapes import LatticeManifold, LatticePipe
 from .lens import Lens
 from .logobox import LogoBox
 from .modulations import (
@@ -64,6 +71,12 @@ __all__ = [
     "Frames",
     "GenericContour",
     "ISpline",
+    "ImplicitGenus",
+    "ImplicitGyroid",
+    "ImplicitSphere",
+    "ImplicitSuperEllipsoid",
+    "LatticeManifold",
+    "LatticePipe",
     "Lens",
     "LineModulation",
     "LocalFrame",
@@ -77,6 +90,7 @@ __all__ = [
     "TangentialControlSpline",
     "decimation",
     "formulas",
+    "functions",
     "grids",
     "lists",
     "spline_ops",

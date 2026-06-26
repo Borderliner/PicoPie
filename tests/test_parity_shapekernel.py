@@ -25,6 +25,12 @@ from picogk.shapes import (
     ControlPointSurface,
     Cylinder,
     Frames,
+    ImplicitGenus,
+    ImplicitGyroid,
+    ImplicitSphere,
+    ImplicitSuperEllipsoid,
+    LatticeManifold,
+    LatticePipe,
     Lens,
     LineModulation,
     LocalFrame,
@@ -35,8 +41,12 @@ from picogk.shapes import (
     Sphere,
     TangentialControlSpline,
 )
+from picogk.shapes import formulas as FM
 from picogk.shapes import spline_ops as SO
 from picogk.shapes import vectors as V
+
+_IMP_PTS = [(0, 0, 0), (3, 1, 2), (5, 5, 5)]
+_PHIS = [0.0, 0.5, 1.2, 3.0]
 
 GOLDEN = Path(__file__).parent / "golden" / "shapekernel_parity.json"
 G = json.loads(GOLDEN.read_text()) if GOLDEN.exists() else {}
@@ -257,3 +267,51 @@ def test_revolve_matches_csharp():
     assert vol == pytest.approx(G["revolve_volume"], rel=1e-3)
     got = [*bbox.min.tolist(), *bbox.max.tolist()]
     assert np.allclose(got, G["revolve_bbox"], rtol=1e-3, atol=5e-3)
+
+
+# --- 12f lattice shapes --------------------------------------------------------
+@needs_golden
+def test_lattice_pipe_matches_csharp():
+    vol, bbox = LatticePipe(LocalFrame((0, 0, 0)), 20, 5).to_voxels().calculate_properties()
+    assert vol == pytest.approx(G["latpipe_volume"], rel=VOL_REL)
+    # a voxelised lattice's surface bbox is sub-voxel sensitive to the
+    # float32 (C#) vs float64 (us) beam endpoints; volume is the strict check.
+    got = [*bbox.min.tolist(), *bbox.max.tolist()]
+    assert np.allclose(got, G["latpipe_bbox"], atol=0.05)
+
+
+@needs_golden
+def test_lattice_manifold_matches_csharp():
+    # lattice beams + tiny tear-drop tips -> slightly float-sensitive (~1e-3).
+    vox = LatticeManifold(LocalFrame((0, 0, 0)), 20, 5, 45).to_voxels()
+    vol, bbox = vox.calculate_properties()
+    assert vol == pytest.approx(G["latman_volume"], rel=2e-3)
+    got = [*bbox.min.tolist(), *bbox.max.tolist()]
+    assert np.allclose(got, G["latman_bbox"], rtol=2e-3, atol=5e-3)
+
+
+# --- 12f implicit signed-distance functions ------------------------------------
+@needs_golden
+def test_implicit_sdf_values_match_csharp():
+    cases = [
+        (ImplicitGyroid(5, 0.3), "imp_gyroid"),
+        (ImplicitSphere((0, 0, 0), 8), "imp_sphere"),
+        (ImplicitGenus(0.5), "imp_genus"),
+        (ImplicitSuperEllipsoid((0, 0, 0), 5, 5, 5, 1, 1), "imp_superellipsoid"),
+    ]
+    for sdf, key in cases:
+        got = [sdf(*p) for p in _IMP_PTS]
+        assert np.allclose(got, G[key], rtol=1e-4, atol=1e-4), key
+
+
+# --- 12f supershape / polygon radii --------------------------------------------
+@needs_golden
+def test_supershape_and_polygon_radii_match_csharp():
+    assert np.allclose([FM.super_shape_radius(p, 6, 2, 1.2, 1.2) for p in _PHIS],
+                       G["supershape_custom"], rtol=1e-5, atol=1e-6)
+    assert np.allclose([FM.super_shape_radius_preset(p, "hex") for p in _PHIS],
+                       G["supershape_hex"], rtol=1e-5, atol=1e-6)
+    assert np.allclose([FM.polygon_radius(p, 6) for p in _PHIS],
+                       G["polygon_custom"], rtol=1e-5, atol=1e-6)
+    assert np.allclose([FM.polygon_radius_preset(p, "tri") for p in _PHIS],
+                       G["polygon_tri"], rtol=1e-5, atol=1e-6)
