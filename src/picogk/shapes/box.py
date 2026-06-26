@@ -42,12 +42,11 @@ class Box(BaseShape):
 
         w_const = self._width.const_value is not None
         d_const = self._depth.const_value is not None
-        if spine:
-            ws, ds, ls = 5, 5, 500
-        else:
-            ws = 5 if w_const else 500
-            ds = 5 if d_const else 500
-            ls = 5 if (w_const and d_const) else 500
+        # a modulated width/depth (or a spine) raises that dimension's + the
+        # length tessellation to 500, matching C#'s SetWidth/SetDepth/spine ctor.
+        ws = 5 if w_const else 500
+        ds = 5 if d_const else 500
+        ls = 500 if (spine or not w_const or not d_const) else 5
         self.width_steps = max(5, ws if width_steps is None else width_steps)
         self.depth_steps = max(5, ds if depth_steps is None else depth_steps)
         self.length_steps = max(5, ls if length_steps is None else length_steps)

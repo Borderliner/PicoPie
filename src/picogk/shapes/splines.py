@@ -50,7 +50,11 @@ def basis(knot, t: float, i: int, degree: int, error: float = _ERROR) -> float:
 
 def _knot_vector(n_control: int, degree: int, clamp: bool) -> np.ndarray:
     n_knots = n_control + degree + 1
-    valid_range = n_knots - degree - (degree + 1)
+    valid_range = n_knots - degree - (degree + 1)   # = n_control - degree
+    if valid_range < 1:
+        raise ValueError(
+            f"a degree-{degree} B-spline needs more than {degree} control points "
+            f"(got {n_control})")
     d = 1.0 / valid_range
     k = -d * degree + d * np.arange(n_knots, dtype=np.float64)
     return np.clip(k, 0.0, 1.0) if clamp else k

@@ -21,6 +21,7 @@ Marked ``fuzz`` -> excluded from the per-wheel CI test-command (slow); run local
 from __future__ import annotations
 
 import contextlib
+import math
 
 import numpy as np
 import pytest
@@ -34,6 +35,15 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from picogk import Mesh, Metadata, ScalarField, VdbFile, Voxels
+from picogk.shapes import (
+    Box,
+    Cylinder,
+    Lens,
+    LocalFrame,
+    Pipe,
+    Ring,
+    Sphere,
+)
 
 pytestmark = pytest.mark.fuzz
 
@@ -180,3 +190,62 @@ def test_fuzz_vdb_get(i):
     f.add_voxels("v", Voxels.sphere(radius=4.0))
     _containable(lambda: f.get(i))
     _containable(lambda: f.field_type(i))
+
+
+# --- picogk.shapes: every build either yields finite-volume voxels or raises ---
+# (B1 hardening rejects non-finite dimensions; the never-abort guard backstops
+# anything else.) Sizing params are bounded (NaN/0/negative still mixed in) and
+# step counts kept small so this stays an abort test, not an OOM/time test.
+FUZZ_SHAPE = settings(max_examples=30, deadline=None)
+sdim = st.one_of(st.sampled_from([float("nan"), 0.0, -5.0]),
+                 st.floats(min_value=1, max_value=25, allow_infinity=False, width=32))
+
+
+def _shape_finite(make) -> None:
+    """Build the shape; raising is fine. If it builds, volume must be finite >= 0."""
+    try:
+        vox = make()
+    except Exception:
+        return
+    vol, _ = vox.calculate_properties()
+    assert math.isfinite(vol) and vol >= 0.0
+
+
+@FUZZ_SHAPE
+@given(p=spt, r=sdim)
+def test_fuzz_sphere_shape(p, r):
+    _shape_finite(lambda: Sphere(LocalFrame(p), radius=r,
+                                 azimuthal_steps=24, polar_steps=24).to_voxels())
+
+
+@FUZZ_SHAPE
+@given(p=spt, w=sdim, d=sdim)
+def test_fuzz_box_shape(p, w, d):
+    _shape_finite(lambda: Box(LocalFrame(p), 20, w, d).to_voxels())
+
+
+@FUZZ_SHAPE
+@given(p=spt, r=sdim)
+def test_fuzz_cylinder_shape(p, r):
+    _shape_finite(lambda: Cylinder(LocalFrame(p), 20, r,
+                                   polar_steps=24, radial_steps=5).to_voxels())
+
+
+@FUZZ_SHAPE
+@given(p=spt, ri=sdim, ro=sdim)
+def test_fuzz_pipe_shape(p, ri, ro):
+    _shape_finite(lambda: Pipe(LocalFrame(p), 20, ri, ro, polar_steps=24).to_voxels())
+
+
+@FUZZ_SHAPE
+@given(p=spt, rr=sdim, tube=sdim)
+def test_fuzz_ring_shape(p, rr, tube):
+    _shape_finite(lambda: Ring(LocalFrame(p), rr, tube,
+                               radial_steps=40, polar_steps=40).to_voxels())
+
+
+@FUZZ_SHAPE
+@given(p=spt, h=sdim, ro=sdim)
+def test_fuzz_lens_shape(p, h, ro):
+    _shape_finite(lambda: Lens(LocalFrame(p), h, 0, ro,
+                               polar_steps=40, radial_steps=5).to_voxels())

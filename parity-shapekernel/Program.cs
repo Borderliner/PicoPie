@@ -181,6 +181,45 @@ r["imp_superellipsoid"] = aImpPts.Select(p => se.fSignedDistance(p)).ToArray();
 r["sphere_surface_area"] = Measure.fGetSurfaceArea(
     Voxels.voxSphere(lib, new Vector3(0, 0, 0), 10f));
 
+// --- Frames alignment modes (Phase 12j) ---
+var aSpinePts = new List<Vector3>() {
+    new Vector3(0, 0, 0), new Vector3(10, 0, 0),
+    new Vector3(10, 10, 0), new Vector3(20, 10, 0) };
+var oFramesCyl = new Frames(aSpinePts, Frames.EFrameType.CYLINDRICAL);
+r["frames_cyl_spine05"] = V3(oFramesCyl.vecGetSpineAlongLength(0.5f));
+r["frames_cyl_z05"] = V3(oFramesCyl.vecGetLocalZAlongLength(0.5f));
+r["frames_cyl_x05"] = V3(oFramesCyl.vecGetLocalXAlongLength(0.5f));
+var oFramesMin = new Frames(aSpinePts, Frames.EFrameType.MIN_ROTATION);
+r["frames_min_x05"] = V3(oFramesMin.vecGetLocalXAlongLength(0.5f));
+var oFramesTx = new Frames(aSpinePts, new Vector3(0, 0, 1));   // targetX = +Z
+r["frames_tx_spine05"] = V3(oFramesTx.vecGetSpineAlongLength(0.5f));
+r["frames_tx_x05"] = V3(oFramesTx.vecGetLocalXAlongLength(0.5f));
+
+// --- PipeSegment (mid_range method) ---
+new BasePipeSegment(oOriginFrame, 20f, 5f, 10f,
+    new LineModulation(0.5f * MathF.PI), new LineModulation(0.5f * MathF.PI),
+    BasePipeSegment.EMethod.MID_RANGE).voxConstruct()
+    .CalculateProperties(out float segMrVol, out BBox3 segMrBox);
+r["seg_midrange_volume"] = segMrVol; r["seg_midrange_bbox"] = Bb(segMrBox);
+
+// --- CylindricalControlSpline ---
+var oCcs = new CylindricalControlSpline(new Vector3(5, 0, 0));
+oCcs.AddRelativeStep(CylindricalControlSpline.EDirection.Z, 10f);
+oCcs.AddRelativeStep(CylindricalControlSpline.EDirection.RADIAL, 5f);
+r["ccs_samples"] = oCcs.aGetPoints(5).Select(p => V3(p)).ToArray();
+
+// --- transform= on a box (vectorised vs C# point-wise) ---
+var oTfBox = new BaseBox(oOriginFrame, 20f, 10f, 8f);
+oTfBox.SetTransformation((p) => p + new Vector3(10, 0, 0));
+oTfBox.voxConstruct().CalculateProperties(out float tfVol, out BBox3 tfBox);
+r["box_xform_volume"] = tfVol; r["box_xform_bbox"] = Bb(tfBox);
+
+// --- modulated-radius cylinder (the 500-step tessellation path) ---
+var oModCyl = new BaseCylinder(oOriginFrame, 20f, 12f);
+oModCyl.SetRadius(new SurfaceModulation((float phi, float lr) => 12f + 3f * MathF.Cos(5f * phi)));
+oModCyl.voxConstruct().CalculateProperties(out float modCylVol, out _);
+r["mod_cyl_volume"] = modCylVol;
+
 // --- supershape / polygon radii ---
 float[] aPhis = { 0f, 0.5f, 1.2f, 3.0f };
 r["supershape_custom"] = aPhis.Select(ph => Uf.fGetSuperShapeRadius(ph, 6f, 2f, 1.2f, 1.2f)).ToArray();

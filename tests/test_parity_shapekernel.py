@@ -25,6 +25,7 @@ from picogk.shapes import (
     ControlPointSpline,
     ControlPointSurface,
     Cylinder,
+    CylindricalControlSpline,
     Frames,
     ImplicitGenus,
     ImplicitGyroid,
@@ -312,6 +313,66 @@ def test_surface_area_matches_csharp():
     # same primitive sphere + same native mesh as C# -> areas match to float precision
     area = ME.surface_area(Voxels.sphere(radius=10))
     assert area == pytest.approx(G["sphere_surface_area"], rel=VOL_REL)
+
+
+# --- 12j: previously-untested-vs-C# surfaces (frames alignment, transform, etc.) ---
+_SPINE = [[0, 0, 0], [10, 0, 0], [10, 10, 0], [20, 10, 0]]
+FRAME_ATOL = 1e-2   # brute-force align search: float32-vs-float64 may pick an adjacent grid step
+
+
+@needs_golden
+def test_frames_cylindrical_matches_csharp():
+    f = Frames.aligned(_SPINE, "cylindrical")
+    assert np.allclose(f.spine_at(0.5), G["frames_cyl_spine05"], atol=FRAME_ATOL)
+    assert np.allclose(f.local_z_at(0.5), G["frames_cyl_z05"], atol=FRAME_ATOL)
+    assert np.allclose(f.local_x_at(0.5), G["frames_cyl_x05"], atol=FRAME_ATOL)
+
+
+@needs_golden
+def test_frames_min_rotation_matches_csharp():
+    f = Frames.aligned(_SPINE, "min_rotation")
+    assert np.allclose(f.local_x_at(0.5), G["frames_min_x05"], atol=FRAME_ATOL)
+
+
+@needs_golden
+def test_frames_aligned_to_x_matches_csharp():
+    f = Frames.aligned_to_x(_SPINE, (0, 0, 1))
+    assert np.allclose(f.spine_at(0.5), G["frames_tx_spine05"], atol=FRAME_ATOL)
+    assert np.allclose(f.local_x_at(0.5), G["frames_tx_x05"], atol=FRAME_ATOL)
+
+
+@needs_golden
+def test_pipe_segment_mid_range_matches_csharp():
+    seg = PipeSegment(LocalFrame((0, 0, 0)), 20, 5, 10,
+                      start=0.5 * np.pi, end=0.5 * np.pi, method="mid_range")
+    vol, bbox = seg.to_voxels().calculate_properties()
+    assert vol == pytest.approx(G["seg_midrange_volume"], rel=VOL_REL)
+    got = [*bbox.min.tolist(), *bbox.max.tolist()]
+    assert np.allclose(got, G["seg_midrange_bbox"], rtol=VOL_REL, atol=1e-3)
+
+
+@needs_golden
+def test_cylindrical_control_spline_matches_csharp():
+    ccs = CylindricalControlSpline([5, 0, 0])
+    ccs.add_relative_step("z", 10).add_relative_step("radial", 5)
+    assert np.allclose(ccs.points(5), G["ccs_samples"], rtol=MATH_RTOL, atol=MATH_ATOL)
+
+
+@needs_golden
+def test_shape_transform_matches_csharp():
+    box = Box(LocalFrame((0, 0, 0)), 20, 10, 8,
+              transform=lambda p: p + np.array([10.0, 0, 0]))
+    vol, bbox = box.to_voxels().calculate_properties()
+    assert vol == pytest.approx(G["box_xform_volume"], rel=VOL_REL)
+    got = [*bbox.min.tolist(), *bbox.max.tolist()]
+    assert np.allclose(got, G["box_xform_bbox"], rtol=VOL_REL, atol=1e-3)
+
+
+@needs_golden
+def test_modulated_cylinder_matches_csharp():
+    cyl = Cylinder(LocalFrame((0, 0, 0)), 20, radius=lambda phi, lr: 12 + 3 * np.cos(5 * phi))
+    vol, _ = cyl.to_voxels().calculate_properties()
+    assert vol == pytest.approx(G["mod_cyl_volume"], rel=VOL_REL)
 
 
 @needs_golden
