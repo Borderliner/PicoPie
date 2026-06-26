@@ -6,7 +6,7 @@ import ctypes as C
 
 from . import library
 from ._base import NativeObject
-from .types import to_vec3
+from .types import require_finite, to_vec3
 
 
 class Lattice(NativeObject):
@@ -19,6 +19,7 @@ class Lattice(NativeObject):
 
     def add_sphere(self, center, radius: float) -> Lattice:
         c = to_vec3(center)
+        require_finite("radius", radius)
         self._lib.Lattice_AddSphere(self._inst, self.handle,
                                     C.byref(c), radius)
         return self
@@ -27,6 +28,7 @@ class Lattice(NativeObject):
                  radius_end: float | None = None, round_cap: bool = True) -> Lattice:
         a, b = to_vec3(start), to_vec3(end)
         r2 = radius_start if radius_end is None else radius_end
+        require_finite("radius", radius_start, r2)
         self._lib.Lattice_AddBeam(self._inst, self.handle,
                                   C.byref(a), C.byref(b),
                                   radius_start, r2,

@@ -41,6 +41,11 @@ class Mesh(NativeObject):
         tris = np.ascontiguousarray(triangles, dtype=np.int32).reshape(-1, 3)
         if tris.size and (tris.max() >= len(verts) or tris.min() < 0):
             raise ValueError("triangle index out of range")
+        # Reject non-finite vertices here (both the fast and fallback paths) so
+        # NaN/inf never reaches the native rasteriser -- this also validates the
+        # output of every shape, whose dimensions/modulations flow through here.
+        if verts.size and not np.isfinite(verts).all():
+            raise ValueError("mesh vertices must be finite (got NaN/inf)")
         m = cls()
         if _fast.lib is not None:
             if len(verts):
