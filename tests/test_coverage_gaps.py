@@ -82,6 +82,26 @@ def test_intersect_implicit_clips():
     assert clipped == pytest.approx(full / 2, rel=0.15)
 
 
+def test_intersect_implicit_fine_voxel_size():
+    # Regression: at voxel sizes below ~0.33 mm, upstream's IntersectImplicit
+    # truncated the narrow band (mm float) into an int 0, producing a grid with
+    # background 0 -> OpenVDB's csgIntersection aborted. We patch the runtime to
+    # pass the source narrow band instead (see scripts/patch_runtime.py). This
+    # must work at a fine voxel size, where the old build raised.
+    prev = picogk.voxel_size()
+    picogk.shutdown()
+    try:
+        picogk.init(voxel_size_mm=0.1)
+        v = Voxels.sphere(radius=10)
+        full = v.volume_mm3()
+        v.intersect_implicit_(lambda x, y, z: x)   # keep the x<=0 hemisphere
+        clipped = v.volume_mm3()
+        assert 0 < clipped < full
+    finally:
+        picogk.shutdown()
+        picogk.init(voxel_size_mm=prev)            # restore the session voxel size
+
+
 # --- in-place operators ------------------------------------------------------
 def test_inplace_add_mutates():
     v = Voxels.sphere(radius=8)

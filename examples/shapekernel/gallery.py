@@ -6,9 +6,15 @@ are :class:`Voxels` or :class:`Mesh`). The scenes are collected in ``SCENES``.
 
 Usage::
 
-    python examples/shapekernel/gallery.py                # render every scene to PNG
-    python examples/shapekernel/gallery.py out_dir        # ... into out_dir
-    python examples/shapekernel/gallery.py --show box     # open one scene interactively
+    python examples/shapekernel/gallery.py                  # render every scene to PNG
+    python examples/shapekernel/gallery.py out_dir          # ... into out_dir
+    python examples/shapekernel/gallery.py --voxel-size 0.1 # finer/smoother (slower)
+    python examples/shapekernel/gallery.py --show box       # open one scene interactively
+
+Surface smoothness is set by the *voxel size*, not the parametric tessellation:
+every scene is rasterised to a voxel field and re-meshed at that grid, so a
+coarse grid gives faceted silhouettes and an "orange-peel" look. ``--voxel-size``
+defaults to 0.2 mm for clean docs renders; drop it for stress tests.
 
 Rendering needs a display + OpenGL; the geometry builds run headless (and are
 exercised by tests/test_examples.py).
@@ -34,7 +40,6 @@ from picogk.shapes import (
     LatticePipe,
     Lens,
     LocalFrame,
-    Palette as P,
     Pipe,
     PipeSegment,
     Ring,
@@ -43,7 +48,11 @@ from picogk.shapes import (
     mesh_utils,
     painter,
 )
+from picogk.shapes import (
+    Palette as P,
+)
 from picogk.shapes.colors import ColorScale3D, rainbow_spectrum
+
 
 # --- shared modulations (from the upstream examples) ---------------------------
 def _line1(lr):
@@ -187,7 +196,7 @@ def build_gyroid_sphere():
 
 def build_gyroid_genus():
     from picogk import Voxels
-    s = 6.0   # the genus lives in ~unit space -> scale it up to resolve at 0.5 mm
+    s = 8.0   # the genus lives in ~unit space -> scale it up so the surface resolves cleanly
     genus = ImplicitGenus(0.0)
     vox = Voxels().render_implicit_(lambda x, y, z: genus(x / s, y / s, z / s),
                                     ((-3 * s, -3 * s, -1.6 * s), (3 * s, 3 * s, 1.6 * s)))
@@ -196,11 +205,11 @@ def build_gyroid_genus():
 
 
 def build_superellipsoid():
-    # scaled up from the unit examples so they're visible at a 0.5 mm voxel size
-    a = 8.0
-    specs = [((-20, 0, 0), 3.0, 0.25, P.RUBY),
+    # scaled up from the unit examples so the surface resolves cleanly (no dimpling)
+    a = 16.0
+    specs = [((-45, 0, 0), 3.0, 0.25, P.RUBY),
              ((0, 0, 0), 1.5, 1.5, P.BLUE),
-             ((20, 0, 0), 0.25, 0.25, P.BUBBLEGUM)]
+             ((45, 0, 0), 0.25, 0.25, P.BUBBLEGUM)]
     scene = []
     for centre, e1, e2, rgb in specs:
         vox = ImplicitSuperEllipsoid((0, 0, 0), a, a, a, e1, e2).render(((-a, -a, -a), (a, a, a)))
@@ -255,20 +264,34 @@ def render_scene(scene, path, size=(1280, 960), background=(0.16, 0.16, 0.2)):
 
 
 def main(argv) -> int:
-    picogk.init(voxel_size_mm=0.5)
-    if len(argv) >= 2 and argv[0] == "--show":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("out", nargs="?", default="examples/_out/gallery",
+                        help="output directory for the PNGs (default: examples/_out/gallery)")
+    parser.add_argument("--voxel-size", type=float, default=0.2, metavar="MM",
+                        help="kernel voxel size in mm; smaller = smoother but slower "
+                             "(default: 0.2)")
+    parser.add_argument("--show", metavar="SCENE", choices=sorted(SCENES),
+                        help="open one scene interactively instead of rendering PNGs")
+    args = parser.parse_args(argv)
+
+    picogk.init(voxel_size_mm=args.voxel_size)
+
+    if args.show:
         from picogk import Viewer
         with Viewer() as v:
-            for i, (obj, rgb) in enumerate(SCENES[argv[1]]()):
+            for i, (obj, rgb) in enumerate(SCENES[args.show]()):
                 v.add(obj, group=i)
                 v.set_group_material(i, rgb)
             v.run()
         return 0
-    out = argv[0] if argv else "examples/_out/gallery"
+
     import os
-    os.makedirs(out, exist_ok=True)
+    os.makedirs(args.out, exist_ok=True)
     for name, build in SCENES.items():
-        path = os.path.join(out, f"{name}.png")
+        path = os.path.join(args.out, f"{name}.png")
         render_scene(build(), path)
         print("wrote", path)
     return 0

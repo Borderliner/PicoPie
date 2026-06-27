@@ -1,17 +1,29 @@
 #!/usr/bin/env python3
-"""Patch the (pinned) PicoGKRuntime so uncaught C++/OpenVDB exceptions become a
-*settable error* at the C ABI instead of ``std::terminate``-ing the whole process.
+"""Patch the (pinned) PicoGKRuntime at build time. Two independent fixes:
 
-Why: handles cross the ABI as ``extern "C"`` functions; a C++ exception escaping
-one of them aborts the process (uncatchable from Python). We wrap every
-``PICOGK_API`` body in try/catch that records the message and returns a
-type-appropriate sentinel. The Python side (src/picogk/_native/runtime.py) reads
-the flag after each call and raises ``PicoGKError`` -- so *any* native error, even
-one we never anticipated, becomes an ordinary catchable exception.
+1. **Never-abort guard** (``PicoGKLibrary.cpp``): uncaught C++/OpenVDB exceptions
+   become a *settable error* at the C ABI instead of ``std::terminate``-ing the
+   whole process. Handles cross the ABI as ``extern "C"`` functions; a C++
+   exception escaping one of them aborts the process (uncatchable from Python).
+   We wrap every ``PICOGK_API`` body in try/catch that records the message and
+   returns a type-appropriate sentinel. The Python side
+   (src/picogk/_native/runtime.py) reads the flag after each call and raises
+   ``PicoGKError`` -- so *any* native error becomes an ordinary catchable one.
 
-This is applied at build time to the cloned runtime (build_runtime.sh and the
-Windows .ps1); the runtime stays vendored-unmodified in git. Idempotent. Should
-be upstreamed to leap71/PicoGKRuntime so we eventually don't carry it.
+2. **CSG narrow-band fix** (``PicoGKVdbVoxels.h``): upstream's
+   ``Voxels::IntersectImplicit`` builds its temp grid with
+   ``Voxels oVox(oVoxelSize(), fBackgroundMM())`` -- but that ctor's 2nd arg is an
+   ``int nNarrowBand`` while ``fBackgroundMM()`` returns the background in *mm*
+   (``narrowBand * voxel_size``, a float). For voxel sizes below ~0.33 mm it
+   truncates to ``int 0`` -> a grid with background 0 -> OpenVDB's
+   ``csgIntersection`` aborts ("expected grid A outside value > 0, got 0"). We
+   pass the source's narrow band instead, so it works at any voxel size.
+
+Both are applied at build time to the cloned runtime (build_runtime.sh and the
+Windows .ps1) by invoking this script on ``PicoGKLibrary.cpp``; the sibling
+header is patched automatically. The runtime stays vendored-unmodified in git.
+Idempotent. Should be upstreamed to leap71/PicoGKRuntime so we eventually don't
+carry these.
 
 Usage: python scripts/patch_runtime.py [path/to/PicoGKLibrary.cpp]
 """
@@ -119,6 +131,26 @@ def patch(src: str) -> tuple[str, int]:
     return src, wrapped
 
 
+# Fix 2: the IntersectImplicit narrow-band truncation bug (see module docstring).
+_CSG_BUG = "Voxels oVox(oVoxelSize(), fBackgroundMM());"
+_CSG_FIX = "Voxels oVox(oVoxelSize(), m_nSdfNarrowBand);"
+
+
+def patch_csg_narrowband(path: Path) -> int:
+    """Patch ``PicoGKVdbVoxels.h`` in place. Idempotent. Returns 1 if patched, 0
+    if already fixed. Raises if the expected upstream line is gone (a pin bump
+    that touched it must be re-checked rather than silently shipping the bug)."""
+    text = path.read_text(encoding="utf-8")
+    if _CSG_FIX in text:
+        return 0                        # already patched
+    if _CSG_BUG not in text:
+        raise SystemExit(
+            f"{path}: neither the buggy nor the fixed IntersectImplicit line found "
+            "-- upstream changed; re-check the CSG narrow-band fix.")
+    path.write_text(text.replace(_CSG_BUG, _CSG_FIX), encoding="utf-8")
+    return 1
+
+
 def main(argv: list[str]) -> int:
     path = (Path(argv[1]) if len(argv) > 1
             else Path("native/PicoGKRuntime/Source/PicoGKLibrary.cpp"))
@@ -127,9 +159,18 @@ def main(argv: list[str]) -> int:
     out, n = patch(path.read_text(encoding="utf-8"))
     if n < 0:
         print(f"already patched: {path}")
-        return 0
-    path.write_text(out, encoding="utf-8")
-    print(f"patched {path}: wrapped {n} PICOGK_API functions")
+    else:
+        path.write_text(out, encoding="utf-8")
+        print(f"patched {path}: wrapped {n} PICOGK_API functions")
+
+    # Also fix the CSG narrow-band bug in the sibling header (all build scripts
+    # invoke this on PicoGKLibrary.cpp, so this reaches every platform for free).
+    hdr = path.parent / "PicoGKVdbVoxels.h"
+    if hdr.exists():
+        m = patch_csg_narrowband(hdr)
+        print(f"{'patched' if m else 'already patched'}: {hdr} (CSG narrow-band)")
+    else:
+        print(f"skipped CSG narrow-band fix: {hdr} not found")
     return 0
 
 

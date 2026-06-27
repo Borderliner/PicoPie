@@ -208,12 +208,19 @@ def test_runtime_never_abort_guard_active():
 
 
 def test_native_exception_surfaces_in_process():
-    # The canonical hard-abort (a 2nd implicit intersect -> OpenVDB ValueError)
-    # must now surface as a catchable PicoGKError WITHOUT crashing the process.
-    # We bypass the Phase-7 pre-check to exercise the runtime guard itself; if it
-    # regressed, this test would SIGABRT the whole pytest run (a loud failure).
-    v = Voxels.sphere(radius=8.0)
-    v.intersect_implicit_(lambda x, y, z: x)
-    v._implicit_intersected = False          # bypass Phase-7 guard -> hit native
-    with pytest.raises(PicoGKError):
-        v.intersect_implicit_(lambda x, y, z: y)
+    # A native C++/OpenVDB exception must surface as a catchable PicoGKError
+    # WITHOUT crashing the process. The native VDB field accessors index a
+    # std::vector with .at(), which throws std::out_of_range on a bad index; we
+    # call the raw guarded entry point directly (bypassing VdbFile._check_index)
+    # to drive the throw. If the guard regressed, this would SIGABRT the whole
+    # pytest run (a loud failure).
+    #
+    # (The previous trigger -- a 2nd implicit intersect -- no longer throws now
+    # that the IntersectImplicit narrow-band bug is fixed; see patch_runtime.py.)
+    f = VdbFile()
+    try:
+        buf = C.create_string_buffer(256)
+        with pytest.raises(PicoGKError):
+            f._lib.VdbFile_GetFieldName(f._inst, f.handle, 99, buf)
+    finally:
+        f.close()
