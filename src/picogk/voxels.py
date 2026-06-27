@@ -185,6 +185,7 @@ class Voxels(NativeObject):
         return self
 
     def triple_offset_(self, dist_mm: float) -> Voxels:
+        require_finite("dist_mm", dist_mm)
         self._lib.Voxels_TripleOffset(self._inst, self.handle,
                                       dist_mm)
         return self
@@ -205,6 +206,7 @@ class Voxels(NativeObject):
         return self
 
     def project_z_slice_(self, z_start_mm: float, z_end_mm: float) -> Voxels:
+        require_finite("z_start_mm", z_start_mm, z_end_mm)
         self._lib.Voxels_ProjectZSlice(self._inst, self.handle,
                                        z_start_mm, z_end_mm)
         return self

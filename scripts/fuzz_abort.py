@@ -3,7 +3,9 @@
 
 Each worker runs a long sequence of randomized API calls (including the
 abort-prone stateful chains -- repeated implicit intersects, booleans on
-degenerate grids, NaN/inf everywhere) in its own process. With the Phase-11a
+degenerate grids, NaN/inf everywhere) in its own process, each at a different
+voxel size drawn from a fine->coarse sweep (so resolution-dependent native bugs,
+like the narrow-band truncations, are exercised too). With the Phase-11a
 guard, native errors are caught as exceptions and the worker finishes with
 ``WORKER_OK``; if any input slips past the guard the worker is killed by the
 native abort (SIGABRT / 0xC0000409) and the driver reports the exact seed +
@@ -17,11 +19,16 @@ Exit code is nonzero if any worker aborted.
 from __future__ import annotations
 
 import contextlib
+import math
 import os
 import random
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+
+# Per-worker voxel size (fine->coarse). Resolution-dependent native bugs only
+# fire at fine sizes; a fixed-0.5 mm campaign never reached them.
+VOXEL_SWEEP = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0]
 
 
 def _weird(rng: random.Random) -> float:
@@ -44,19 +51,6 @@ def _spt(rng: random.Random) -> tuple[float, float, float]:
     return (_size(rng), _size(rng), _size(rng))
 
 
-def _bpt(rng: random.Random) -> tuple[float, float, float]:
-    # render bbox corner kept tiny (the SDF callback runs per voxel, in Python)
-    def f() -> float:
-        return rng.choice([float("nan"), rng.uniform(-5, 5)])
-    return (f(), f(), f())
-
-
-def _qpt(rng: random.Random) -> tuple[float, float, float]:
-    # query point: bounded. A far *finite* point makes closest_point/ray_cast
-    # search/march unboundedly (a hang, not an abort -- out of scope here).
-    return (rng.uniform(-50, 50), rng.uniform(-50, 50), rng.uniform(-50, 50))
-
-
 def worker(seed: int, n: int) -> int:
     import numpy as np
 
@@ -64,35 +58,61 @@ def worker(seed: int, n: int) -> int:
     from picogk import Mesh, Metadata, ScalarField, VdbFile, Voxels
 
     rng = random.Random(seed)
-    picogk.init(voxel_size_mm=0.5)
+    vs = VOXEL_SWEEP[seed % len(VOXEL_SWEEP)]
+    picogk.init(voxel_size_mm=vs)
+
+    # Keep voxel counts bounded at fine resolutions (radius ~ proportional to the
+    # voxel size); NaN/inf/0 radii still flow through to exercise the guards.
+    base_r = max(1.0, min(5.0, 10.0 * vs))
+    rmax = 2.0 * base_r
+    dmax = max(0.5, min(12.0, 20.0 * vs))      # offset/extent magnitude
+    bbox_h = max(0.4, min(8.0, 8.0 * vs))      # render bbox half-extent
+    # The finite magnitudes above are capped relative to the voxel size so an op's
+    # cost (voxel-offset distance, per-voxel SDF callbacks) stays bounded at fine
+    # resolutions; NaN/inf/0 still pass through to keep exercising the guards.
+
+    def _bounded(hi: float) -> float:
+        v = _size(rng)
+        return max(-hi, min(hi, v)) if math.isfinite(v) else v
+
+    def _radius() -> float:
+        return _bounded(rmax)
+
+    def _dist() -> float:
+        return _bounded(dmax)
 
     # Stateless ops: each builds FRESH operands so a grid can't grow unboundedly
     # across the sequence (that would be slow, not an abort). Abort-prone *chains*
     # are exercised within a single op.
     def base() -> Voxels:
-        return Voxels.sphere(radius=5.0)
+        return Voxels.sphere(radius=base_r)
 
     def op_new(_):
-        Voxels.sphere(center=_spt(rng), radius=_size(rng))
+        Voxels.sphere(center=_spt(rng), radius=_radius())
 
     def op_capsule(_):
-        Voxels.capsule(_spt(rng), _spt(rng), _size(rng), _size(rng))
+        Voxels.capsule(_spt(rng), _spt(rng), _radius(), _radius())
 
     def op_offset(_):
-        base().offset_(_size(rng))
+        base().offset_(_dist())
 
     def op_double_offset(_):
-        base().double_offset_(_size(rng), _size(rng))
+        base().double_offset_(_dist(), _dist())
 
     def op_shell(_):
-        base().shell_(_size(rng))
+        base().shell_(_dist())
 
     def op_bool(_):
         getattr(base(), rng.choice(["bool_add_", "bool_subtract_", "bool_intersect_"]))(base())
 
+    def _bcorner() -> float:
+        return rng.choice([float("nan"), rng.uniform(-bbox_h, bbox_h)])
+
     def op_render(_):
         r = _weird(rng)
-        Voxels().render_implicit_(lambda x, y, z: r, (_bpt(rng), _bpt(rng)))
+        Voxels().render_implicit_(
+            lambda x, y, z: r,
+            ((_bcorner(), _bcorner(), _bcorner()), (_bcorner(), _bcorner(), _bcorner())))
 
     def op_intersect_chain(_):
         v = base()
@@ -112,11 +132,16 @@ def worker(seed: int, n: int) -> int:
         f.set_many(arr, np.full(len(arr), _weird(rng), np.float32))
         f.get_many(arr)
 
+    def _qry() -> tuple[float, float, float]:
+        # near the (small) grid: a far point makes closest_point/ray_cast march
+        # ~distance/voxel_size steps, which explodes at fine resolutions.
+        return (rng.uniform(-5, 5), rng.uniform(-5, 5), rng.uniform(-5, 5))
+
     def op_query(_):
         v = base()
-        v.is_inside(_qpt(rng))
-        v.closest_point(_qpt(rng))
-        v.ray_cast(_qpt(rng), (1.0, 0.0, 0.0))   # fixed dir: a degenerate one would hang, not abort
+        v.is_inside(_qry())
+        v.closest_point(_qry())
+        v.ray_cast(_qry(), (1.0, 0.0, 0.0))      # fixed dir: a degenerate one would hang, not abort
 
     def op_slice(_):
         base().slice_z(rng.randint(-1000, 1000))
@@ -131,16 +156,26 @@ def worker(seed: int, n: int) -> int:
         f.add_voxels("v", base())
         f.get(rng.randint(-50, 50))
 
+    def op_triple_offset(_):
+        base().triple_offset_(_dist())
+
+    def op_project_z(_):
+        base().project_z_slice_(_dist(), _dist())
+
+    def op_mesh_shell(_):
+        Voxels.mesh_shell(base().to_mesh(), _dist())
+
     ops = [op_new, op_capsule, op_offset, op_double_offset, op_shell, op_bool, op_render,
-           op_intersect_chain, op_mesh, op_field, op_query, op_slice, op_meta, op_vdb]
+           op_intersect_chain, op_mesh, op_field, op_query, op_slice, op_meta, op_vdb,
+           op_triple_offset, op_project_z, op_mesh_shell]
 
     for i in range(n):
         op = rng.choice(ops)
-        sys.stderr.write(f"[{seed}:{i}] {op.__name__}\n")
+        sys.stderr.write(f"[{seed}:{i}|vs={vs}] {op.__name__}\n")
         sys.stderr.flush()
         with contextlib.suppress(Exception):
             op(None)
-    print(f"WORKER_OK {n}")
+    print(f"WORKER_OK {n} voxel={vs}")
     return 0
 
 

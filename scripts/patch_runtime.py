@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Patch the (pinned) PicoGKRuntime at build time. Two independent fixes:
+"""Patch the (pinned) PicoGKRuntime at build time. Three independent fixes:
 
 1. **Never-abort guard** (``PicoGKLibrary.cpp``): uncaught C++/OpenVDB exceptions
    become a *settable error* at the C ABI instead of ``std::terminate``-ing the
@@ -19,7 +19,14 @@
    ``csgIntersection`` aborts ("expected grid A outside value > 0, got 0"). We
    pass the source's narrow band instead, so it works at any voxel size.
 
-Both are applied at build time to the cloned runtime (build_runtime.sh and the
+3. **ProjectZSlice narrow-band fix** (``PicoGKVdbVoxels.h``): the end-cap seal
+   loops in ``ProjectZSliceDn`` / ``ProjectZSliceUp`` iterate
+   ``(int)(0.5f + background_mm)`` slices -- but the background is in *mm*
+   (``narrowBand * voxel_size``), not a voxel count. Below ~0.167 mm it truncates
+   to 0 so the cap is never sealed (a non-watertight result, silently produced);
+   above ~1.5 mm it over-iterates. We use the narrow band directly.
+
+All are applied at build time to the cloned runtime (build_runtime.sh and the
 Windows .ps1) by invoking this script on ``PicoGKLibrary.cpp``; the sibling
 header is patched automatically. The runtime stays vendored-unmodified in git.
 Idempotent. Should be upstreamed to leap71/PicoGKRuntime so we eventually don't
@@ -151,6 +158,30 @@ def patch_csg_narrowband(path: Path) -> int:
     return 1
 
 
+# Fix 3: the ProjectZSliceDn/Up end-cap seal loops (see module docstring). The
+# substring appears once in each of the two functions.
+_PROJ_BUG = "(int) (0.5f + m_roGrid->background())"
+_PROJ_FIX = "m_nSdfNarrowBand"
+_PROJ_MARK = "// Close the last slice, and update the background"
+
+
+def patch_projectz_narrowband(path: Path) -> int:
+    """Patch ``ProjectZSliceDn`` / ``ProjectZSliceUp`` in PicoGKVdbVoxels.h.
+    Idempotent. Returns the number of occurrences fixed (2 on a fresh clone, 0 if
+    already patched). Raises if the seal loops are gone (a pin bump touched them
+    -> re-check rather than silently shipping the bug)."""
+    text = path.read_text(encoding="utf-8")
+    n = text.count(_PROJ_BUG)
+    if n == 0:
+        if _PROJ_MARK in text:
+            return 0                    # loops present, bug pattern gone -> already patched
+        raise SystemExit(
+            f"{path}: ProjectZSlice end-cap seal loops not found -- upstream "
+            "changed; re-check the ProjectZSlice narrow-band fix.")
+    path.write_text(text.replace(_PROJ_BUG, _PROJ_FIX), encoding="utf-8")
+    return n
+
+
 def main(argv: list[str]) -> int:
     path = (Path(argv[1]) if len(argv) > 1
             else Path("native/PicoGKRuntime/Source/PicoGKLibrary.cpp"))
@@ -169,8 +200,11 @@ def main(argv: list[str]) -> int:
     if hdr.exists():
         m = patch_csg_narrowband(hdr)
         print(f"{'patched' if m else 'already patched'}: {hdr} (CSG narrow-band)")
+        p = patch_projectz_narrowband(hdr)
+        tag = f"patched {p} occ" if p else "already patched"
+        print(f"{tag}: {hdr} (ProjectZSlice narrow-band)")
     else:
-        print(f"skipped CSG narrow-band fix: {hdr} not found")
+        print(f"skipped CSG / ProjectZSlice fixes: {hdr} not found")
     return 0
 
 

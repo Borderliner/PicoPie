@@ -2,6 +2,31 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.3.2 — 2026-06-27
+
+### Fixed
+- **`project_z_slice_` at fine voxel sizes.** Found by auditing for more of the
+  0.3.1 bug class (a *millimetre* value used as an integer *voxel count*).
+  PicoGK's `ProjectZSliceDn`/`Up` sealed the end cap by iterating
+  `(int)(0.5 + background_mm)` slices — but the background is in mm
+  (`narrowBand × voxel_size`), not a voxel count. Below ~0.167 mm it truncated to
+  0, so the cap was never sealed and the projected solid came out **non-watertight**
+  (silently — no error; re-voxelising it collapsed the volume, e.g. 818 → 22 mm³
+  at 0.1 mm). Above ~1.5 mm it over-iterated. The bundled runtime now uses the
+  narrow band directly, so the result is consistent across voxel sizes.
+- `Voxels.triple_offset_` and `project_z_slice_` now reject non-finite (NaN/inf)
+  arguments with a `ValueError`, matching `offset_` / `double_offset_`.
+
+### Testing
+- New voxel-size **sweep tripwire** (`tests/test_voxel_size_sweep.py`): exercises
+  the resolution-sensitive native ops across 0.1–1.0 mm and asserts results stay
+  valid and consistent with the 0.5 mm baseline. The whole suite previously ran
+  only at 0.5 mm — the one resolution where these narrow-band truncations can't
+  fire — which is why the class shipped twice.
+- `scripts/fuzz_abort.py` now sweeps voxel size across workers (0.05–2.0 mm) and
+  fuzzes the previously-uncovered `triple_offset_`, `project_z_slice_`, and
+  `mesh_shell` ops.
+
 ## 0.3.1 — 2026-06-27
 
 ### Fixed

@@ -78,4 +78,4 @@ __all__ = [
     "voxel_size",
 ]
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
