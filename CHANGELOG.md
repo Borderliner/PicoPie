@@ -2,6 +2,25 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.4.2 — 2026-06-29
+
+### Fixed
+- **Shape tessellation now follows post-construction modulation.** Setting a
+  modulated dimension *after* construction (`box.width = fn`,
+  `cylinder.radius = fn`, `pipe.inner_radius` / `outer_radius = fn`, and `Cone`)
+  now raises the tessellation step count to match the constructor path; it
+  previously stayed silently coarse. Step counts are computed lazily from the
+  current modulation state; an explicit `*_steps` argument still overrides.
+
+### Testing
+- Added direct coverage for previously-untested public wrappers
+  (`Voxels.voxel_size_mm` / `bounding_box`, `Lattice` / `VdbFile.is_valid`, field
+  `memory_bytes`, `Metadata.to_dict`, the `VdbFile.save` failure path, and the
+  `picogk.__all__` re-exports) and shape branches (spherical frame alignment, the
+  cylindrical control-spline tangential step, closed control surfaces,
+  `LatticeManifold(extend_both_sides=...)`, the down-facing painter split, mesh
+  STL export). 436 CI tests.
+
 ## 0.4.1 — 2026-06-29
 
 A polish pass on the 0.4.0 web viewer (from a final gap audit) plus consistency

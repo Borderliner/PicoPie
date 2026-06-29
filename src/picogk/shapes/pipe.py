@@ -31,12 +31,12 @@ class Pipe(BaseShape):
             self.frames = Frames.extrude(length, frame if frame is not None else LocalFrame())
         self.inner_radius = inner_radius
         self.outer_radius = outer_radius
-        ic = self._inner.const_value is not None
-        oc = self._outer.const_value is not None
-        ls = 500 if (spine or not ic or not oc) else 5
+        self._spine = spine
         self.polar_steps = max(5, polar_steps)
         self.radial_steps = max(5, radial_steps)
-        self.length_steps = max(5, ls if length_steps is None else length_steps)
+        # length steps bump to 500 when either radius is modulated (or spine-based);
+        # computed lazily so a radius set after construction still bumps.
+        self._length_steps = length_steps
 
     @property
     def inner_radius(self) -> SurfaceModulation:
@@ -53,6 +53,17 @@ class Pipe(BaseShape):
     @outer_radius.setter
     def outer_radius(self, value) -> None:
         self._outer = SurfaceModulation(value)
+
+    @property
+    def length_steps(self) -> int:
+        if self._length_steps is not None:
+            return max(5, self._length_steps)
+        modulated = self._inner.const_value is None or self._outer.const_value is None
+        return 500 if (self._spine or modulated) else 5
+
+    @length_steps.setter
+    def length_steps(self, value) -> None:
+        self._length_steps = value
 
     def _phi(self, phi_ratio, length_ratio):
         """Angle for a phi-ratio (full 2*pi sweep; segment overrides)."""

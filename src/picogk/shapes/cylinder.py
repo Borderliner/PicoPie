@@ -30,11 +30,12 @@ class Cylinder(BaseShape):
         else:
             self.frames = Frames.extrude(length, frame if frame is not None else LocalFrame())
         self.radius = radius
-        r_const = self._radius.const_value is not None
-        ls = 500 if (spine or not r_const) else 5
+        self._spine = spine
         self.polar_steps = max(5, polar_steps)
         self.radial_steps = max(5, radial_steps)
-        self.length_steps = max(5, ls if length_steps is None else length_steps)
+        # length steps bump to 500 when the radius is modulated (or spine-based);
+        # computed lazily so a radius set after construction still bumps.
+        self._length_steps = length_steps
 
     @property
     def radius(self) -> SurfaceModulation:
@@ -43,6 +44,16 @@ class Cylinder(BaseShape):
     @radius.setter
     def radius(self, value) -> None:
         self._radius = SurfaceModulation(value)
+
+    @property
+    def length_steps(self) -> int:
+        if self._length_steps is not None:
+            return max(5, self._length_steps)
+        return 500 if (self._spine or self._radius.const_value is None) else 5
+
+    @length_steps.setter
+    def length_steps(self, value) -> None:
+        self._length_steps = value
 
     def _cap(self, length_ratio: float) -> np.ndarray:
         p = np.arange(self.polar_steps, dtype=np.float64) / (self.polar_steps - 1)

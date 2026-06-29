@@ -39,17 +39,14 @@ class Box(BaseShape):
             self.frames = Frames.extrude(length, frame if frame is not None else LocalFrame())
         self.width = width
         self.depth = depth
-
-        w_const = self._width.const_value is not None
-        d_const = self._depth.const_value is not None
-        # a modulated width/depth (or a spine) raises that dimension's + the
-        # length tessellation to 500, matching C#'s SetWidth/SetDepth/spine ctor.
-        ws = 5 if w_const else 500
-        ds = 5 if d_const else 500
-        ls = 500 if (spine or not w_const or not d_const) else 5
-        self.width_steps = max(5, ws if width_steps is None else width_steps)
-        self.depth_steps = max(5, ds if depth_steps is None else depth_steps)
-        self.length_steps = max(5, ls if length_steps is None else length_steps)
+        self._spine = spine
+        # step counts default to 5, but a modulated width/depth (or a spine) raises
+        # that dimension's + the length tessellation to 500 (matching C#'s
+        # SetWidth/SetDepth/spine ctor). Computed lazily so setting a modulation
+        # AFTER construction still bumps; an explicit *_steps kwarg overrides.
+        self._width_steps = width_steps
+        self._depth_steps = depth_steps
+        self._length_steps = length_steps
 
     @property
     def width(self) -> LineModulation:
@@ -66,6 +63,37 @@ class Box(BaseShape):
     @depth.setter
     def depth(self, value) -> None:
         self._depth = LineModulation(value)
+
+    @property
+    def width_steps(self) -> int:
+        if self._width_steps is not None:
+            return max(5, self._width_steps)
+        return 5 if self._width.const_value is not None else 500
+
+    @width_steps.setter
+    def width_steps(self, value) -> None:
+        self._width_steps = value
+
+    @property
+    def depth_steps(self) -> int:
+        if self._depth_steps is not None:
+            return max(5, self._depth_steps)
+        return 5 if self._depth.const_value is not None else 500
+
+    @depth_steps.setter
+    def depth_steps(self, value) -> None:
+        self._depth_steps = value
+
+    @property
+    def length_steps(self) -> int:
+        if self._length_steps is not None:
+            return max(5, self._length_steps)
+        modulated = self._width.const_value is None or self._depth.const_value is None
+        return 500 if (self._spine or modulated) else 5
+
+    @length_steps.setter
+    def length_steps(self, value) -> None:
+        self._length_steps = value
 
     @classmethod
     def from_bbox(cls, bbox, *, transform: VertexTransform | None = None) -> Box:
