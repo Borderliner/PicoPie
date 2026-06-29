@@ -7,6 +7,8 @@ exists. The import test runs everywhere (the module must import head-less).
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -209,3 +211,38 @@ def test_perspective_degenerate_near_far_no_nan():
     assert np.all(np.isfinite(p))
     m = _to_mat4(np.eye(4))                            # identity round-trips
     assert (m.vec1.X, m.vec2.Y, m.vec3.Z, m.vec4.W) == (1.0, 1.0, 1.0, 1.0)
+
+
+def test_camera_state_math_headless():
+    # _apply_orbit/_pan/_zoom + _basis/_view_projection are pure camera-state math
+    # (no native calls), so they're testable without a display via object.__new__
+    # -> these clamp assertions run in CI (test_interaction_updates_camera covers
+    # the same on a real window, but is display-gated).
+    v = object.__new__(Viewer)
+    v._radius = 10.0
+    v._zoom = 1.0
+    v._azimuth, v._elevation = math.radians(45), math.radians(25)
+    v._orbit_speed = 0.008
+    v._target = np.zeros(3, np.float32)
+    v._autofit = True
+
+    v._apply_zoom(1e6)                        # zoom clamps to [0.05, 20]
+    assert v._zoom == pytest.approx(0.05)
+    v._zoom = 1.0
+    v._apply_zoom(-1e6)
+    assert v._zoom == pytest.approx(20.0)
+
+    v._zoom, v._elevation = 1.0, 0.0
+    v._apply_orbit(0.0, 1e9)                  # elevation clamps to (-pi/2, pi/2)
+    assert abs(v._elevation) < math.pi / 2 and v._autofit is False
+    v._apply_orbit(0.0, -1e9)
+    assert abs(v._elevation) < math.pi / 2
+
+    d, right, up = v._basis()                 # orthonormal frame
+    assert abs(float(np.dot(d, right))) < 1e-5 and abs(float(np.dot(d, up))) < 1e-5
+    vp, eye = v._view_projection(1.5)
+    assert np.all(np.isfinite(vp)) and np.all(np.isfinite(eye))
+
+    t0 = v._target.copy()
+    v._apply_pan(40.0, 10.0)                  # pan moves the orbit target
+    assert not np.array_equal(v._target, t0)

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "picopie"
-version = "0.4.0"
+version = "0.4.1"
 description = "A Pythonic binding for the PicoGK computational-geometry kernel"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -63,7 +63,6 @@ markers = [
     "fuzz: Hypothesis property fuzzing of the abort surface (run locally; excluded from per-wheel CI)",
     "viewer: interactive viewer render tests (need a display/OpenGL; excluded from headless CI)",
     "examples: ShapeKernel example-gallery integration builds (slow per-voxel implicit renders; excluded from per-wheel CI)",
-    "web: browser-based (anywidget/three.js) viewer tests (need the [web] extra; excluded from per-wheel CI)",
 ]
 
 [tool.coverage.run]
@@ -107,11 +106,11 @@ build-frontend = "build"
 # Per-Python: re-stage the runtime built once in before-all into the package.
 before-build = "python {project}/scripts/stage_runtime.py"
 # Wheel must work standalone: bundled runtime + compiled extension + real geometry.
-test-requires = ["pytest", "numpy", "pillow", "matplotlib"]
+test-requires = ["pytest", "numpy", "pillow", "matplotlib", "anywidget"]
 # perf + fuzz tests are excluded here (slow / not per-wheel gates); they run
 # locally and via scripts/fuzz_abort.py. The fast-path *presence* and the
 # never-abort guard *presence* are still asserted in CI (unmarked tests).
-test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf and not fuzz and not viewer and not examples and not web\" {project}/tests"
+test-command = "python {project}/scripts/ci_check.py && python -m pytest -m \"not perf and not fuzz and not viewer and not examples\" {project}/tests"
 # cibuildwheel auto-repairs (auditwheel/delocate/delvewheel), vendoring the
 # dlopen'd runtime's deps -- verified locally that auditwheel handles _lib/picogk.so.
 

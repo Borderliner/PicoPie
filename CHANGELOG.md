@@ -2,6 +2,39 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.4.1 — 2026-06-29
+
+A polish pass on the 0.4.0 web viewer (from a final gap audit) plus consistency
+hardening. The core was verified to have no crash/hang gaps.
+
+### Fixed (web viewer)
+- **Matrix convention now matches the desktop `Viewer`** — `set_group_matrix` /
+  `set_object_matrix` use the same row-major System.Numerics convention;
+  previously a non-symmetric transform rendered transposed in the browser.
+- **The camera no longer re-fits on every update** — recolouring, toggling
+  visibility, or transforming a group preserves the current orbit (it auto-frames
+  only on first load and on `reset_view`).
+- `export_html` now carries per-object transforms; the identity matrix is no
+  longer a shared-mutable default.
+
+### Changed (web viewer)
+- **geometry/style split** — heavy vertex/index buffers (the `geometry` trait)
+  are separate from light per-object style (color, material, visibility,
+  transform). A style tweak does a cheap in-place update instead of
+  re-transmitting and rebuilding all geometry.
+
+### Hardening
+- `Voxels.mesh_shell`, `ScalarField`/`VectorField` `set_many`/`get_many`,
+  `ScalarField.slice`, and `Mesh.add_triangle` now reject non-finite /
+  out-of-range input with a clear error (consistent with the rest of the API)
+  instead of producing silent garbage.
+
+### Testing
+- Assert the `require_finite` / `to_vec3` / bounds guards actually raise (the fuzz
+  suite only proved "no abort"); add library-lifecycle tests
+  (`NotInitializedError`, `init(<=0)`, `session()`); bring the web serialization
+  and viewer camera-state math into per-wheel CI. 420 CI tests.
+
 ## 0.4.0 — 2026-06-29
 
 ### Added

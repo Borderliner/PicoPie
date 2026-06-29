@@ -69,12 +69,15 @@ _IDENTITY16 = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
 
 
 def _mat16(matrix) -> list[float]:
-    """A 4x4 row-major transform -> flat 16 floats (accepts a (4, 4) array or a
-    length-16 sequence)."""
+    """A 4x4 transform (row-major, System.Numerics convention — same as
+    :class:`picogk.Viewer`, i.e. row-vector with the translation in the last row)
+    -> the flat-16 three.js wants. three.js uses column vectors, so we transpose
+    here; identity and uniform scale are symmetric, hence unaffected. Accepts a
+    (4, 4) array or a length-16 sequence."""
     arr = np.asarray(matrix, dtype=float).reshape(-1)
     if arr.size != 16:
         raise ValueError("matrix must be 4x4 (16 values, row-major)")
-    return [float(x) for x in arr]
+    return [float(x) for x in arr.reshape(4, 4).T.reshape(-1)]
 
 
 def _mesh_item(mesh: Mesh) -> dict:
@@ -97,7 +100,12 @@ class WebViewer(anywidget.AnyWidget):
     """
 
     _esm = _JS
+    # geometry = heavy per-id buffers (changes only on add/remove); style = light
+    # per-id color/material/visibility/matrix (changes on every tweak). Splitting
+    # them keeps recolor/transform/visibility cheap (no buffer resend, no rebuild,
+    # no camera re-fit).
     geometry = traitlets.List().tag(sync=True)  # type: ignore[var-annotated]
+    style = traitlets.List().tag(sync=True)  # type: ignore[var-annotated]
     background = traitlets.List(traitlets.Float()).tag(sync=True)
     width = traitlets.Int(720).tag(sync=True)
     height = traitlets.Int(480).tag(sync=True)
@@ -143,19 +151,19 @@ class WebViewer(anywidget.AnyWidget):
         if color is not None:
             item["color_override"] = _rgb(color)
         self._items.append(item)
-        self._sync()
+        self._sync_all()
         return self
 
     def remove(self, obj) -> WebViewer:
         """Remove every previously-added object that is ``obj``."""
         self._items = [it for it in self._items if it["_obj"] is not obj]
-        self._sync()
+        self._sync_all()
         return self
 
     def remove_all(self) -> WebViewer:
         """Remove every object."""
         self._items = []
-        self._sync()
+        self._sync_all()
         return self
 
     # --- styling -------------------------------------------------------------
@@ -165,13 +173,13 @@ class WebViewer(anywidget.AnyWidget):
         self._materials[int(group)] = {
             "color": _rgb(color), "metallic": float(metallic),
             "roughness": float(roughness)}
-        self._sync()
+        self._sync_style()
         return self
 
     def set_group_visible(self, group: int, visible: bool = True) -> WebViewer:
         """Show or hide a group."""
         self._hidden.discard(int(group)) if visible else self._hidden.add(int(group))
-        self._sync()
+        self._sync_style()
         return self
 
     def set_background(self, color) -> WebViewer:
@@ -181,20 +189,22 @@ class WebViewer(anywidget.AnyWidget):
 
     # --- transforms ----------------------------------------------------------
     def set_group_matrix(self, group: int, matrix) -> WebViewer:
-        """Apply a 4x4 row-major transform (mm) to every object in ``group``
-        (matches :meth:`picogk.Viewer.set_group_matrix`)."""
+        """Apply a 4x4 transform (mm) to every object in ``group``. Same
+        convention as :meth:`picogk.Viewer.set_group_matrix` — row-major,
+        System.Numerics (row-vector, translation in the last row)."""
         self._group_matrices[int(group)] = _mat16(matrix)
-        self._sync()
+        self._sync_style()
         return self
 
     def set_object_matrix(self, obj, matrix) -> WebViewer:
-        """Apply a 4x4 row-major transform to a specific added object (overrides
-        its group's matrix)."""
+        """Apply a 4x4 transform to a specific added object (overrides its
+        group's matrix). Same convention as
+        :meth:`picogk.Viewer.set_object_matrix` (row-major, System.Numerics)."""
         m = _mat16(matrix)
         for it in self._items:
             if it["_obj"] is obj:
                 it["matrix_override"] = m
-        self._sync()
+        self._sync_style()
         return self
 
     # --- camera / capture ----------------------------------------------------
@@ -240,26 +250,34 @@ class WebViewer(anywidget.AnyWidget):
     def _matrix_for(self, item: dict) -> list[float]:
         if "matrix_override" in item:
             return item["matrix_override"]
-        return self._group_matrices.get(item["group"], _IDENTITY16)
+        return list(self._group_matrices.get(item["group"], _IDENTITY16))
 
-    def _sync(self) -> None:
+    def _sync_geometry(self) -> None:
+        out = []
+        for it in self._items:
+            entry = {"id": it["id"], "kind": it["kind"], "positions": it["positions"]}
+            if it["kind"] == "mesh":
+                entry["indices"] = it["indices"]
+            out.append(entry)
+        self.geometry = out
+
+    def _sync_style(self) -> None:
         out = []
         for it in self._items:
             mat = self._materials.get(it["group"], {})
-            entry = {
+            out.append({
                 "id": it["id"],
-                "kind": it["kind"],
-                "positions": it["positions"],
                 "color": self._color_for(it),
                 "metallic": mat.get("metallic", 0.1),
                 "roughness": mat.get("roughness", 0.6),
                 "visible": it["group"] not in self._hidden,
                 "matrix": self._matrix_for(it),
-            }
-            if it["kind"] == "mesh":
-                entry["indices"] = it["indices"]
-            out.append(entry)
-        self.geometry = out
+            })
+        self.style = out
+
+    def _sync_all(self) -> None:
+        self._sync_geometry()
+        self._sync_style()
 
 
 def show(*objects, width: int = 720, height: int = 480,
@@ -292,7 +310,7 @@ for(const it of DATA.geometry){it.positions=b64(it.positions,Float32Array);
 const el=document.getElementById("app");
 const v=createViewer(el,{width:el.clientWidth,height:el.clientHeight,background:DATA.background});
 v.setBackground(DATA.background);
-v.setGeometry(DATA.geometry);
+v.setGeometry(DATA.geometry, DATA.style);
 addEventListener("resize",()=>v.resize(el.clientWidth,el.clientHeight));
 </script></body></html>
 """
@@ -309,14 +327,15 @@ def export_html(objects, path: str, *, background=(0.16, 0.16, 0.2),
     """
     objs = list(objects) if isinstance(objects, (list, tuple)) else [objects]
     viewer = show(*objs, background=background)
-    items = []
+    geom = []
     for e in viewer.geometry:
-        item = {k: e[k] for k in ("kind", "color", "metallic", "roughness", "visible")}
-        item["positions"] = base64.b64encode(e["positions"]).decode("ascii")
+        item = {"id": e["id"], "kind": e["kind"],
+                "positions": base64.b64encode(e["positions"]).decode("ascii")}
         if "indices" in e:
             item["indices"] = base64.b64encode(e["indices"]).decode("ascii")
-        items.append(item)
-    data = json.dumps({"geometry": items, "background": _rgb(background)})
+        geom.append(item)
+    # style (color/material/visibility/matrix) is plain JSON -- carries the matrix
+    data = json.dumps({"geometry": geom, "style": viewer.style, "background": _rgb(background)})
     html = (_HTML.replace("__JS__", _JS.read_text(encoding="utf-8"))
                  .replace("__DATA__", data)
                  .replace("__TITLE__", title))

@@ -18,6 +18,15 @@ from ._native.ctypes_types import PKFnTraverseActiveS, PKFnTraverseActiveV, PKVe
 from .types import read_voxel_dimensions, to_vec3, vec3_to_np
 
 
+def _finite_positions(pos: np.ndarray) -> None:
+    """Reject NaN/inf sample coordinates. The single-point set/get route through
+    ``to_vec3`` (finite-checked), but the bulk fast path passes ``pos`` straight
+    into a nogil native loop that turns coords into voxel indices -- where
+    non-finite is silent garbage / UB. Keep the two paths consistent."""
+    if pos.size and not np.isfinite(pos).all():
+        raise ValueError("positions must be finite (got NaN/inf)")
+
+
 class ScalarField(NativeObject):
     _destroy_fn = "ScalarField_Destroy"
 
@@ -79,6 +88,7 @@ class ScalarField(NativeObject):
             raise ValueError("positions and values must have the same length")
         if not len(pos):
             return self
+        _finite_positions(pos)
         if _fast.lib is not None:
             _fast.lib.scalar_set_many(_fast.addr(self._lib.ScalarField_SetValue),
                                       self._inst, self.handle, pos, vals)
@@ -94,6 +104,7 @@ class ScalarField(NativeObject):
         n = len(pos)
         if not n:
             return np.empty(0, dtype=np.float32), np.empty(0, dtype=bool)
+        _finite_positions(pos)
         if _fast.lib is not None:
             return _fast.lib.scalar_get_many(
                 _fast.addr(self._lib.ScalarField_bGetValue),
@@ -125,7 +136,9 @@ class ScalarField(NativeObject):
         voxel column.
         """
         _, size = self.voxel_dimensions()
-        sx, sy = int(size[0]), int(size[1])
+        sx, sy, sz = int(size[0]), int(size[1]), int(size[2])
+        if not 0 <= z_index < sz:                  # native does an unchecked OOB read
+            raise IndexError(f"z_index {z_index} out of range [0, {sz})")
         buf = np.empty(sx * sy, dtype=np.float32)
         self._lib.ScalarField_GetSlice(
             self._inst, self.handle, int(z_index),
@@ -212,6 +225,7 @@ class VectorField(NativeObject):
             raise ValueError("positions and values must have the same length")
         if not len(pos):
             return self
+        _finite_positions(pos)
         if _fast.lib is not None:
             _fast.lib.vector_set_many(_fast.addr(self._lib.VectorField_SetValue),
                                       self._inst, self.handle, pos, vals)
@@ -227,6 +241,7 @@ class VectorField(NativeObject):
         n = len(pos)
         if not n:
             return np.empty((0, 3), dtype=np.float32), np.empty(0, dtype=bool)
+        _finite_positions(pos)
         if _fast.lib is not None:
             return _fast.lib.vector_get_many(
                 _fast.addr(self._lib.VectorField_bGetValue),

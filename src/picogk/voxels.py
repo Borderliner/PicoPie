@@ -75,6 +75,7 @@ class Voxels(NativeObject):
         """A hollow shell of the given thickness around a mesh surface."""
         from .mesh import Mesh as _Mesh
         require_type(mesh, _Mesh, "mesh")
+        require_finite("radius", radius)        # consistent with sphere/capsule/offsets
         lib, inst = library.lib(), library.instance()
         h = lib.Voxels_hCreateMeshShell(inst,
                                         mesh.handle, radius)

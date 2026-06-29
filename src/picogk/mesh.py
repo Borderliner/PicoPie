@@ -95,7 +95,14 @@ class Mesh(NativeObject):
             self._inst, self.handle, C.byref(v)))
 
     def add_triangle(self, a: int, b: int, c: int) -> int:
-        tri = PKTriangle(int(a), int(b), int(c))
+        # indices must reference already-added vertices; an out-of-range index is
+        # a deferred OOB read at to_voxels/render time (from_arrays validates the
+        # same way up front).
+        a, b, c = int(a), int(b), int(c)
+        n = self.vertex_count()
+        if not all(0 <= i < n for i in (a, b, c)):
+            raise IndexError(f"triangle indices {(a, b, c)} out of range [0, {n})")
+        tri = PKTriangle(a, b, c)
         return int(self._lib.Mesh_nAddTriangle(
             self._inst, self.handle, C.byref(tri)))
 

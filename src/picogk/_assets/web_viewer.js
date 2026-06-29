@@ -1,7 +1,13 @@
 // PicoPie web viewer front-end (three.js).
 //
-// Geometry is computed in Python and handed to `createViewer` as a list of items
-// (positions/indices as typed arrays or DataViews, plus color/material/matrix).
+// Geometry is computed in Python and handed to `createViewer` as two lists:
+//   - geometry: heavy, per-id {id, kind, positions, indices} buffers (changes
+//     only when objects are added/removed)
+//   - style:    light, per-id {id, color, metallic, roughness, visible, matrix}
+//     (changes on every recolor/transform/visibility toggle)
+// Splitting them means a style tweak does a cheap in-place update — no buffer
+// resend, no scene rebuild, and no camera re-fit.
+//
 // The same `createViewer` powers both the anywidget (notebook) path via the
 // default `render` export and the self-contained HTML export
 // (picogk.web.export_html).
@@ -26,7 +32,13 @@ function asUint32(b) {
   return new Uint32Array(buf);
 }
 
-// Build a viewer inside `el`. Returns handles used by both front-ends.
+function applyMatrixTo(obj, m16) {
+  obj.matrixAutoUpdate = false;          // we drive the local matrix directly
+  if (m16 && m16.length === 16) obj.matrix.set(...m16);   // Matrix4.set is row-major
+  else obj.matrix.identity();
+  obj.matrixWorldNeedsUpdate = true;
+}
+
 export function createViewer(el, opts = {}) {
   let width = opts.width || 720;
   let height = opts.height || 480;
@@ -37,45 +49,46 @@ export function createViewer(el, opts = {}) {
   renderer.domElement.style.display = "block";
   renderer.domElement.style.borderRadius = "6px";
   renderer.domElement.style.outline = "none";
-  renderer.domElement.tabIndex = 0;          // so it can receive keyboard shortcuts
+  renderer.domElement.tabIndex = 0;
   el.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1e6);
 
-  // Soft ambient + hemisphere fill + two directionals so the shape reads from
-  // any orbit angle (loosely mirrors the desktop viewer's lighting).
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   scene.add(new THREE.HemisphereLight(0xffffff, 0x404050, 0.35));
-  const key = new THREE.DirectionalLight(0xffffff, 0.9);
-  key.position.set(1, 1.4, 1.2);
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-  fill.position.set(-1, -0.6, -0.8);
-  scene.add(fill);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  keyLight.position.set(1, 1.4, 1.2);
+  scene.add(keyLight);
+  const fillLight = new THREE.DirectionalLight(0xffffff, 0.35);
+  fillLight.position.set(-1, -0.6, -0.8);
+  scene.add(fillLight);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
 
-  let content = new THREE.Group();
+  const content = new THREE.Group();
   scene.add(content);
-  let lastBox = new THREE.Box3();
+  const meshes = new Map();              // id -> Object3D
   let wireframe = false;
+  let autofit = true;                    // first load auto-frames; user interaction stops it
+  controls.addEventListener("start", () => { autofit = false; });
 
   function disposeContent() {
-    content.traverse((o) => {
-      if (o.geometry) o.geometry.dispose();
-      if (o.material) o.material.dispose();
-    });
-    scene.remove(content);
-    content = new THREE.Group();
-    scene.add(content);
+    for (const obj of meshes.values()) {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+      content.remove(obj);
+    }
+    meshes.clear();
   }
 
   function frameCamera(box) {
-    if (!box || box.isEmpty()) {
+    if (!box || box.isEmpty() || !isFinite(box.min.x) || !isFinite(box.max.x)) {
       camera.position.set(40, 30, 40);
+      camera.near = 0.1; camera.far = 1e5;
+      camera.updateProjectionMatrix();
       camera.lookAt(0, 0, 0);
       controls.target.set(0, 0, 0);
       controls.update();
@@ -94,42 +107,59 @@ export function createViewer(el, opts = {}) {
     controls.update();
   }
 
-  function applyMatrix(obj, m16) {
-    if (m16 && m16.length === 16) {
-      const m = new THREE.Matrix4();
-      m.set(...m16);                          // Matrix4.set takes row-major args
-      obj.applyMatrix4(m);
+  function visibleBox() {
+    content.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    for (const obj of meshes.values()) {
+      if (obj.visible) box.expandByObject(obj);
     }
+    return box;
   }
 
-  function setGeometry(items) {
+  function fit() { frameCamera(visibleBox()); }
+
+  function buildOne(item) {
+    const positions = asFloat32(item.positions);
+    let obj;
+    if (item.kind === "line") {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      obj = new THREE.Line(geo, new THREE.LineBasicMaterial());
+    } else {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      if (item.indices) geo.setIndex(new THREE.BufferAttribute(asUint32(item.indices), 1));
+      geo.computeVertexNormals();
+      obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ wireframe }));
+    }
+    return obj;
+  }
+
+  // Light, in-place: recolor / re-material / show-hide / transform by id.
+  function setStyle(styles) {
+    for (const s of styles || []) {
+      const obj = meshes.get(s.id);
+      if (!obj) continue;
+      obj.visible = s.visible !== false;
+      const c = s.color || [0.8, 0.8, 0.8];
+      if (obj.material && obj.material.color) obj.material.color.setRGB(c[0], c[1], c[2]);
+      if (obj.material && "metalness" in obj.material) obj.material.metalness = s.metallic ?? 0.1;
+      if (obj.material && "roughness" in obj.material) obj.material.roughness = s.roughness ?? 0.6;
+      applyMatrixTo(obj, s.matrix);
+    }
+    content.updateMatrixWorld(true);     // styles can change transforms -- but DON'T re-fit
+  }
+
+  // Heavy: rebuild geometry from buffers, then apply style; re-fit only if autofit.
+  function setGeometry(items, styles) {
     disposeContent();
-    for (const it of items || []) {
-      if (it.visible === false) continue;
-      const positions = asFloat32(it.positions);
-      const col = it.color || [0.8, 0.8, 0.8];
-      const color = new THREE.Color(col[0], col[1], col[2]);
-      let obj;
-      if (it.kind === "line") {
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        obj = new THREE.Line(geo, new THREE.LineBasicMaterial({ color }));
-      } else {
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-        if (it.indices) geo.setIndex(new THREE.BufferAttribute(asUint32(it.indices), 1));
-        geo.computeVertexNormals();
-        obj = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-          color, metalness: it.metallic ?? 0.1, roughness: it.roughness ?? 0.6,
-          wireframe,
-        }));
-      }
-      applyMatrix(obj, it.matrix);
+    for (const item of items || []) {
+      const obj = buildOne(item);
+      meshes.set(item.id, obj);
       content.add(obj);
     }
-    content.updateMatrixWorld(true);
-    lastBox = new THREE.Box3().setFromObject(content);   // world bbox (honors matrices)
-    frameCamera(lastBox);
+    setStyle(styles);
+    if (autofit) frameCamera(visibleBox());
   }
 
   function setBackground(c) {
@@ -144,15 +174,15 @@ export function createViewer(el, opts = {}) {
     camera.updateProjectionMatrix();
   }
 
-  function fit() { frameCamera(lastBox); }
-
   function toggleWireframe() {
     wireframe = !wireframe;
-    content.traverse((o) => { if (o.material && "wireframe" in o.material) o.material.wireframe = wireframe; });
+    for (const obj of meshes.values()) {
+      if (obj.material && "wireframe" in obj.material) obj.material.wireframe = wireframe;
+    }
   }
 
   function pngBlob(cb) {
-    renderer.render(scene, camera);                      // ensure the buffer is current
+    renderer.render(scene, camera);
     renderer.domElement.toBlob((blob) => cb(blob), "image/png");
   }
 
@@ -189,7 +219,7 @@ export function createViewer(el, opts = {}) {
   }
 
   return {
-    setGeometry, setBackground, resize, fit, toggleWireframe,
+    setGeometry, setStyle, setBackground, resize, fit, toggleWireframe,
     downloadPNG, pngBlob, dispose, renderer, scene, camera,
   };
 }
@@ -202,14 +232,14 @@ function render({ model, el }) {
     background: model.get("background"),
   });
   v.setBackground(model.get("background"));
-  v.setGeometry(model.get("geometry"));
-  model.on("change:geometry", () => v.setGeometry(model.get("geometry")));
+  v.setGeometry(model.get("geometry"), model.get("style"));
+  model.on("change:geometry", () => v.setGeometry(model.get("geometry"), model.get("style")));
+  model.on("change:style", () => v.setStyle(model.get("style")));
   model.on("change:background", () => v.setBackground(model.get("background")));
   model.on("change:width", () => v.resize(model.get("width"), model.get("height")));
   model.on("change:height", () => v.resize(model.get("width"), model.get("height")));
   model.on("change:_fit", () => v.fit());
   model.on("change:_wireframe", () => v.toggleWireframe());
-  // programmatic screenshot: Python bumps _grab; send the PNG back as a buffer.
   model.on("change:_grab", () => {
     v.pngBlob((blob) => blob.arrayBuffer().then(
       (ab) => model.send({ type: "screenshot" }, [ab])));
