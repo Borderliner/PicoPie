@@ -122,8 +122,20 @@ precision; `parity-shapekernel/` → `tests/golden/shapekernel_parity.json`).
 - [x] Hardening: finite-validation on shape dimensions; property-fuzzed; never aborts
 - *~50 parity checks + ~120 offline/fuzz tests; ruff + mypy clean.*
 
-## Phase 13 — Web viewer (future, not started)
+## ✅ Phase 13 — Web viewer (done, 0.4.0)
 
-- [ ] A browser/WebGL viewer (three.js in an anywidget): compute in Python, stream
-      the mesh as glTF, render in the browser — fills the GLFW-needs-a-local-display
-      gap (works over SSH / Colab / cloud).
+A browser viewer (three.js in an [anywidget](https://anywidget.dev)) — `picogk.web`.
+Geometry is computed in Python and streamed to the browser as binary buffers
+(compute-in-Python, render-in-browser), filling the GLFW-needs-a-local-display gap:
+it works in JupyterLab, VS Code, Colab, and over SSH.
+
+- [x] `WebViewer` at **full parity with the desktop `Viewer`** — `add`
+      (Voxels/Mesh/PolyLine) / `remove` / `set_group_material` / `set_group_visible` /
+      `set_background` / `set_group_matrix` / `set_object_matrix` / `reset_view` /
+      `screenshot`, plus `show(*objects)`
+- [x] three.js renderer: PBR materials + lighting, orbit/pan/zoom, auto-framed
+      camera, wireframe toggle; keyboard shortcuts (F fit · W wireframe · S save PNG)
+- [x] `export_html(objects, path)` — a self-contained, double-click-to-open HTML
+      (renderer inlined, geometry embedded) — no Jupyter needed
+- [x] `[web]` extra (anywidget); JS shipped as package data; offline serialization
+      tests (`web` marker); a runnable demo (`examples/web/demo.py`)

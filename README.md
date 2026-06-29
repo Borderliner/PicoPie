@@ -71,6 +71,9 @@ x86-64), macOS (Apple Silicon), and Windows (x64)**.
 - **Headless viz** (`[viz]`) — `save_slice_png`, `save_slice_sheet`, `mesh_preview`.
 - **Interactive viewer** — `picogk.show(part)` (GLFW/OpenGL, orbit camera) and
   `render_png(part, "out.png")` for offscreen renders.
+- **Web viewer** (`[web]`) — `picogk.web.show(part)` renders inline in Jupyter/VS
+  Code/Colab via three.js (works over SSH, where the desktop viewer can't), and
+  `picogk.web.export_html(part, "v.html")` writes a self-contained interactive file.
 - **Parametric shapes** (`picogk.shapes`) — a Pythonic port of LEAP 71's
   [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel): `Sphere`/`Box`/
   `Cylinder`/`Cone`/`Ring`/`Lens`/`Pipe`/`PipeSegment`/`Revolve`/`LogoBox` defined by

@@ -2,6 +2,24 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.4.0 — 2026-06-29
+
+### Added
+- **`picogk.web`** — a browser-based 3D viewer (three.js inside an
+  [anywidget](https://anywidget.dev)), via the optional `[web]` extra. Geometry is
+  computed in Python and streamed to the browser as binary buffers, so it renders
+  where the desktop GLFW `picogk.Viewer` can't: JupyterLab, VS Code notebooks,
+  Google Colab, and remote/SSH sessions (compute-in-Python, render-in-browser).
+  - `WebViewer` mirrors the desktop `Viewer` — `add` (Voxels/Mesh/PolyLine),
+    `remove`, `set_group_material`, `set_group_visible`, `set_background`,
+    `set_group_matrix` / `set_object_matrix`, `reset_view`, `screenshot` — plus a
+    `show(*objects)` one-liner.
+  - PBR materials + lighting, orbit/pan/zoom, an auto-framed camera, a wireframe
+    toggle, and keyboard shortcuts (F fit · W wireframe · S save PNG).
+  - `export_html(objects, path)` writes a self-contained, double-click-to-open
+    HTML file (three.js renderer inlined, geometry embedded) — no Jupyter needed.
+  - Runnable demo: `python examples/web/demo.py`.
+
 ## 0.3.2 — 2026-06-27
 
 ### Fixed

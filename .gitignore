@@ -34,5 +34,8 @@ parity-shapekernel/obj/
 # mkdocs build output
 site/
 
+# web viewer demo output (examples/web/demo.py)
+web_demo.html
+
 # Claude Code local settings
 .claude/settings.local.json
