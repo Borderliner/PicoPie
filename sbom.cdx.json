@@ -3,7 +3,7 @@
   "specVersion": "1.5",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-07-02T14:18:48Z",
+    "timestamp": "2026-07-02T19:43:56Z",
     "tools": [
       {
         "name": "picopie gen_sbom.py"
@@ -12,7 +12,7 @@
     "component": {
       "type": "library",
       "name": "picopie",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "licenses": [
         {
           "license": {
@@ -20,7 +20,7 @@
           }
         }
       ],
-      "purl": "pkg:pypi/picopie@0.5.0"
+      "purl": "pkg:pypi/picopie@0.6.0"
     }
   },
   "components": [
