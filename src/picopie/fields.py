@@ -9,6 +9,7 @@ edited per point, and round-tripped through ``.vdb`` files (see ``picopie.vdb``)
 from __future__ import annotations
 
 import ctypes as C
+import threading
 
 import numpy as np
 
@@ -16,6 +17,12 @@ from . import _fast, library
 from ._base import NativeObject, require_type
 from ._native.ctypes_types import PKFnTraverseActiveS, PKFnTraverseActiveV, PKVector3
 from .types import read_voxel_dimensions, to_vec3, vec3_to_np
+
+# The compiled active-voxel collector (_fastloop) writes through module globals,
+# so concurrent traversals from different threads must be serialised. The lock is
+# only held for one export call; the pure-Python fallback needs no lock (its
+# per-call lists are local, and the GIL serialises the appends).
+_ACTIVE_TRAVERSE_LOCK = threading.Lock()
 
 
 def _finite_positions(pos: np.ndarray) -> None:
@@ -149,9 +156,16 @@ class ScalarField(NativeObject):
         """Return ``(coords, values)`` over all active voxels.
 
         ``coords`` is (N, 3) float32 **in millimetres**, ``values`` is (N,)
-        float32. Implemented via a native traversal calling back into Python --
-        slow for large fields (see roadmap Phase 2 for the compiled path).
+        float32. Uses the compiled collector when available (a native traversal
+        writing straight into NumPy buffers); otherwise falls back to a
+        per-voxel Python callback.
         """
+        if _fast.lib is not None:
+            with _ACTIVE_TRAVERSE_LOCK:
+                return _fast.lib.scalar_active_values(
+                    _fast.addr(self._lib.ScalarField_TraverseActive),
+                    self._inst, self.handle)
+
         coords: list[tuple[float, float, float]] = []
         values: list[float] = []
 
@@ -262,7 +276,14 @@ class VectorField(NativeObject):
 
     def active_values(self) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(coords, values)``, both (N, 3) float32, over active voxels
-        (``coords`` in millimetres)."""
+        (``coords`` in millimetres). Uses the compiled collector when available,
+        otherwise a per-voxel Python callback."""
+        if _fast.lib is not None:
+            with _ACTIVE_TRAVERSE_LOCK:
+                return _fast.lib.vector_active_values(
+                    _fast.addr(self._lib.VectorField_TraverseActive),
+                    self._inst, self.handle)
+
         coords: list[tuple[float, float, float]] = []
         values: list[tuple[float, float, float]] = []
 

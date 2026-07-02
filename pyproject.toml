@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "picopie"
-version = "0.6.0"
+version = "0.7.0"
 description = "A Pythonic binding for the PicoGK computational-geometry kernel"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -29,6 +29,14 @@ ctypedef unsigned char (*getscl_t)(u64, u64, float*, float*) noexcept nogil
 ctypedef void          (*setvec_t)(u64, u64, float*, float*) noexcept nogil
 ctypedef unsigned char (*getvecf_t)(u64, u64, float*, float*) noexcept nogil
 
+# TraverseActive: the native walks the sparse active set and calls a callback per
+# voxel. coord/value are packed float structs (PKVector3 = 3 float32), ABI-identical
+# to float*. Two entries: scalar value (float), vector value (float*).
+ctypedef void          (*travs_cb_t)(const float*, float)        noexcept nogil
+ctypedef void          (*travv_cb_t)(const float*, const float*) noexcept nogil
+ctypedef void          (*traverse_s_t)(u64, u64, travs_cb_t)     noexcept nogil
+ctypedef void          (*traverse_v_t)(u64, u64, travv_cb_t)     noexcept nogil
+
 
 # --- Mesh: read --------------------------------------------------------------
 def read_vertices(u64 fn, u64 inst, u64 h, int n):
@@ -126,3 +134,92 @@ def vector_get_many(u64 fn, u64 inst, u64 h, float[:, ::1] pos):
     fb = found.view(bool)
     out[~fb] = NAN
     return out, fb
+
+
+# --- Fields: compiled active-voxel traversal --------------------------------
+# The native callback ABI carries no user-data pointer, so the collector writes
+# through module globals. This is single-threaded (TraverseActive runs on the
+# calling thread) but NOT re-entrant across threads -- the Python wrappers
+# serialise concurrent calls with a lock. Two passes: count, then fill an
+# exactly-sized buffer (there is no native active-voxel count to pre-size from).
+cdef Py_ssize_t _g_i = 0
+cdef float* _g_coords = NULL
+cdef float* _g_vals = NULL          # scalar: 1 per voxel; vector: 3 per voxel
+
+
+cdef void _count_s(const float* pc, float v) noexcept nogil:
+    global _g_i
+    _g_i += 1
+
+
+cdef void _fill_s(const float* pc, float v) noexcept nogil:
+    global _g_i
+    cdef Py_ssize_t i = _g_i
+    _g_coords[3 * i] = pc[0]
+    _g_coords[3 * i + 1] = pc[1]
+    _g_coords[3 * i + 2] = pc[2]
+    _g_vals[i] = v
+    _g_i += 1
+
+
+cdef void _count_v(const float* pc, const float* pv) noexcept nogil:
+    global _g_i
+    _g_i += 1
+
+
+cdef void _fill_v(const float* pc, const float* pv) noexcept nogil:
+    global _g_i
+    cdef Py_ssize_t i = _g_i
+    _g_coords[3 * i] = pc[0]
+    _g_coords[3 * i + 1] = pc[1]
+    _g_coords[3 * i + 2] = pc[2]
+    _g_vals[3 * i] = pv[0]
+    _g_vals[3 * i + 1] = pv[1]
+    _g_vals[3 * i + 2] = pv[2]
+    _g_i += 1
+
+
+def scalar_active_values(u64 fn, u64 inst, u64 h):
+    global _g_i, _g_coords, _g_vals
+    cdef traverse_s_t traverse = <traverse_s_t><void*>(<size_t>fn)
+    _g_i = 0
+    with nogil:
+        traverse(inst, h, _count_s)
+    cdef Py_ssize_t n = _g_i
+    coords = np.empty((n, 3), dtype=np.float32)
+    vals = np.empty(n, dtype=np.float32)
+    if n == 0:
+        return coords, vals
+    cdef float[:, ::1] mc = coords
+    cdef float[::1] mv = vals
+    _g_coords = &mc[0, 0]
+    _g_vals = &mv[0]
+    _g_i = 0
+    with nogil:
+        traverse(inst, h, _fill_s)
+    _g_coords = NULL
+    _g_vals = NULL
+    return coords, vals
+
+
+def vector_active_values(u64 fn, u64 inst, u64 h):
+    global _g_i, _g_coords, _g_vals
+    cdef traverse_v_t traverse = <traverse_v_t><void*>(<size_t>fn)
+    _g_i = 0
+    with nogil:
+        traverse(inst, h, _count_v)
+    cdef Py_ssize_t n = _g_i
+    coords = np.empty((n, 3), dtype=np.float32)
+    vals = np.empty((n, 3), dtype=np.float32)
+    if n == 0:
+        return coords, vals
+    cdef float[:, ::1] mc = coords
+    cdef float[:, ::1] mv = vals
+    _g_coords = &mc[0, 0]
+    _g_vals = &mv[0, 0]
+    _g_i = 0
+    with nogil:
+        traverse(inst, h, _fill_v)
+    _g_coords = NULL
+    _g_vals = NULL
+    return coords, vals

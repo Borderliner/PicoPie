@@ -2,6 +2,24 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.7.0 — 2026-07-02
+
+### Changed — `active_values()` is now compiled (~30× faster)
+
+`ScalarField.active_values()` and `VectorField.active_values()` previously walked
+the sparse active-voxel set with a per-voxel Python callback (the same overhead
+class as the implicit-SDF path fixed in 0.6.0). They now use the compiled
+`_fastloop` extension: a native traversal that writes straight into NumPy arrays
+(two `nogil` passes — count, then fill an exactly-sized buffer).
+
+- **~30× faster** — 335k active voxels went from ~320 ms to ~10 ms — with
+  **bit-identical** results (same coords, values, dtype, shape, and ordering).
+- **Same public API, transparent.** No new method; it falls back to the pure-Python
+  callback when the extension isn't built, exactly like `get_many`/`set_many`.
+- Concurrent calls from multiple threads are serialised with a lock (the native
+  callback ABI carries no user-data pointer, so the collector uses module state);
+  the pure-Python fallback needs no lock.
+
 ## 0.6.0 — 2026-07-02
 
 ### Added — compiled callbacks for `render_implicit_` / `intersect_implicit_`
