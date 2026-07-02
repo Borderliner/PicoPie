@@ -26,8 +26,8 @@ import sys
 
 import numpy as np
 
-import picogk
-from picogk.shapes import (
+import picopie
+from picopie.shapes import (
     Box,
     ControlPointSpline,
     Cylinder,
@@ -48,10 +48,10 @@ from picogk.shapes import (
     mesh_utils,
     painter,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     Palette as P,
 )
-from picogk.shapes.colors import ColorScale3D, rainbow_spectrum
+from picopie.shapes.colors import ColorScale3D, rainbow_spectrum
 
 
 # --- shared modulations (from the upstream examples) ---------------------------
@@ -195,7 +195,7 @@ def build_gyroid_sphere():
 
 
 def build_gyroid_genus():
-    from picogk import Voxels
+    from picopie import Voxels
     s = 8.0   # the genus lives in ~unit space -> scale it up so the surface resolves cleanly
     genus = ImplicitGenus(0.0)
     vox = Voxels().render_implicit_(lambda x, y, z: genus(x / s, y / s, z / s),
@@ -253,7 +253,7 @@ SCENES = {
 
 def render_scene(scene, path, size=(1280, 960), background=(0.16, 0.16, 0.2)):
     """Render a ``[(object, rgb), ...]`` scene to a PNG (needs a display)."""
-    from picogk import Viewer
+    from picopie import Viewer
     with Viewer(size=size) as v:
         for i, (obj, rgb) in enumerate(scene):
             v.add(obj, group=i)
@@ -277,10 +277,10 @@ def main(argv) -> int:
                         help="open one scene interactively instead of rendering PNGs")
     args = parser.parse_args(argv)
 
-    picogk.init(voxel_size_mm=args.voxel_size)
+    picopie.init(voxel_size_mm=args.voxel_size)
 
     if args.show:
-        from picogk import Viewer
+        from picopie import Viewer
         with Viewer() as v:
             for i, (obj, rgb) in enumerate(SCENES[args.show]()):
                 v.add(obj, group=i)

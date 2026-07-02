@@ -9,10 +9,10 @@ arbitrary curve, carrying a field of local frames along it.
 Build smooth curves from control points:
 
 ```python
-import picogk
-from picogk.shapes import ControlPointSpline, TangentialControlSpline
+import picopie
+from picopie.shapes import ControlPointSpline, TangentialControlSpline
 
-picogk.init(0.5)
+picopie.init(0.5)
 
 # a B-spline through control points (open by default; closed=True for a loop)
 curve = ControlPointSpline([[0, 0, 0], [0, 40, 0], [0, 50, 20], [0, 60, 60]])
@@ -32,7 +32,7 @@ A `Frames` object samples a field of local frames along a path. The classmethods
 choose how the local axes are oriented:
 
 ```python
-from picogk.shapes import Frames, LocalFrame
+from picopie.shapes import Frames, LocalFrame
 
 spine_pts = ControlPointSpline([[0, 0, 0], [0, 40, 0], [0, 50, 30]]).points(500)
 
@@ -58,7 +58,7 @@ Pass `frames=` instead of a frame + length, and the shape follows the spine.
 `Cylinder`, `Box`, `Pipe`, `PipeSegment`, and `LatticePipe` all support it:
 
 ```python
-from picogk.shapes import Cylinder, Pipe
+from picopie.shapes import Cylinder, Pipe
 
 spine = Frames.aligned_to_x(spine_pts, target_x=(0, 1, 0))
 
@@ -75,7 +75,7 @@ travels along the spine*.
 an axis frame's local Z:
 
 ```python
-from picogk.shapes import Revolve
+from picopie.shapes import Revolve
 
 axis = LocalFrame((0, 0, 0))
 profile = Frames.extrude(40, LocalFrame((0, 0, 0)))
@@ -88,11 +88,11 @@ radius-vs-height contour.
 
 ## Point-list utilities
 
-`picogk.shapes.spline_ops` operates on point lists — arc-length resampling, NURB
+`picopie.shapes.spline_ops` operates on point lists — arc-length resampling, NURB
 smoothing, transforms, nearest-point queries:
 
 ```python
-from picogk.shapes import spline_ops as so
+from picopie.shapes import spline_ops as so
 
 even = so.reparametrized(spine_pts, 200)     # constant arc-length spacing
 smooth = so.nurb(spine_pts, 200)             # NURB-smoothed

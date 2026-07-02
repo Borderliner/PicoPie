@@ -3,7 +3,7 @@
 
 Colours are RGB float tuples in ``0..1`` — ready for ``Viewer.set_group_material``
 and ``show()``. Value→colour *scales* map a scalar to a colour for visualising a
-field or per-triangle property (see :mod:`picogk.shapes.painter`).
+field or per-triangle property (see :mod:`picopie.shapes.painter`).
 """
 
 from __future__ import annotations

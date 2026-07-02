@@ -9,9 +9,9 @@ raise a clean ``ValueError`` instead of producing silent-garbage voxels.
 import numpy as np
 import pytest
 
-import picogk._fast as _fast
-from picogk import Lattice, Mesh
-from picogk.shapes import (
+import picopie._fast as _fast
+from picopie import Lattice, Mesh
+from picopie.shapes import (
     Box,
     Cone,
     Cylinder,

@@ -8,10 +8,10 @@ booleans, surface offsets, and shelling.
 Use the operators — they read like set algebra and return a **new** `Voxels`:
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-picogk.init(voxel_size_mm=0.2)
+picopie.init(voxel_size_mm=0.2)
 
 a = Voxels.sphere(radius=10)
 b = Voxels.sphere(center=(8, 0, 0), radius=8)
@@ -62,10 +62,10 @@ part.shell_(1.5)               # 1.5 mm wall, hollow inside (in place)
 ## Putting it together — a vented hollow ball
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-with picogk.session(voxel_size_mm=0.2):
+with picopie.session(voxel_size_mm=0.2):
     part = Voxels.sphere(radius=12)
     part -= Voxels.sphere(center=(9, 0, 0), radius=6)   # cut an opening
     part.shell_(1.5)                                    # hollow it

@@ -40,14 +40,14 @@ libraries, no separate runtime to install. Wheels are prebuilt for CPython
 Create `main.py`:
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
 # Every session starts by choosing a voxel size (the modeling resolution, in mm).
 # Smaller = finer detail but more memory/time. 0.2 mm is a good starting point.
-picogk.init(voxel_size_mm=0.2)
+picopie.init(voxel_size_mm=0.2)
 
-print("PicoGK runtime:", picogk.version())     # e.g. "26.2.0"
+print("PicoGK runtime:", picopie.version())     # e.g. "26.2.0"
 
 ball = Voxels.sphere(radius=10)                # a 10 mm-radius sphere
 vol, bbox = ball.calculate_properties()        # accurate volume + bounding box
@@ -71,9 +71,9 @@ bbox size = [19.97 19.97 19.97] mm
 
 ## What just happened
 
-- **`picogk.init(voxel_size_mm=...)`** starts a *session* — one native library
+- **`picopie.init(voxel_size_mm=...)`** starts a *session* — one native library
   instance with a fixed voxel size. Call it once before you create geometry. (Call
-  `picogk.shutdown()` to end it, or use `with picogk.session(0.2): ...`.)
+  `picopie.shutdown()` to end it, or use `with picopie.session(0.2): ...`.)
 - **`Voxels`** is the core object: a signed-distance / level-set volume. Everything
   you model is a `Voxels`.
 - **`calculate_properties()`** returns `(volume_mm³, bounding_box)` measured

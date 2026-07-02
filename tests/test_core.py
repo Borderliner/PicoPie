@@ -5,13 +5,13 @@ import math
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Lattice, Voxels
+import picopie
+from picopie import Lattice, Voxels
 
 
 def test_version_and_name():
-    assert picogk.version().count(".") >= 1
-    assert "PicoGK" in picogk.name()
+    assert picopie.version().count(".") >= 1
+    assert "PicoGK" in picopie.name()
 
 
 def test_sphere_volume():
@@ -143,7 +143,7 @@ def test_is_inside():
 
 
 def test_no_handle_leak():
-    lib, inst = picogk.library.lib(), picogk.library.instance()
+    lib, inst = picopie.library.lib(), picopie.library.instance()
     before = lib.Library_nVoxelsAllocated(C.c_uint64(inst))
     for _ in range(15):
         a = Voxels.sphere(radius=5)
@@ -159,5 +159,5 @@ def test_context_manager_closes():
     v = Voxels.sphere(radius=3)
     with v:
         assert v.is_valid()
-    with pytest.raises(picogk.InvalidHandleError):
+    with pytest.raises(picopie.InvalidHandleError):
         _ = v.handle

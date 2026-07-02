@@ -8,11 +8,16 @@ PicoPie binds the *same native runtime* the official C# library uses — so you 
 identical geometry and performance — then wraps it in an idiomatic, NumPy-friendly
 Python API. No .NET, no compiler, no system libraries: just `pip install picopie`.
 
-```python
-import picogk
-from picogk import Voxels
+> ⚠️ **Unofficial & community-maintained.** PicoPie is an independent project —
+> **not** affiliated with, endorsed by, or supported by LEAP 71. It binds the
+> open-source PicoGK runtime, but the API, packaging, and namespace (`picopie`,
+> not `picogk`) are ours. Please file issues **here**, not with the PicoGK team.
 
-picogk.init(voxel_size_mm=0.2)
+```python
+import picopie
+from picopie import Voxels
+
+picopie.init(voxel_size_mm=0.2)
 
 body = Voxels.sphere(radius=10)
 hole = Voxels.sphere(center=(6, 0, 0), radius=6)
@@ -26,7 +31,7 @@ part.to_mesh().save_stl("part.stl")
 
 [![Parametric shapes gallery](docs/images/gallery/gyroid_sphere.png)](docs/gallery.md)
 
-*A gyroid-filled sphere built with `picogk.shapes` — see the [gallery](docs/gallery.md).*
+*A gyroid-filled sphere built with `picopie.shapes` — see the [gallery](docs/gallery.md).*
 
 ## Install
 
@@ -69,12 +74,12 @@ x86-64), macOS (Apple Silicon), and Windows (x64)**.
   `set_many`/`get_many`), **`Metadata`**, **`PolyLine`**.
 - **File I/O** — `save_vdb` / `load_vdb` round-trips voxels + fields (OpenVDB).
 - **Headless viz** (`[viz]`) — `save_slice_png`, `save_slice_sheet`, `mesh_preview`.
-- **Interactive viewer** — `picogk.show(part)` (GLFW/OpenGL, orbit camera) and
+- **Interactive viewer** — `picopie.show(part)` (GLFW/OpenGL, orbit camera) and
   `render_png(part, "out.png")` for offscreen renders.
-- **Web viewer** (`[web]`) — `picogk.web.show(part)` renders inline in Jupyter/VS
+- **Web viewer** (`[web]`) — `picopie.web.show(part)` renders inline in Jupyter/VS
   Code/Colab via three.js (works over SSH, where the desktop viewer can't), and
-  `picogk.web.export_html(part, "v.html")` writes a self-contained interactive file.
-- **Parametric shapes** (`picogk.shapes`) — a Pythonic port of LEAP 71's
+  `picopie.web.export_html(part, "v.html")` writes a self-contained interactive file.
+- **Parametric shapes** (`picopie.shapes`) — a Pythonic port of LEAP 71's
   [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel): `Sphere`/`Box`/
   `Cylinder`/`Cone`/`Ring`/`Lens`/`Pipe`/`PipeSegment`/`Revolve`/`LogoBox` defined by
   local frames + modulations, spines/splines, lattices, implicit SDFs (gyroid,
@@ -91,7 +96,7 @@ PicoPie is validated against the reference and hardened well beyond a naive bind
 - **Parity-tested vs C# PicoGK** on the same runtime — volumes, dims, mesh
   counts/bbox, and geometric queries match to float precision.
 - **Never aborts** — the native runtime is patched so a C++/OpenVDB error surfaces
-  as a catchable `PicoGKError` instead of killing the process; non-finite inputs are
+  as a catchable `PicoPieError` instead of killing the process; non-finite inputs are
   rejected up front. Verified against thousands of fuzzed inputs.
 - **Reproducible & auditable** — every upstream dependency is version-pinned; builds
   ship an SBOM (`sbom.cdx.json`) and hash-pinned build deps.
@@ -116,7 +121,7 @@ sudo apt-get install -y --no-install-recommends \
 scripts/build_runtime.sh
 ```
 
-PicoPie locates the runtime automatically: bundled in the wheel (`picogk/_lib/`),
+PicoPie locates the runtime automatically: bundled in the wheel (`picopie/_lib/`),
 else under `native/`, else via `$PICOGK_RUNTIME` (full path to the shared library).
 Cross-platform wheels are built by `cibuildwheel` in `.github/workflows/wheels.yml`.
 

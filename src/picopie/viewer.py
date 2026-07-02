@@ -2,12 +2,12 @@
 
 PicoPie is headless-first, but this binds PicoGK's native GLFW/OpenGL viewer for
 interactive display. On a machine with no display (e.g. CI) creating a
-:class:`Viewer` raises :class:`PicoGKError`; for headless image output use the
-PNG helpers in :mod:`picogk.viz`, or :func:`render_png` / :meth:`Viewer.screenshot`.
+:class:`Viewer` raises :class:`PicoPieError`; for headless image output use the
+PNG helpers in :mod:`picopie.viz`, or :func:`render_png` / :meth:`Viewer.screenshot`.
 
-    import picogk
-    from picogk import Voxels, Viewer
-    picogk.init(0.5)
+    import picopie
+    from picopie import Voxels, Viewer
+    picopie.init(0.5)
     with Viewer() as v:                # close() is mandatory -> use 'with' or run()
         v.add(Voxels.sphere(radius=10))
         v.screenshot("sphere.png")
@@ -30,7 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from . import library
-from ._errors import InvalidHandleError, PicoGKError
+from ._errors import InvalidHandleError, PicoPieError
 from ._native.ctypes_types import (
     PKBBox3,
     PKColorFloat,
@@ -102,7 +102,7 @@ class Viewer:
 
     def __init__(self, title: str = "PicoPie", size: tuple[int, int] = (1280, 800)):
         if threading.current_thread() is not threading.main_thread():
-            raise PicoGKError("Viewer must be created on the main thread")
+            raise PicoPieError("Viewer must be created on the main thread")
         self._thread = threading.get_ident()
         self._lib = library.lib()
         self._inst = library.instance()
@@ -137,9 +137,9 @@ class Viewer:
         sz = PKVector2(float(size[0]), float(size[1]))
         self._h = self._lib.Viewer_hCreate(title.encode(), C.byref(sz), *self._cbs)
         if not self._h:
-            raise PicoGKError(
+            raise PicoPieError(
                 "could not create a viewer window (no display / OpenGL available?). "
-                "Use picogk.viz for headless PNG output.")
+                "Use picopie.viz for headless PNG output.")
         self._closed = False
         library._register(self)        # so shutdown() invalidates us before destroying the instance
         self._load_lights()
@@ -147,7 +147,7 @@ class Viewer:
     # --- guards --------------------------------------------------------------
     def _check_thread(self) -> None:
         if threading.get_ident() != self._thread:
-            raise PicoGKError("Viewer must be used on the thread that created it")
+            raise PicoPieError("Viewer must be used on the thread that created it")
 
     def _alive(self) -> None:
         if self._closed:
@@ -475,13 +475,13 @@ def show(*objects, title: str = "PicoPie", size: tuple[int, int] = (1280, 800),
 
     Each object goes in its own group with a color from a default palette::
 
-        picogk.show(part)
-        picogk.show(body, holes)          # two objects, two colors
+        picopie.show(part)
+        picopie.show(body, holes)          # two objects, two colors
 
     With ``block=True`` (default) this runs the window's event loop until it is
     closed (main thread); pass ``block=False`` to drive :meth:`Viewer.poll`
     yourself. Returns the :class:`Viewer`. Requires a display -- for headless
-    image output use :func:`render_png` or :mod:`picogk.viz`.
+    image output use :func:`render_png` or :mod:`picopie.viz`.
     """
     v = Viewer(title=title, size=size)
     _populate(v, objects, background)
@@ -497,11 +497,11 @@ def render_png(obj, path: str, *, size: tuple[int, int] = (1280, 800),
     ``obj`` is a single ``Voxels``/``Mesh``/``PolyLine`` or a list of them
     (each gets a palette color)::
 
-        picogk.render_png(part, "part.png")
-        picogk.render_png([body, holes], "scene.png", size=(1920, 1080))
+        picopie.render_png(part, "part.png")
+        picopie.render_png([body, holes], "scene.png", size=(1920, 1080))
 
-    Still needs a display + OpenGL (raises :class:`PicoGKError` otherwise); for
-    truly headless image output use :mod:`picogk.viz`. Returns the written path.
+    Still needs a display + OpenGL (raises :class:`PicoPieError` otherwise); for
+    truly headless image output use :mod:`picopie.viz`. Returns the written path.
     """
     objs = list(obj) if isinstance(obj, (list, tuple)) else [obj]
     with Viewer(size=size) as v:

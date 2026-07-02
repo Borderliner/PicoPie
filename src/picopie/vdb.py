@@ -6,15 +6,15 @@ A ``.vdb`` holds one or more named grids. PicoGK maps grid kinds to types:
 ============  ================================  ===================
 field type    OpenVDB grid                      PicoPie object
 ============  ================================  ===================
-0  VOXELS     float, level set                  :class:`~picogk.Voxels`
-1  SCALAR     float, fog volume                 :class:`~picogk.ScalarField`
-2  VECTOR     Vec3                              :class:`~picogk.VectorField`
+0  VOXELS     float, level set                  :class:`~picopie.Voxels`
+1  SCALAR     float, fog volume                 :class:`~picopie.ScalarField`
+2  VECTOR     Vec3                              :class:`~picopie.VectorField`
 ============  ================================  ===================
 
 Convenience::
 
-    picogk.save_vdb("part.vdb", body=voxels, heat=scalar_field)
-    objs = picogk.load_vdb("part.vdb")    # -> {"body": Voxels, "heat": ScalarField}
+    picopie.save_vdb("part.vdb", body=voxels, heat=scalar_field)
+    objs = picopie.load_vdb("part.vdb")    # -> {"body": Voxels, "heat": ScalarField}
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from enum import IntEnum
 
 from . import library
 from ._base import NativeObject, require_type
-from ._errors import PicoGKError
+from ._errors import PicoPieError
 from .fields import ScalarField, VectorField
 from .voxels import Voxels
 
@@ -54,7 +54,7 @@ class VdbFile(NativeObject):
         if not h:
             hint = ("file not found" if not os.path.exists(path)
                     else "unreadable or not a valid .vdb")
-            raise PicoGKError(f"failed to load VDB file ({hint}): {path}")
+            raise PicoPieError(f"failed to load VDB file ({hint}): {path}")
         return cls(h)
 
     def is_valid(self) -> bool:
@@ -66,7 +66,7 @@ class VdbFile(NativeObject):
     def save(self, path: str) -> None:
         ok = self._lib.VdbFile_bSaveToFile(self._inst, self.handle, str(path).encode())
         if not ok:
-            raise PicoGKError(f"failed to save VDB file: {path}")
+            raise PicoPieError(f"failed to save VDB file: {path}")
 
     # --- field introspection -------------------------------------------------
     def field_count(self) -> int:
@@ -160,7 +160,7 @@ class VdbFile(NativeObject):
             return self.get_scalar_field(index)
         if t is FieldType.VECTOR:
             return self.get_vector_field(index)
-        raise PicoGKError(f"field {index} has unknown type")
+        raise PicoPieError(f"field {index} has unknown type")
 
     def to_dict(self) -> dict:
         """Load every field into ``{name: typed object}``."""

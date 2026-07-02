@@ -6,13 +6,13 @@ import importlib
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Lattice, Metadata, ScalarField, VdbFile, VectorField, Voxels
-from picogk._errors import PicoGKError
+import picopie
+from picopie import Lattice, Metadata, ScalarField, VdbFile, VectorField, Voxels
+from picopie._errors import PicoPieError
 
 
 def test_voxels_voxel_size_mm_matches_session():
-    assert Voxels.sphere(radius=5).voxel_size_mm() == pytest.approx(picogk.voxel_size())
+    assert Voxels.sphere(radius=5).voxel_size_mm() == pytest.approx(picopie.voxel_size())
 
 
 def test_voxels_bounding_box_is_nondegenerate_grid_extent():
@@ -50,12 +50,12 @@ def test_metadata_to_dict():
 def test_vdbfile_save_failure_raises():
     f = VdbFile()
     f.add_voxels("v", Voxels.sphere(radius=4))
-    with pytest.raises(PicoGKError):
+    with pytest.raises(PicoPieError):
         f.save("/no_such_dir_picopie_xyz/cannot/write.vdb")
 
 
 def test_public_names_all_import():
-    # a broken re-export in picogk.__init__ would slip through everything else
-    mod = importlib.import_module("picogk")
+    # a broken re-export in picopie.__init__ would slip through everything else
+    mod = importlib.import_module("picopie")
     for name in mod.__all__:
-        assert hasattr(mod, name), f"picogk.{name} is exported but missing"
+        assert hasattr(mod, name), f"picopie.{name} is exported but missing"

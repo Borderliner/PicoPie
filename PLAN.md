@@ -48,9 +48,9 @@ kernel would mean reimplementing OpenVDB — huge and slow. We do what C# does: 
 ## 3. Package architecture
 
 ```
-picopie/                      # pip name: picopie  ·  import name: picogk
+picopie/                      # pip name: picopie  ·  import name: picopie
 ├── pyproject.toml            # build via scikit-build-core or setuptools + cibuildwheel
-├── src/picogk/
+├── src/picopie/
 │   ├── __init__.py           # public API: init(), Voxels, Mesh, Lattice, ScalarField, ...
 │   ├── _native/
 │   │   ├── loader.py         # locate + dlopen runtime (bundled → env var → system)
@@ -76,10 +76,10 @@ picopie/                      # pip name: picopie  ·  import name: picogk
 - **Handle lifetime** → each wrapper holds `(instance, handle)`; implement `close()`,
   `__enter__/__exit__`, and `__del__` calling the matching `*_Destroy`. Guard double-free; tear
   down objects before the library instance. Mirrors C# `IDisposable`.
-- **Library singleton** → `picogk.init(voxel_size_mm=0.1)` creates the instance via
+- **Library singleton** → `picopie.init(voxel_size_mm=0.1)` creates the instance via
   `Library_hCreateInstance`; everything else pulls it implicitly (like C# static `Library`).
 - **Log callback** → register a `PKFInfo` CFUNCTYPE routed to Python `logging`; keep a hard ref
-  so it isn't GC'd. Fatal-error flag → raise `PicoGKError`.
+  so it isn't GC'd. Fatal-error flag → raise `PicoPieError`.
 - **NumPy first** → vectors/bboxes accept/return numpy or tuples; fields and mesh buffers expose
   numpy views; conversions centralized in `types.py`.
 - **Prototype codegen** → parse `PicoGK.h` (regular `PICOGK_API <ret> <Name>(<args>);` grammar)
@@ -89,14 +89,14 @@ picopie/                      # pip name: picopie  ·  import name: picogk
 
 | C# (`Base/*.cs`) | Python | Notes |
 |---|---|---|
-| `Library` (static, `Go`) | `picogk.init()` + module globals | hides instance handle |
-| `Voxels` | `picogk.Voxels` | primitives, `+ - &` → `__add__/__sub__/__and__` (BoolAdd/Subtract/Intersect), offsets, `volume()`, slices, `render_mesh/lattice/implicit` |
-| `Mesh` | `picogk.Mesh` | `from_voxels`, `.vertices`/`.triangles` numpy |
-| `Lattice` | `picogk.Lattice` | `add_beam`, `add_sphere` |
-| `ScalarField`/`VectorField` | `picogk.ScalarField`/`VectorField` | get/set, traverse, from-voxels |
-| `PolyLine` | `picogk.PolyLine` | |
-| `BBox3`/`Matrix4x4`/`Vector3` | `picogk.types` | numpy-backed |
-| IO (`MeshIo`,`OpenVdbFile`,`VoxelsIo`,`ImageIo`) | `picogk.io` | STL/OBJ/VDB/PNG |
+| `Library` (static, `Go`) | `picopie.init()` + module globals | hides instance handle |
+| `Voxels` | `picopie.Voxels` | primitives, `+ - &` → `__add__/__sub__/__and__` (BoolAdd/Subtract/Intersect), offsets, `volume()`, slices, `render_mesh/lattice/implicit` |
+| `Mesh` | `picopie.Mesh` | `from_voxels`, `.vertices`/`.triangles` numpy |
+| `Lattice` | `picopie.Lattice` | `add_beam`, `add_sphere` |
+| `ScalarField`/`VectorField` | `picopie.ScalarField`/`VectorField` | get/set, traverse, from-voxels |
+| `PolyLine` | `picopie.PolyLine` | |
+| `BBox3`/`Matrix4x4`/`Vector3` | `picopie.types` | numpy-backed |
+| IO (`MeshIo`,`OpenVdbFile`,`VoxelsIo`,`ImageIo`) | `picopie.io` | STL/OBJ/VDB/PNG |
 | `Viewer` | — | deferred (post-v1) |
 | `Shapes/*`, ShapeKernel | — | follow-on pure-Python port (it's pure C# atop PicoGK) |
 
@@ -141,7 +141,7 @@ ctypes layer pure-Python for everything else.
 | Cross-platform `.so/.dylib/.dll` name resolution | Normalize in `loader.py`; `PICOGK_RUNTIME` env override |
 
 ## 9. Immediate next steps
-1. Scaffold the package (`pyproject.toml`, `src/picogk/`, `tests/`, `examples/`).
+1. Scaffold the package (`pyproject.toml`, `src/picopie/`, `tests/`, `examples/`).
 2. Vendor `PicoGK.h` + `PicoGKApiTypes.h`; write `_gen_prototypes.py` and emit `prototypes.py`.
 3. Stand up the Linux runtime build (M0) — the gating prerequisite.
 4. Implement `loader.py` + `library.py` + a smoke test (sphere → volume).

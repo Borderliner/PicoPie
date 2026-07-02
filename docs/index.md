@@ -9,10 +9,10 @@ identical geometry and performance, wrapped in an idiomatic, NumPy-friendly API.
 No .NET required.
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-picogk.init(voxel_size_mm=0.2)
+picopie.init(voxel_size_mm=0.2)
 
 body = Voxels.sphere(radius=10)
 hole = Voxels.sphere(center=(6, 0, 0), radius=6)
@@ -42,9 +42,9 @@ is the identical, battle-tested kernel.
   pure-Python fallback
 - Headless visualization (`save_slice_png`, `save_slice_sheet`, `mesh_preview`)
 - Interactive viewer (`show`, `render_png`) — GLFW/OpenGL, orbit camera
-- Parametric shapes (`picogk.shapes`) — a Pythonic ShapeKernel port (frames,
+- Parametric shapes (`picopie.shapes`) — a Pythonic ShapeKernel port (frames,
   modulations, splines, lattices, implicit SDFs, measurement), parity-tested vs C#
-- Hardened: native errors surface as catchable `PicoGKError` (never aborts)
+- Hardened: native errors surface as catchable `PicoPieError` (never aborts)
 
 ## Learn it
 

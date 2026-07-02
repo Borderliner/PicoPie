@@ -10,8 +10,8 @@ the **surface area / voxel²** (level sets store a narrow band around the surfac
 and finer voxels mean more memory and time for every operation.
 
 ```python
-picogk.init(voxel_size_mm=0.5)   # coarse: fast iteration, prototyping
-picogk.init(voxel_size_mm=0.1)   # fine:   final detail, much heavier
+picopie.init(voxel_size_mm=0.5)   # coarse: fast iteration, prototyping
+picopie.init(voxel_size_mm=0.1)   # fine:   final detail, much heavier
 ```
 
 Model and iterate coarse; only drop the voxel size for the final export.
@@ -44,7 +44,7 @@ Check the fast path is active (it falls back to pure Python if the extension
 wasn't built):
 
 ```python
-from picogk import _fast
+from picopie import _fast
 assert _fast.available()        # True in the published wheels
 ```
 

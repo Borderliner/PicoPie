@@ -10,10 +10,10 @@ is *inside* the solid. PicoPie evaluates it over a box and fills the voxels.
 
 ```python
 import math
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-picogk.init(voxel_size_mm=0.3)
+picopie.init(voxel_size_mm=0.3)
 
 def sphere_sdf(x, y, z):
     return math.sqrt(x*x + y*y + z*z) - 10        # <= 0 inside radius 10

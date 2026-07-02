@@ -14,7 +14,7 @@ import math
 import numpy as np
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     Bisection,
     Box,
     Cone,
@@ -36,10 +36,10 @@ from picogk.shapes import (
     formulas,
     functions,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     spline_ops as SO,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     vectors as V,
 )
 
@@ -132,7 +132,7 @@ def test_formulas_misc():
 def test_implicit_genus_and_superellipsoid_render():
     s = 6.0
     g = ImplicitGenus(0.0)
-    from picogk import Voxels
+    from picopie import Voxels
     vox = Voxels().render_implicit_(lambda x, y, z: g(x / s, y / s, z / s),
                                     ((-18, -18, -10), (18, 18, 10)))
     assert vox.calculate_properties()[0] > 0
@@ -142,7 +142,7 @@ def test_implicit_genus_and_superellipsoid_render():
 
 # --- functions.add_line --------------------------------------------------------
 def test_functions_add_line():
-    from picogk import Lattice
+    from picopie import Lattice
     lat = Lattice()
     functions.add_line(lat, [[0, 0, 0], [10, 0, 0], [10, 10, 0]], 2)
     assert lat.to_voxels().calculate_properties()[0] > 0
@@ -197,7 +197,7 @@ def test_degenerate_inputs_do_not_crash():
     # tiny lattice
     LatticePipe(LocalFrame((0, 0, 0)), 20, 5, length_steps=2).to_voxels()
     # too-few control points for the degree -> a clean error (not ZeroDivisionError)
-    from picogk.shapes import ControlPointSpline
+    from picopie.shapes import ControlPointSpline
     with pytest.raises(ValueError):
         ControlPointSpline([[0, 0, 0], [1, 0, 0]])              # 2 pts, degree 2
     assert len(ControlPointSpline([[0, 0, 0], [1, 0, 0], [2, 0, 0]]).points(10)) == 10

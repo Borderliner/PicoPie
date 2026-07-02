@@ -3,7 +3,7 @@
 Values are strings, floats, or 3-vectors. Metadata travels with the grid into
 ``.vdb`` files, so it's the place to stamp units, provenance, parameters, etc.
 
-    md = picogk.Metadata.from_voxels(part)
+    md = picopie.Metadata.from_voxels(part)
     md["material"] = "Ti-6Al-4V"
     md["wall_mm"] = 1.0
     print(md.to_dict())

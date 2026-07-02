@@ -14,9 +14,9 @@ from __future__ import annotations
 import math
 import traceback
 
-import picogk
-from picogk import Voxels
-from picogk.shapes import (
+import picopie
+from picopie import Voxels
+from picopie.shapes import (
     Box,
     Cylinder,
     ImplicitGyroid,
@@ -58,8 +58,8 @@ def sphere(r=10.0, c=(0, 0, 0)) -> Voxels:
 
 
 def sweep_one(vs: float):
-    picogk.shutdown()
-    picogk.init(voxel_size_mm=vs)
+    picopie.shutdown()
+    picopie.init(voxel_size_mm=vs)
 
     # --- primitives + measurement ---
     run("sphere+volume", vs, lambda: nonempty(sphere()))
@@ -138,7 +138,7 @@ def sweep_one(vs: float):
 
     # --- fields ---
     def _scalar():
-        from picogk import ScalarField
+        from picopie import ScalarField
         sf = ScalarField.from_voxels(sphere())
         return f"ok={sf is not None}"
     run("ScalarField.from_voxels", vs, _scalar)

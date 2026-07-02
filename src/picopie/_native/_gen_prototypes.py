@@ -8,8 +8,8 @@ The header grammar is highly regular::
 
 Run from anywhere::
 
-    python -m picogk._native._gen_prototypes        # writes prototypes.py
-    python -m picogk._native._gen_prototypes --check # parse + report only
+    python -m picopie._native._gen_prototypes        # writes prototypes.py
+    python -m picopie._native._gen_prototypes --check # parse + report only
 
 Regenerate this whenever the bound runtime version changes.
 """

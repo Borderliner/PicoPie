@@ -17,19 +17,19 @@ size at the end (init with a different size raises while a session is live).
 
 import pytest
 
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
 SIZES = [0.1, 0.2, 0.5, 1.0]   # fine..coarse; 0.05 is left to fuzz_abort.py (slow)
 
 
 @pytest.fixture
 def restore_session():
-    prev = picogk.voxel_size()
-    picogk.shutdown()
+    prev = picopie.voxel_size()
+    picopie.shutdown()
     yield
-    picogk.shutdown()
-    picogk.init(voxel_size_mm=prev)
+    picopie.shutdown()
+    picopie.init(voxel_size_mm=prev)
 
 
 def _vol(v: Voxels) -> float:
@@ -39,11 +39,11 @@ def _vol(v: Voxels) -> float:
 def _at(vs: float, build):
     """Init at ``vs``, run ``build`` (which must return a *scalar* -- the grid is
     invalidated on shutdown), then shut down."""
-    picogk.init(voxel_size_mm=vs)
+    picopie.init(voxel_size_mm=vs)
     try:
         return build()
     finally:
-        picogk.shutdown()
+        picopie.shutdown()
 
 
 def test_intersect_implicit_across_sizes(restore_session):

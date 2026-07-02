@@ -12,7 +12,7 @@ import random
 import numpy as np
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     Bisection,
     BisectionError,
     Distribution,
@@ -24,7 +24,7 @@ from picogk.shapes import (
     grids,
     lists,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     vectors as V,
 )
 

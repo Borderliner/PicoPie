@@ -1,6 +1,6 @@
 # Shapes 1 — Parametric shapes
 
-`picogk.shapes` is a Pythonic port of LEAP 71's
+`picopie.shapes` is a Pythonic port of LEAP 71's
 [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel) — a higher-level,
 *parametric* modeling layer built on the PicoPie core. Instead of composing raw
 booleans and SDFs, you instantiate engineering primitives (boxes, spheres,
@@ -12,10 +12,10 @@ native code — and it's **parity-tested against the reference C# ShapeKernel** 
 float precision.
 
 ```python
-import picogk
-from picogk.shapes import Sphere, Box, Cylinder, LocalFrame
+import picopie
+from picopie.shapes import Sphere, Box, Cylinder, LocalFrame
 
-picogk.init(0.5)
+picopie.init(0.5)
 
 part = Sphere(LocalFrame(position=(0, 0, 0)), radius=10).to_voxels()
 vol, _ = part.calculate_properties()
@@ -33,7 +33,7 @@ A `LocalFrame` is a position plus a right-handed orthonormal basis
 their frame's axes, so moving or orienting the frame moves/orients the shape.
 
 ```python
-from picogk.shapes import LocalFrame
+from picopie.shapes import LocalFrame
 
 f = LocalFrame(position=(10, 0, 0))               # origin frame, default axes
 tilted = LocalFrame((0, 0, 0), local_z=(0, 1, 1)) # choose the Z axis; X auto-picked
@@ -58,9 +58,9 @@ spun = f.rotated(angle=0.5, axis=(0, 0, 1))       # copy, rotated about Z
 | `LogoBox` | `LogoBox(frame, length, ref_width, image, mapping)` (image-embossed top) |
 
 ```python
-from picogk.shapes import Box, Cylinder, Cone, Ring, Lens
+from picopie.shapes import Box, Cylinder, Cone, Ring, Lens
 
-picogk.init(0.5)
+picopie.init(0.5)
 box  = Box(LocalFrame((-30, 0, 0)), length=20, width=10, depth=8).to_voxels()
 cyl  = Cylinder(LocalFrame((0, 0, 0)), length=30, radius=8).to_voxels()
 cone = Cone(LocalFrame((30, 0, 0)), length=30, start_radius=8, end_radius=2).to_voxels()
@@ -80,7 +80,7 @@ across the shape — a tapering nozzle, a fluted cylinder, a wavy sphere.
 
 ```python
 import numpy as np
-from picogk.shapes import Sphere, Cylinder
+from picopie.shapes import Sphere, Cylinder
 
 # a sphere whose radius ripples with the azimuthal angle
 wavy = Sphere(radius=lambda phi, theta: 20 + 3 * np.cos(6 * phi)).to_voxels()
@@ -94,7 +94,7 @@ Callables must be numpy-aware (they're evaluated on arrays during meshing).
 Modulations compose with `+ - *`:
 
 ```python
-from picogk.shapes import SurfaceModulation
+from picopie.shapes import SurfaceModulation
 base = SurfaceModulation(10.0)
 ripple = SurfaceModulation(lambda phi, lr: np.cos(5 * phi))
 radius = base + 2.0 * ripple        # a SurfaceModulation; pass it as radius=

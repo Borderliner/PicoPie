@@ -7,26 +7,26 @@ explains the guarantees and how to work with them.
 ## Errors are catchable, not fatal
 
 The runtime is built with a **never-abort guard**: every C entry point is wrapped so
-a C++/OpenVDB exception becomes a catchable `PicoGKError` instead of terminating the
+a C++/OpenVDB exception becomes a catchable `PicoPieError` instead of terminating the
 process.
 
 ```python
-import picogk
-from picogk import Voxels
-from picogk._errors import PicoGKError
+import picopie
+from picopie import Voxels
+from picopie._errors import PicoPieError
 
-picogk.init(0.5)
+picopie.init(0.5)
 try:
     risky_operation()
-except PicoGKError as e:
+except PicoPieError as e:
     print("native error:", e)        # caught — your program keeps running
 ```
 
 The exception hierarchy:
 
-- `PicoGKError` — base / native errors and version mismatches.
+- `PicoPieError` — base / native errors and version mismatches.
 - `InvalidHandleError` — using an object after it's closed (or after `shutdown()`).
-- `NotInitializedError` — calling the API before `picogk.init()`.
+- `NotInitializedError` — calling the API before `picopie.init()`.
 
 ## Non-finite inputs are rejected
 
@@ -69,14 +69,14 @@ v.close()
 v.volume_mm3()                       # InvalidHandleError — using a closed object raises (no crash)
 ```
 
-`picogk.shutdown()` invalidates all live objects first, so any later use raises
+`picopie.shutdown()` invalidates all live objects first, so any later use raises
 cleanly rather than touching freed native memory.
 
 ## A note on `intersect_implicit_`
 
 The one operation with a sharp edge: calling `intersect_implicit_` twice on the same
 volume (or a copy) leaves a non-level-set grid. PicoPie detects the repeat and raises
-`PicoGKError`; and even if you bypass that, the never-abort guard turns the underlying
+`PicoPieError`; and even if you bypass that, the never-abort guard turns the underlying
 OpenVDB error into an exception rather than a crash. Still — **prefer composing the
 clip into one `render_implicit_`** (`max(feature, clip)`); it's correct by construction.
 

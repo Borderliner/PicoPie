@@ -5,8 +5,8 @@ import math
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Mesh, Voxels
+import picopie
+from picopie import Mesh, Voxels
 
 
 # --- Voxels geometric queries ------------------------------------------------
@@ -88,18 +88,18 @@ def test_intersect_implicit_fine_voxel_size():
     # background 0 -> OpenVDB's csgIntersection aborted. We patch the runtime to
     # pass the source narrow band instead (see scripts/patch_runtime.py). This
     # must work at a fine voxel size, where the old build raised.
-    prev = picogk.voxel_size()
-    picogk.shutdown()
+    prev = picopie.voxel_size()
+    picopie.shutdown()
     try:
-        picogk.init(voxel_size_mm=0.1)
+        picopie.init(voxel_size_mm=0.1)
         v = Voxels.sphere(radius=10)
         full = v.volume_mm3()
         v.intersect_implicit_(lambda x, y, z: x)   # keep the x<=0 hemisphere
         clipped = v.volume_mm3()
         assert 0 < clipped < full
     finally:
-        picogk.shutdown()
-        picogk.init(voxel_size_mm=prev)            # restore the session voxel size
+        picopie.shutdown()
+        picopie.init(voxel_size_mm=prev)            # restore the session voxel size
 
 
 # --- in-place operators ------------------------------------------------------
@@ -138,10 +138,10 @@ def test_mesh_add_vertex_triangle():
 
 # --- library.init guard ------------------------------------------------------
 def test_init_same_voxel_size_is_noop():
-    picogk.init(picogk.voxel_size())           # same -> no error
+    picopie.init(picopie.voxel_size())           # same -> no error
 
 
 def test_init_different_voxel_size_raises():
-    other = picogk.voxel_size() + 0.25
-    with pytest.raises(picogk.PicoGKError):
-        picogk.init(other)
+    other = picopie.voxel_size() + 0.25
+    with pytest.raises(picopie.PicoPieError):
+        picopie.init(other)

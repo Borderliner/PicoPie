@@ -8,14 +8,14 @@ the Pythonic wrappers can supply it implicitly -- mirroring the static
 
 Usage::
 
-    import picogk
-    picogk.init(voxel_size_mm=0.2)
+    import picopie
+    picopie.init(voxel_size_mm=0.2)
     ...
-    picogk.shutdown()          # optional; also runs atexit
+    picopie.shutdown()          # optional; also runs atexit
 
 or as a context manager::
 
-    with picogk.session(voxel_size_mm=0.2):
+    with picopie.session(voxel_size_mm=0.2):
         ...
 """
 
@@ -26,14 +26,14 @@ import contextlib
 import ctypes as C
 import weakref
 
-from ._errors import NotInitializedError, PicoGKError
+from ._errors import NotInitializedError, PicoPieError
 from ._native.runtime import lib as _lib
 
 _STRLEN = 255
 
 # The native C ABI this binding targets, as major.minor (PicoGKRuntime is pinned
 # to tag PicoGK-v2.2.0 -> runtime "26.2.0"). init() verifies the loaded runtime
-# matches, so a stale/incompatible picogk.* DLL fails loudly instead of crashing
+# matches, so a stale/incompatible picopie.* DLL fails loudly instead of crashing
 # at the first mismatched call. Patch releases (26.2.x) are accepted.
 _EXPECTED_RUNTIME_VERSION = "26.2"
 
@@ -72,16 +72,16 @@ def init(voxel_size_mm: float = 0.1) -> None:
         raise ValueError("voxel_size_mm must be > 0")
     if _session is not None:
         if abs(_session.voxel_size_mm - voxel_size_mm) > 1e-9:
-            raise PicoGKError(
+            raise PicoPieError(
                 f"PicoGK already initialised with voxel size "
                 f"{_session.voxel_size_mm} mm; cannot change to {voxel_size_mm} "
-                f"mm. Call picogk.shutdown() first.")
+                f"mm. Call picopie.shutdown() first.")
         return
     cdll = _lib()
     _check_runtime_version()
     handle = cdll.Library_hCreateInstance(voxel_size_mm)
     if not handle:
-        raise PicoGKError("Library_hCreateInstance returned a null handle")
+        raise PicoPieError("Library_hCreateInstance returned a null handle")
     _session = _Session(cdll, int(handle), float(voxel_size_mm))
 
 
@@ -93,7 +93,7 @@ def _check_runtime_version() -> None:
     """
     ver = _info_string("Library_GetVersion")
     if ver != _EXPECTED_RUNTIME_VERSION and not ver.startswith(_EXPECTED_RUNTIME_VERSION + "."):
-        raise PicoGKError(
+        raise PicoPieError(
             f"PicoGK runtime version mismatch: loaded {ver!r}, but this binding "
             f"targets {_EXPECTED_RUNTIME_VERSION}.x. Rebuild the runtime at the "
             f"pinned tag PicoGK-v2.2.0, or point $PICOGK_RUNTIME at a matching build.")
@@ -133,7 +133,7 @@ atexit.register(shutdown)
 def _active() -> _Session:
     if _session is None:
         raise NotInitializedError(
-            "PicoGK is not initialised. Call picogk.init(voxel_size_mm=...) "
+            "PicoGK is not initialised. Call picopie.init(voxel_size_mm=...) "
             "first.")
     return _session
 

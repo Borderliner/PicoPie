@@ -50,7 +50,7 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 ## ✅ Phase 4 — Packaging & cross-platform wheels (done)
 
 - [x] Scripted, reproducible native build (`scripts/build_runtime.sh` + `stage_runtime.py`)
-- [x] Bundle runtime into wheels under `picogk/_lib/` — **verified locally**: wheel installs
+- [x] Bundle runtime into wheels under `picopie/_lib/` — **verified locally**: wheel installs
       in a clean venv (no source tree, no env var) and runs off the bundled runtime
 - [x] `auditwheel repair` vendors the runtime's deps (TBB/Blosc/Boost/…) and patches RPATH;
       confirmed all resolve to `picopie.libs/` (manylinux self-contained, even dlopen'd)
@@ -77,13 +77,13 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 - [x] API docs (mkdocs-material + mkdocstrings): home, quickstart, guide, API reference
       (`mkdocs.yml`, `docs/`) — **`mkdocs build --strict` passes** (5 pages, API auto-generated
       from the source docstrings via griffe). Build: `pip install -e ".[docs]" && mkdocs build`
-- [x] Examples: `hello_picogk`, `fields_and_io`, `visualize`
+- [x] Examples: `hello_picopie`, `fields_and_io`, `visualize`
 - *Parity-validated against the reference implementation; docs ready to publish.*
 
 ## ✅ Phase R — Reliability hardening (done)
 
 - [x] **Never-abort runtime**: a build-time patch wraps all 173 C ABI functions so a
-      C++/OpenVDB exception becomes a catchable `PicoGKError` instead of `SIGABRT`;
+      C++/OpenVDB exception becomes a catchable `PicoPieError` instead of `SIGABRT`;
       a ctypes `errcheck` raises it on the Python side (the Cython fast loop bypasses it)
 - [x] **Fuzzing** (Hypothesis + a subprocess campaign, 12k+ ops) — found a NaN-capsule
       segfault and an inf-offset hang; fixed by rejecting non-finite geometry inputs
@@ -96,7 +96,7 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 ## ✅ Phase 10 — Interactive viewer (done)
 
 - [x] Bound the native GLFW/OpenGL viewer: `Viewer` (window, PBR materials, IBL
-      lighting), orbit camera (mouse/scroll/keys), `picogk.show()` one-liner,
+      lighting), orbit camera (mouse/scroll/keys), `picopie.show()` one-liner,
       offscreen `render_png()`, `screenshot()`
 - [x] Main-thread affinity guard, use-after-close protection, leak-free lifetime
 - *Closes the last C# feature gap; headless usage still preferred for batch/CI.*
@@ -104,7 +104,7 @@ Goal: every native capability reachable from idiomatic Python, plus persistence.
 ## ✅ Phase 12 — ShapeKernel port (done, 0.3.0)
 
 A full, Pythonic port of LEAP 71's [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel)
-(pure C# atop PicoGK) onto the PicoPie core — `picogk.shapes`. Pinned at tag
+(pure C# atop PicoGK) onto the PicoPie core — `picopie.shapes`. Pinned at tag
 `ShapeKernel-v2.1.0` and **parity-tested vs the reference C#** (geometry to float
 precision; `parity-shapekernel/` → `tests/golden/shapekernel_parity.json`).
 
@@ -124,7 +124,7 @@ precision; `parity-shapekernel/` → `tests/golden/shapekernel_parity.json`).
 
 ## ✅ Phase 13 — Web viewer (done, 0.4.0)
 
-A browser viewer (three.js in an [anywidget](https://anywidget.dev)) — `picogk.web`.
+A browser viewer (three.js in an [anywidget](https://anywidget.dev)) — `picopie.web`.
 Geometry is computed in Python and streamed to the browser as binary buffers
 (compute-in-Python, render-in-browser), filling the GLFW-needs-a-local-display gap:
 it works in JupyterLab, VS Code, Colab, and over SSH.

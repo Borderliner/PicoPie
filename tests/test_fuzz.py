@@ -3,7 +3,7 @@
 The property under test, across the whole API: **for any input, an operation
 either succeeds or raises a catchable ``Exception`` -- it never aborts the
 process.** With the Phase-11a never-abort runtime guard in place, a C++/OpenVDB
-error surfaces as ``PicoGKError`` (an ``Exception``); if any input slipped past
+error surfaces as ``PicoPieError`` (an ``Exception``); if any input slipped past
 the guard it would ``SIGABRT`` and crash this whole pytest process -- a loud,
 unmissable failure. So each test feeds adversarial inputs (NaN/inf/huge/negative,
 out-of-range indices, degenerate geometry) and just asserts the call is
@@ -34,8 +34,8 @@ pytest.importorskip("hypothesis")
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from picogk import Mesh, Metadata, ScalarField, VdbFile, Voxels
-from picogk.shapes import (
+from picopie import Mesh, Metadata, ScalarField, VdbFile, Voxels
+from picopie.shapes import (
     Box,
     Cylinder,
     Lens,
@@ -192,7 +192,7 @@ def test_fuzz_vdb_get(i):
     _containable(lambda: f.field_type(i))
 
 
-# --- picogk.shapes: every build either yields finite-volume voxels or raises ---
+# --- picopie.shapes: every build either yields finite-volume voxels or raises ---
 # (B1 hardening rejects non-finite dimensions; the never-abort guard backstops
 # anything else.) Sizing params are bounded (NaN/0/negative still mixed in) and
 # step counts kept small so this stays an abort test, not an OOM/time test.

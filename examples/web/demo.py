@@ -14,9 +14,9 @@ import sys
 import webbrowser
 from pathlib import Path
 
-import picogk
-from picogk.shapes import Box, ImplicitGyroid, ImplicitSphere, LocalFrame, Sphere
-from picogk.web import export_html
+import picopie
+from picopie.shapes import Box, ImplicitGyroid, ImplicitSphere, LocalFrame, Sphere
+from picopie.web import export_html
 
 
 def build_scene():
@@ -33,7 +33,7 @@ def main(argv: list[str]) -> int:
     auto_open = "--no-open" not in argv
     out = args[0] if args else "web_demo.html"
 
-    picogk.init(voxel_size_mm=0.5)   # coarse-ish so the demo HTML stays light + fast
+    picopie.init(voxel_size_mm=0.5)   # coarse-ish so the demo HTML stays light + fast
     export_html(build_scene(), out, title="PicoPie web viewer demo")
 
     uri = Path(out).resolve().as_uri()

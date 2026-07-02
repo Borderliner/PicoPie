@@ -13,10 +13,10 @@ import sys
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Lattice, Mesh, ScalarField, VectorField, Voxels
-from picogk import library as _lib
-from picogk.types import require_finite, to_vec3
+import picopie
+from picopie import Lattice, Mesh, ScalarField, VectorField, Voxels
+from picopie import library as _lib
+from picopie.types import require_finite, to_vec3
 
 NONFINITE = [float("nan"), float("inf"), -float("inf")]
 
@@ -108,9 +108,9 @@ def test_init_rejects_nonpositive_voxel_size():
     # the <= 0 check fires before the session guard, so this is safe with a live
     # session and doesn't mutate it.
     with pytest.raises(ValueError):
-        picogk.init(voxel_size_mm=0.0)
+        picopie.init(voxel_size_mm=0.0)
     with pytest.raises(ValueError):
-        picogk.init(voxel_size_mm=-1.0)
+        picopie.init(voxel_size_mm=-1.0)
 
 
 # --- lifecycle that needs a *fresh* (uninitialized) process -> subprocess -------
@@ -120,25 +120,25 @@ def _run(code: str) -> subprocess.CompletedProcess:
 
 def test_not_initialized_error_in_fresh_process():
     r = _run(
-        "import picogk\n"
+        "import picopie\n"
         "try:\n"
-        "    picogk.Voxels.sphere(radius=5)\n"
+        "    picopie.Voxels.sphere(radius=5)\n"
         "    print('NORAISE')\n"
-        "except picogk.NotInitializedError:\n"
+        "except picopie.NotInitializedError:\n"
         "    print('RAISED')\n")
     assert "RAISED" in r.stdout, r.stdout + r.stderr
 
 
 def test_session_context_manager_in_fresh_process():
     r = _run(
-        "import picogk\n"
-        "from picogk import library\n"
-        "with picogk.session(0.5):\n"
-        "    v = picogk.Voxels.sphere(radius=5)\n"
+        "import picopie\n"
+        "from picopie import library\n"
+        "with picopie.session(0.5):\n"
+        "    v = picopie.Voxels.sphere(radius=5)\n"
         "    print('VOL', v.volume_mm3() > 0)\n"
         "print('AFTER', library.is_initialized())\n")
     assert "VOL True" in r.stdout and "AFTER False" in r.stdout, r.stdout + r.stderr
 
 
 def test_uninitialized_accessor_name_is_exported():
-    assert _lib.NotInitializedError is picogk.NotInitializedError
+    assert _lib.NotInitializedError is picopie.NotInitializedError

@@ -4,48 +4,48 @@ Auto-generated from docstrings.
 
 ## Session
 
-::: picogk.library
+::: picopie.library
     options:
       members: [init, shutdown, session, is_initialized, voxel_size, name, version, build_info, total_memory_bytes]
 
 ## Voxels
 
-::: picogk.voxels.Voxels
+::: picopie.voxels.Voxels
 
 ## Mesh
 
-::: picogk.mesh.Mesh
+::: picopie.mesh.Mesh
 
 ## Lattice
 
-::: picogk.lattice.Lattice
+::: picopie.lattice.Lattice
 
 ## Fields
 
-::: picogk.fields.ScalarField
+::: picopie.fields.ScalarField
 
-::: picogk.fields.VectorField
+::: picopie.fields.VectorField
 
 ## Metadata
 
-::: picogk.metadata.Metadata
+::: picopie.metadata.Metadata
 
 ## PolyLine
 
-::: picogk.polyline.PolyLine
+::: picopie.polyline.PolyLine
 
 ## File I/O
 
-::: picogk.vdb
+::: picopie.vdb
     options:
       members: [save_vdb, load_vdb, VdbFile, FieldType]
 
 ## Visualization
 
-::: picogk.viz
+::: picopie.viz
     options:
       members: [save_slice_png, save_slice_sheet, mesh_preview, colorize]
 
 ## Types
 
-::: picogk.types.BBox3
+::: picopie.types.BBox3

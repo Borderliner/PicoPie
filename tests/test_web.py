@@ -1,4 +1,4 @@
-"""Offline tests for the browser viewer (picogk.web).
+"""Offline tests for the browser viewer (picopie.web).
 
 The actual three.js rendering needs a browser, so these only exercise the
 Python side: that objects serialize into the ``geometry`` (heavy buffers) and
@@ -9,11 +9,11 @@ that style tweaks don't re-emit geometry. Marked ``web`` (needs the [web] extra)
 import numpy as np
 import pytest
 
-from picogk import PolyLine, Voxels
+from picopie import PolyLine, Voxels
 
 # Offline serialization only (no browser), so these run in CI now that anywidget
 # is in the wheel test-requires; importorskip keeps a minimal (no-[web]) env green.
-web = pytest.importorskip("picogk.web")
+web = pytest.importorskip("picopie.web")
 WebViewer, show = web.WebViewer, web.show
 
 

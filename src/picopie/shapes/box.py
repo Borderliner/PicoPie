@@ -97,7 +97,7 @@ class Box(BaseShape):
 
     @classmethod
     def from_bbox(cls, bbox, *, transform: VertexTransform | None = None) -> Box:
-        """A box matching a :class:`~picogk.types.BBox3` (origin at its min-Z centre)."""
+        """A box matching a :class:`~picopie.types.BBox3` (origin at its min-Z centre)."""
         size = np.asarray(bbox.size, dtype=np.float64)
         centre = np.asarray(bbox.center, dtype=np.float64).copy()
         centre[2] = float(np.asarray(bbox.min, dtype=np.float64)[2])

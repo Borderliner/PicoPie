@@ -16,9 +16,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Voxels
-from picogk.shapes import (
+import picopie
+from picopie import Voxels
+from picopie.shapes import (
     Bisection,
     Box,
     Cone,
@@ -43,10 +43,10 @@ from picogk.shapes import (
     Sphere,
     TangentialControlSpline,
 )
-from picogk.shapes import formulas as FM
-from picogk.shapes import measure as ME
-from picogk.shapes import spline_ops as SO
-from picogk.shapes import vectors as V
+from picopie.shapes import formulas as FM
+from picopie.shapes import measure as ME
+from picopie.shapes import spline_ops as SO
+from picopie.shapes import vectors as V
 
 _IMP_PTS = [(0, 0, 0), (3, 1, 2), (5, 5, 5)]
 _PHIS = [0.0, 0.5, 1.2, 3.0]
@@ -73,7 +73,7 @@ def test_sphere_volume_is_near_ideal():
 
 
 def test_radius_accepts_number_callable_and_modulation():
-    from picogk.shapes import SurfaceModulation
+    from picopie.shapes import SurfaceModulation
     assert Sphere(radius=5).to_voxels().calculate_properties()[0] > 0
     assert Sphere(radius=lambda phi, theta: 8.0).to_voxels().calculate_properties()[0] > 0
     assert Sphere(radius=SurfaceModulation(6)).to_voxels().calculate_properties()[0] > 0
@@ -82,7 +82,7 @@ def test_radius_accepts_number_callable_and_modulation():
 # --- C# golden parity (skip without the golden) --------------------------------
 @needs_golden
 def test_voxel_size_matches_golden():
-    assert picogk.voxel_size() == pytest.approx(G["voxel_size_mm"])
+    assert picopie.voxel_size() == pytest.approx(G["voxel_size_mm"])
 
 
 @needs_golden

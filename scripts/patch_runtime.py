@@ -7,8 +7,8 @@
    exception escaping one of them aborts the process (uncatchable from Python).
    We wrap every ``PICOGK_API`` body in try/catch that records the message and
    returns a type-appropriate sentinel. The Python side
-   (src/picogk/_native/runtime.py) reads the flag after each call and raises
-   ``PicoGKError`` -- so *any* native error becomes an ordinary catchable one.
+   (src/picopie/_native/runtime.py) reads the flag after each call and raises
+   ``PicoPieError`` -- so *any* native error becomes an ordinary catchable one.
 
 2. **CSG narrow-band fix** (``PicoGKVdbVoxels.h``): upstream's
    ``Voxels::IntersectImplicit`` builds its temp grid with

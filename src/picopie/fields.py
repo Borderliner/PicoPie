@@ -3,7 +3,7 @@
 A ``ScalarField`` holds a float per active voxel (e.g. temperature, a weighting
 mask); a ``VectorField`` holds a 3-vector per active voxel (e.g. a flow or
 orientation field). Both can be built from a ``Voxels`` volume, sampled and
-edited per point, and round-tripped through ``.vdb`` files (see ``picogk.vdb``).
+edited per point, and round-tripped through ``.vdb`` files (see ``picopie.vdb``).
 """
 
 from __future__ import annotations

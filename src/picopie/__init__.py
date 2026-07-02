@@ -2,10 +2,10 @@
 
 Quick start::
 
-    import picogk
-    from picogk import Voxels
+    import picopie
+    from picopie import Voxels
 
-    picogk.init(voxel_size_mm=0.2)
+    picopie.init(voxel_size_mm=0.2)
 
     body = Voxels.sphere(radius=10)
     hole = Voxels.sphere(center=(5, 0, 0), radius=6)
@@ -18,7 +18,7 @@ Quick start::
 
 from __future__ import annotations
 
-from ._errors import InvalidHandleError, NotInitializedError, PicoGKError
+from ._errors import InvalidHandleError, NotInitializedError, PicoPieError
 from .fields import ScalarField, VectorField
 from .lattice import Lattice
 from .library import (
@@ -51,7 +51,7 @@ __all__ = [
     "MetaType",
     "Metadata",
     "NotInitializedError",
-    "PicoGKError",
+    "PicoPieError",
     "PolyLine",
     "ScalarField",
     "VdbFile",
@@ -78,4 +78,4 @@ __all__ = [
     "voxel_size",
 ]
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"

@@ -10,7 +10,7 @@ import pathlib
 
 import pytest
 
-from picogk import Mesh, Voxels
+from picopie import Mesh, Voxels
 
 pytestmark = pytest.mark.examples
 

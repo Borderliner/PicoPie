@@ -8,8 +8,8 @@ import gc
 import numpy as np
 import pytest
 
-import picogk
-from picogk import (
+import picopie
+from picopie import (
     FieldType,
     Mesh,
     Metadata,
@@ -243,7 +243,7 @@ def test_vdb_load_no_leak(tmp_path):
     v = Voxels.sphere(radius=5)
     p = tmp_path / "x.vdb"
     save_vdb(str(p), body=v)
-    lib, inst = picogk.library.lib(), picogk.library.instance()
+    lib, inst = picopie.library.lib(), picopie.library.instance()
     before = lib.Library_nVdbFilesAllocated(C.c_uint64(inst))
     for _ in range(10):
         d = load_vdb(str(p))
@@ -260,5 +260,5 @@ def test_save_vdb_requires_objects(tmp_path):
 
 
 def test_load_missing_vdb_raises_clearly(tmp_path):
-    with pytest.raises(picogk.PicoGKError, match="file not found"):
+    with pytest.raises(picopie.PicoPieError, match="file not found"):
         VdbFile.load(str(tmp_path / "nope.vdb"))

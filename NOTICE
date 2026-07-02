@@ -2,11 +2,14 @@ PicoPie
 Copyright 2026 Mohammadreza Hajianpour <hajianpour.mr@gmail.com>
 Copyright 2026 Vish Vadlamani <global.takeover7@gmail.com>
 
+PicoPie is an independent, community-maintained project. It is not affiliated
+with, endorsed by, or supported by LEAP 71.
+
 This product is a Python port and binding of PicoGK
 (https://github.com/leap71/PicoGK), Copyright (c) LEAP 71, licensed under the
 Apache License, Version 2.0.
 
-The `picogk.shapes` module is a Python port of LEAP 71's ShapeKernel
+The `picopie.shapes` module is a Python port of LEAP 71's ShapeKernel
 (https://github.com/leap71/LEAP71_ShapeKernel), Copyright (c) LEAP 71, likewise
 licensed under the Apache License, Version 2.0.
 

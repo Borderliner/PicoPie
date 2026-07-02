@@ -29,7 +29,7 @@ def lib() -> C.CDLL:
 
 
 def _install_error_guard(cdll: C.CDLL) -> None:
-    """Route the runtime's captured errors into ``PicoGKError`` after every call.
+    """Route the runtime's captured errors into ``PicoPieError`` after every call.
 
     When the runtime is built with the never-abort guard (scripts/patch_runtime.py),
     a C++/OpenVDB exception is caught at the C ABI -- it sets ``g_pkLastErrorFlag``
@@ -49,7 +49,7 @@ def _install_error_guard(cdll: C.CDLL) -> None:
     get_err.restype = C.c_int
     get_err.argtypes = [C.c_char_p, C.c_int]
 
-    from .._errors import PicoGKError
+    from .._errors import PicoPieError
 
     def _last_error() -> str:
         buf = C.create_string_buffer(1024)
@@ -59,13 +59,13 @@ def _install_error_guard(cdll: C.CDLL) -> None:
     def _errcheck(result, func, args):
         if flag.value:
             flag.value = 0
-            raise PicoGKError(_last_error() or "PicoGK: native error")
+            raise PicoPieError(_last_error() or "PicoGK: native error")
         return result
 
     for name in prototypes.FUNCTIONS:
         with contextlib.suppress(AttributeError):
             getattr(cdll, name).errcheck = _errcheck
-    cdll._picogk_guarded = True  # type: ignore[attr-defined]
+    cdll._picopie_guarded = True  # type: ignore[attr-defined]
 
 
 __all__ = ["find_runtime", "lib"]

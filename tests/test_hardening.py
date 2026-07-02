@@ -5,10 +5,10 @@ import ctypes as C
 
 import pytest
 
-import picogk
-from picogk import Metadata, ScalarField, VdbFile, Voxels, library
-from picogk._errors import InvalidHandleError, PicoGKError
-from picogk._native import ctypes_types
+import picopie
+from picopie import Metadata, ScalarField, VdbFile, Voxels, library
+from picopie._errors import InvalidHandleError, PicoPieError
+from picopie._native import ctypes_types
 
 
 # --- H2: out-of-range VDB field index must raise, not abort -------------------
@@ -38,7 +38,7 @@ def test_vdbfile_get_bad_index_raises():
 def test_vdbfile_valid_index_still_works(tmp_path):
     v = Voxels.sphere(radius=5)
     p = tmp_path / "x.vdb"
-    picogk.save_vdb(str(p), body=v)
+    picopie.save_vdb(str(p), body=v)
     f = VdbFile.load(str(p))
     try:
         assert f.field_name(0) == "body"          # in range: fine
@@ -53,15 +53,15 @@ def test_operation_after_shutdown_raises(tmp_path):
     import subprocess
     import sys
     code = (
-        "import picogk\n"
-        "from picogk import Voxels\n"
-        "picogk.init(0.5)\n"
+        "import picopie\n"
+        "from picopie import Voxels\n"
+        "picopie.init(0.5)\n"
         "v = Voxels.sphere(radius=5)\n"
-        "picogk.shutdown()\n"
+        "picopie.shutdown()\n"
         "try:\n"
         "    v.volume_mm3()\n"
         "    print('NO_RAISE')\n"
-        "except picogk.InvalidHandleError:\n"
+        "except picopie.InvalidHandleError:\n"
         "    print('RAISED')\n"
         "v.close()  # must be a safe no-op, not an abort\n"
     )
@@ -97,7 +97,7 @@ def test_runtime_version_matches_expected():
 @pytest.mark.parametrize("bad", ["27.0.0", "26.3.0", "26.20.0", "25.2.0", "", "garbage"])
 def test_version_gate_rejects_mismatch(monkeypatch, bad):
     monkeypatch.setattr(library, "_info_string", lambda fn: bad)
-    with pytest.raises(PicoGKError, match="version mismatch"):
+    with pytest.raises(PicoPieError, match="version mismatch"):
         library._check_runtime_version()
 
 
@@ -127,14 +127,14 @@ def test_double_intersect_implicit_raises_not_aborts():
     # A second implicit intersect aborts the process in OpenVDB; we must raise.
     v = _solid()
     v.intersect_implicit_(lambda x, y, z: x)         # first is fine
-    with pytest.raises(PicoGKError, match="twice"):
+    with pytest.raises(PicoPieError, match="twice"):
         v.intersect_implicit_(lambda x, y, z: y)
 
 
 def test_intersect_implicit_bad_state_follows_copy():
     v = _solid()
     v.intersect_implicit_(lambda x, y, z: x)
-    with pytest.raises(PicoGKError):
+    with pytest.raises(PicoPieError):
         v.copy().intersect_implicit_(lambda x, y, z: y)
 
 
@@ -203,12 +203,12 @@ def test_use_after_free_raises_not_aborts():
 def test_runtime_never_abort_guard_active():
     # Wheels/dev builds must ship the patched runtime; if this fails, the runtime
     # was built without scripts/patch_runtime.py and a native error would abort.
-    assert getattr(library.lib(), "_picogk_guarded", False), \
+    assert getattr(library.lib(), "_picopie_guarded", False), \
         "runtime not built with the never-abort guard (run scripts/patch_runtime.py)"
 
 
 def test_native_exception_surfaces_in_process():
-    # A native C++/OpenVDB exception must surface as a catchable PicoGKError
+    # A native C++/OpenVDB exception must surface as a catchable PicoPieError
     # WITHOUT crashing the process. The native VDB field accessors index a
     # std::vector with .at(), which throws std::out_of_range on a bad index; we
     # call the raw guarded entry point directly (bypassing VdbFile._check_index)
@@ -220,7 +220,7 @@ def test_native_exception_surfaces_in_process():
     f = VdbFile()
     try:
         buf = C.create_string_buffer(256)
-        with pytest.raises(PicoGKError):
+        with pytest.raises(PicoPieError):
             f._lib.VdbFile_GetFieldName(f._inst, f.handle, 99, buf)
     finally:
         f.close()

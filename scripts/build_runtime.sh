@@ -16,7 +16,7 @@ BUILD="$NATIVE/build"
 
 # Pin the upstream runtime for reproducible builds. Tag PicoGK-v2.2.0 -> the
 # runtime reports version "26.2.0" (kept in sync with _EXPECTED_RUNTIME_VERSION
-# in src/picogk/library.py). Pinning the superproject commit also pins its
+# in src/picopie/library.py). Pinning the superproject commit also pins its
 # submodules (OpenVDB/GLFW) via their recorded gitlinks.
 PICOGK_RUNTIME_REF="${PICOGK_RUNTIME_REF:-0f26321c18ed878a7820ef769c38fd5d49d39242}"  # PicoGK-v2.2.0
 

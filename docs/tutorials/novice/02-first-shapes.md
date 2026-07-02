@@ -9,10 +9,10 @@ directly; you build with primitives and combine them.
 There are two built-in solids: spheres and capsules (a cylinder with rounded ends).
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-picogk.init(voxel_size_mm=0.2)
+picopie.init(voxel_size_mm=0.2)
 
 ball   = Voxels.sphere(center=(0, 0, 0), radius=10)
 rod    = Voxels.capsule(start=(-15, 0, 0), end=(15, 0, 0), radius=3)
@@ -39,7 +39,7 @@ print(mesh.vertex_count(), "vertices,", mesh.triangle_count(), "triangles")
 ### B. Render a PNG (needs the `[viz]` extra)
 
 ```python
-from picogk import save_slice_png, mesh_preview
+from picopie import save_slice_png, mesh_preview
 
 save_slice_png(ball, "slice.png", axis="z", mode="sdf")   # a cross-section image
 mesh_preview(ball.to_mesh(), "preview.png")               # a shaded 3D preview
@@ -52,25 +52,25 @@ mesh_preview(ball.to_mesh(), "preview.png")               # a shaded 3D preview
 ### C. Open an interactive window (needs a display)
 
 ```python
-picogk.show(ball)              # orbit with the mouse; press Esc to close
+picopie.show(ball)              # orbit with the mouse; press Esc to close
 ```
 
-On a machine with no display (CI, a server) this raises `PicoGKError` — use A or B
+On a machine with no display (CI, a server) this raises `PicoPieError` — use A or B
 there. (More in the [viewer tutorial](../advanced/03-viewer.md).)
 
 ## A tiny complete example
 
 ```python
-import picogk
-from picogk import Voxels
+import picopie
+from picopie import Voxels
 
-with picogk.session(voxel_size_mm=0.2):        # auto-init + shutdown
+with picopie.session(voxel_size_mm=0.2):        # auto-init + shutdown
     rod = Voxels.capsule((-15, 0, 0), (15, 0, 0), radius=3)
     rod.to_mesh().save_stl("rod.stl")
     print("wrote rod.stl —", rod.calculate_properties()[0], "mm³")
 ```
 
-Using `with picogk.session(...)` is the tidy way to scope a session: it initializes
+Using `with picopie.session(...)` is the tidy way to scope a session: it initializes
 on entry and shuts down on exit.
 
 Next: [combining shapes with booleans, and exporting →](03-booleans-and-export.md)

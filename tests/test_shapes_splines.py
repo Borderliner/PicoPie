@@ -8,7 +8,7 @@ identities and structural checks. Cross-checks vs C# live in
 import numpy as np
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     ControlPointSpline,
     ControlPointSurface,
     CylindricalControlSpline,
@@ -18,7 +18,7 @@ from picogk.shapes import (
     decimation,
     formulas,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     spline_ops as SO,
 )
 

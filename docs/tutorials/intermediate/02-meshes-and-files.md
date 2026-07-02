@@ -9,10 +9,10 @@ Go from a volume to a mesh and back:
 
 ```python
 import numpy as np
-import picogk
-from picogk import Voxels, Mesh
+import picopie
+from picopie import Voxels, Mesh
 
-picogk.init(voxel_size_mm=0.3)
+picopie.init(voxel_size_mm=0.3)
 
 part = Voxels.sphere(radius=10)
 mesh = part.to_mesh()                 # marching-cubes surface
@@ -50,7 +50,7 @@ A `Lattice` is a set of struts (beams) and spheres, voxelized into a solid — i
 for trusses and scaffolds:
 
 ```python
-from picogk import Lattice
+from picopie import Lattice
 
 lat = Lattice()
 lat.add_sphere((-10, 0, 0), 2.0)                       # node
@@ -68,7 +68,7 @@ strut if the two radii differ.
 (readable by other OpenVDB tools, and by C# PicoGK):
 
 ```python
-from picogk import save_vdb, load_vdb, ScalarField
+from picopie import save_vdb, load_vdb, ScalarField
 
 part = Voxels.sphere(radius=10)
 heat = ScalarField.from_voxels(part)            # (fields covered in the next tutorial)
@@ -84,7 +84,7 @@ For finer control (inspecting field names/types before loading) there's the
 `VdbFile` class and the `FieldType` enum:
 
 ```python
-from picogk import VdbFile, FieldType
+from picopie import VdbFile, FieldType
 
 f = VdbFile.load("model.vdb")
 for name, ftype in f.fields():                   # [("body", FieldType.VOXELS), ...]

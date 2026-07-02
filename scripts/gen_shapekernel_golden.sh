@@ -15,7 +15,7 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
   exit 1
 }
 
-SO="$(find "$ROOT/native/PicoGKRuntime/Dist" "$ROOT/src/picogk/_lib" \
+SO="$(find "$ROOT/native/PicoGKRuntime/Dist" "$ROOT/src/picopie/_lib" \
         -name 'picogk*.so' 2>/dev/null | head -1)"
 [[ -n "$SO" ]] || { echo "no built runtime found; run scripts/build_runtime.sh"; exit 1; }
 

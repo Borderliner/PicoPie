@@ -7,8 +7,8 @@ All CI-offline.
 
 import numpy as np
 
-import picogk
-from picogk.shapes import (
+import picopie
+from picopie.shapes import (
     Box,
     Cone,
     ControlPointSurface,
@@ -21,7 +21,7 @@ from picogk.shapes import (
     io_utils,
     painter,
 )
-from picogk.shapes.colors import ColorScale3D, rainbow_spectrum
+from picopie.shapes.colors import ColorScale3D, rainbow_spectrum
 
 
 # --- the setter step-bump fix (0.4.2) ----------------------------------------
@@ -76,7 +76,7 @@ def test_lattice_manifold_extend_both_sides():
 
 
 def test_painter_only_down_facing():
-    mesh = picogk.Voxels.sphere(radius=20).to_mesh()
+    mesh = picopie.Voxels.sphere(radius=20).to_mesh()
     scale = ColorScale3D(rainbow_spectrum(), 0.0, 90.0)
     scene = painter.split_by_overhang_angle(mesh, scale, n_classes=20, only_down_facing=True)
     assert isinstance(scene, list) and len(scene) > 0
@@ -86,5 +86,5 @@ def test_painter_only_down_facing():
 
 def test_export_mesh_to_stl(tmp_path):
     out = tmp_path / "m.stl"
-    io_utils.export_mesh_to_stl(picogk.Voxels.sphere(radius=5).to_mesh(), str(out))
+    io_utils.export_mesh_to_stl(picopie.Voxels.sphere(radius=5).to_mesh(), str(out))
     assert out.exists() and out.stat().st_size > 0

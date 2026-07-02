@@ -8,9 +8,9 @@ and the compiled _fastloop extension built. Then exercises real geometry.
 import math
 import sys
 
-import picogk
-from picogk import Voxels, _fast
-from picogk._native.loader import find_runtime
+import picopie
+from picopie import Voxels, _fast
+from picopie._native.loader import find_runtime
 
 
 def main() -> int:
@@ -22,14 +22,14 @@ def main() -> int:
         print("FAIL: compiled _fastloop extension missing from the wheel")
         return 1
 
-    picogk.init(voxel_size_mm=0.5)
+    picopie.init(voxel_size_mm=0.5)
     vol = Voxels.sphere(radius=10).volume_mm3()
     ideal = 4 / 3 * math.pi * 10**3
     if abs(vol - ideal) / ideal > 0.02:
         print(f"FAIL: sphere volume {vol} off from {ideal}")
         return 1
 
-    print(f"OK  PicoGK {picogk.version()}  runtime={rt}  fastloop={_fast.available()}")
+    print(f"OK  PicoGK {picopie.version()}  runtime={rt}  fastloop={_fast.available()}")
     return 0
 
 

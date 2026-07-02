@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy the built native runtime into ``src/picogk/_lib/`` so it gets bundled
+"""Copy the built native runtime into ``src/picopie/_lib/`` so it gets bundled
 into the wheel. Run after building PicoGKRuntime and before ``python -m build``.
 
 Resolution: ``$PICOGK_RUNTIME`` if set, else the runtime build tree under
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEST = ROOT / "src" / "picogk" / "_lib"
+DEST = ROOT / "src" / "picopie" / "_lib"
 
 _NAMES = {
     "linux": ["picogk.so", "libpicogk.so"],

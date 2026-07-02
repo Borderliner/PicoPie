@@ -8,8 +8,8 @@ the supershape/polygon radii. Exact C# parity lives in
 import numpy as np
 import pytest
 
-from picogk import Voxels
-from picogk.shapes import (
+from picopie import Voxels
+from picopie.shapes import (
     Frames,
     ImplicitGenus,
     ImplicitGyroid,
@@ -20,7 +20,7 @@ from picogk.shapes import (
     LocalFrame,
     formulas,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     functions as fn,
 )
 

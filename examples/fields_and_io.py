@@ -5,16 +5,16 @@
 """
 from pathlib import Path
 
-import picogk
-from picogk import Mesh, Metadata, ScalarField, Voxels, load_vdb, save_vdb
+import picopie
+from picopie import Mesh, Metadata, ScalarField, Voxels, load_vdb, save_vdb
 
 OUT = Path(__file__).parent / "_out"
 OUT.mkdir(exist_ok=True)
 
 
 def main() -> None:
-    picogk.init(voxel_size_mm=0.3)
-    print(f"PicoGK {picogk.version()}")
+    picopie.init(voxel_size_mm=0.3)
+    print(f"PicoGK {picopie.version()}")
 
     # --- build a part, attach a scalar field + metadata ---
     part = Voxels.sphere(radius=10) - Voxels.sphere(center=(6, 0, 0), radius=6)

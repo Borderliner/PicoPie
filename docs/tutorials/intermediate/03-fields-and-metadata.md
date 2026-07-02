@@ -10,10 +10,10 @@ A `ScalarField` stores one float per active voxel — think a heat map or a dens
 
 ```python
 import numpy as np
-import picogk
-from picogk import Voxels, ScalarField
+import picopie
+from picopie import Voxels, ScalarField
 
-picogk.init(voxel_size_mm=0.3)
+picopie.init(voxel_size_mm=0.3)
 
 part  = Voxels.sphere(radius=10)
 field = ScalarField.from_voxels(part)        # a field defined where `part` has data
@@ -47,7 +47,7 @@ near = ScalarField.build_from_voxels(part, value=1.0, sd_threshold=0.5)
 A `VectorField` stores a 3-vector per voxel (e.g. a direction or displacement):
 
 ```python
-from picogk import VectorField
+from picopie import VectorField
 
 vf = VectorField.from_voxels(part)
 vf.set((0, 0, 0), (1.0, 0.0, 0.0))
@@ -61,7 +61,7 @@ print(vf.get((0, 0, 0)))                     # array([1., 0., 0.], dtype=float32
 syntax:
 
 ```python
-from picogk import Metadata
+from picopie import Metadata
 
 md = Metadata.from_voxels(part)
 md["material"] = "Ti-6Al-4V"                 # string
@@ -81,7 +81,7 @@ print("material" in md, "nope" in md)        # True False
 Fields and metadata round-trip through `.vdb` alongside the geometry:
 
 ```python
-from picogk import save_vdb, load_vdb
+from picopie import save_vdb, load_vdb
 
 save_vdb("annotated.vdb", body=part, heat=field)
 objs = load_vdb("annotated.vdb")             # {"body": Voxels, "heat": ScalarField}

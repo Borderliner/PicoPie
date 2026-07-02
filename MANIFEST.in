@@ -1,6 +1,6 @@
 # Ship the Cython source so the fast extension can be (re)built from an sdist.
-include src/picogk/_fastloop.pyx
+include src/picopie/_fastloop.pyx
 include README.md PLAN.md ROADMAP.md
-recursive-include src/picogk/_native/headers *.h
-recursive-include src/picogk/_assets *.zip
-recursive-include src/picogk/_assets *.js
+recursive-include src/picopie/_native/headers *.h
+recursive-include src/picopie/_assets *.zip
+recursive-include src/picopie/_assets *.js

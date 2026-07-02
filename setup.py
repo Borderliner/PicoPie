@@ -11,9 +11,9 @@ from pathlib import Path
 
 from setuptools import Extension, setup
 
-NAME = "picogk._fastloop"
-PYX = "src/picogk/_fastloop.pyx"
-CSRC = "src/picogk/_fastloop.c"
+NAME = "picopie._fastloop"
+PYX = "src/picopie/_fastloop.pyx"
+CSRC = "src/picopie/_fastloop.c"
 
 ext_modules = []
 try:

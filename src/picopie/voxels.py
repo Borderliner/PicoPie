@@ -16,7 +16,7 @@ import numpy as np
 
 from . import library
 from ._base import NativeObject, require_type
-from ._errors import InvalidHandleError, PicoGKError
+from ._errors import InvalidHandleError, PicoPieError
 from ._native.ctypes_types import PKBBox3, PKPFnfSdf, PKVector3
 from .types import BBox3, read_voxel_dimensions, require_finite, to_vec3, vec3_to_np
 
@@ -110,7 +110,7 @@ class Voxels(NativeObject):
         if self._closed or other._closed:
             raise InvalidHandleError("boolean op on a closed Voxels")
         if other._inst != self._inst:
-            raise PicoGKError("cannot combine Voxels from different sessions")
+            raise PicoPieError("cannot combine Voxels from different sessions")
 
     def bool_add_(self, other: Voxels) -> Voxels:
         self._check_operand(other)
@@ -253,14 +253,14 @@ class Voxels(NativeObject):
 
         WARNING: the resulting grid may not be a valid level set. Calling this a
         second time on the same volume (or a copy of it) raises
-        :class:`PicoGKError` -- the underlying OpenVDB CSG would otherwise abort
+        :class:`PicoPieError` -- the underlying OpenVDB CSG would otherwise abort
         the whole process, uncatchably. A boolean op after one implicit
         intersect is usually fine but not guaranteed. For clipping, prefer
         composing fields inside a single :meth:`render_implicit_` callback
         (e.g. ``max(feature_sdf, clip_sdf)``), which has none of these caveats.
         """
         if self._implicit_intersected:
-            raise PicoGKError(
+            raise PicoPieError(
                 "intersect_implicit_() called twice on the same volume: the grid "
                 "is no longer a valid level set and a second implicit intersect "
                 "aborts the process. Compose the clip into one render_implicit_ "

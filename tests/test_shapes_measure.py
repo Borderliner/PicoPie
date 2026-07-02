@@ -9,17 +9,17 @@ test_parity_shapekernel.py; CoG/inertia are validated against analytic formulas
 import numpy as np
 import pytest
 
-from picogk import Mesh, Voxels
-from picogk.shapes import (
+from picopie import Mesh, Voxels
+from picopie.shapes import (
     Cylinder,
     LocalFrame,
     Sphere,
     io_utils,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     measure as ME,
 )
-from picogk.shapes import (
+from picopie.shapes import (
     mesh_utils as MU,
 )
 

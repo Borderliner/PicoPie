@@ -7,7 +7,7 @@ Exact C# parity lives in ``test_parity_shapekernel.py``.
 import numpy as np
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     Box,
     Cone,
     Cylinder,

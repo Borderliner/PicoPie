@@ -1,6 +1,6 @@
 """Lattice-based shapes (port of ShapeKernel ``LatticePipe`` / ``LatticeManifold``).
 
-These build a :class:`~picogk.Lattice` of beams along a :class:`Frames` spine
+These build a :class:`~picopie.Lattice` of beams along a :class:`Frames` spine
 (rather than a surface mesh) and voxelise it. ``LatticeManifold`` adds a
 tear-drop "tip" per station for self-supporting (printable) overhangs.
 """

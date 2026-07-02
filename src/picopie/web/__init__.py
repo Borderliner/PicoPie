@@ -1,7 +1,7 @@
 """Browser-based 3D viewer — three.js rendered inside an `anywidget`.
 
 Geometry is computed in Python and streamed to the browser as binary buffers, so
-it renders where the desktop GLFW :class:`picogk.Viewer` can't: JupyterLab, VS
+it renders where the desktop GLFW :class:`picopie.Viewer` can't: JupyterLab, VS
 Code notebooks, Google Colab, and remote/SSH sessions (compute-in-Python,
 render-in-browser — *not* a WASM port of the kernel).
 
@@ -11,19 +11,19 @@ Requires the optional ``[web]`` extra::
 
 Usage (in a notebook cell)::
 
-    import picogk
-    from picogk.web import show
-    picogk.init(0.5)
-    show(picogk.Voxels.sphere(radius=10))            # renders inline
+    import picopie
+    from picopie.web import show
+    picopie.init(0.5)
+    show(picopie.Voxels.sphere(radius=10))            # renders inline
 
     # or, mirroring the desktop Viewer:
-    from picogk.web import WebViewer
+    from picopie.web import WebViewer
     v = WebViewer(background=(0.1, 0.1, 0.12))
     v.add(part, group=0)
     v.set_group_material(0, (0.4, 0.6, 0.9), metallic=0.2, roughness=0.4)
     v                                                # last expression renders it
 
-The API mirrors :class:`picogk.Viewer` (``add`` / ``set_group_material`` /
+The API mirrors :class:`picopie.Viewer` (``add`` / ``set_group_material`` /
 ``set_background`` / ``show``). three.js is loaded from a CDN the first time
 (needs internet; the browser caches it afterwards).
 """
@@ -40,7 +40,7 @@ try:
     import traitlets
 except ModuleNotFoundError as exc:  # pragma: no cover - exercised only without the extra
     raise ModuleNotFoundError(
-        "picogk.web needs anywidget — install the web extra:\n"
+        "picopie.web needs anywidget — install the web extra:\n"
         '    pip install "picopie[web]"'
     ) from exc
 
@@ -52,7 +52,7 @@ __all__ = ["WebViewer", "export_html", "show"]
 
 _JS = pathlib.Path(__file__).resolve().parent.parent / "_assets" / "web_viewer.js"
 
-# Default per-group colors (mirrors picogk.viewer._PALETTE so the web and desktop
+# Default per-group colors (mirrors picopie.viewer._PALETTE so the web and desktop
 # viewers color a multi-object scene the same way).
 _PALETTE: list[tuple[float, float, float]] = [
     (0.35, 0.60, 0.95), (0.95, 0.55, 0.30), (0.45, 0.80, 0.45),
@@ -70,7 +70,7 @@ _IDENTITY16 = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
 
 def _mat16(matrix) -> list[float]:
     """A 4x4 transform (row-major, System.Numerics convention — same as
-    :class:`picogk.Viewer`, i.e. row-vector with the translation in the last row)
+    :class:`picopie.Viewer`, i.e. row-vector with the translation in the last row)
     -> the flat-16 three.js wants. three.js uses column vectors, so we transpose
     here; identity and uniform scale are symmetric, hence unaffected. Accepts a
     (4, 4) array or a length-16 sequence."""
@@ -94,7 +94,7 @@ def _line_item(pl: PolyLine) -> dict:
 class WebViewer(anywidget.AnyWidget):
     """An interactive three.js viewer that renders inline in a notebook.
 
-    Add :class:`~picogk.Voxels`, :class:`~picogk.Mesh`, or :class:`~picogk.PolyLine`
+    Add :class:`~picopie.Voxels`, :class:`~picopie.Mesh`, or :class:`~picopie.PolyLine`
     objects with :meth:`add`; display by making the widget the last expression in
     a cell (or call ``IPython.display.display(viewer)``).
     """
@@ -190,7 +190,7 @@ class WebViewer(anywidget.AnyWidget):
     # --- transforms ----------------------------------------------------------
     def set_group_matrix(self, group: int, matrix) -> WebViewer:
         """Apply a 4x4 transform (mm) to every object in ``group``. Same
-        convention as :meth:`picogk.Viewer.set_group_matrix` — row-major,
+        convention as :meth:`picopie.Viewer.set_group_matrix` — row-major,
         System.Numerics (row-vector, translation in the last row)."""
         self._group_matrices[int(group)] = _mat16(matrix)
         self._sync_style()
@@ -199,7 +199,7 @@ class WebViewer(anywidget.AnyWidget):
     def set_object_matrix(self, obj, matrix) -> WebViewer:
         """Apply a 4x4 transform to a specific added object (overrides its
         group's matrix). Same convention as
-        :meth:`picogk.Viewer.set_object_matrix` (row-major, System.Numerics)."""
+        :meth:`picopie.Viewer.set_object_matrix` (row-major, System.Numerics)."""
         m = _mat16(matrix)
         for it in self._items:
             if it["_obj"] is obj:

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 
-class PicoGKError(RuntimeError):
+class PicoPieError(RuntimeError):
     """Base class for all PicoPie errors."""
 
 
-class NotInitializedError(PicoGKError):
-    """Raised when the PicoGK session is used before :func:`picogk.init`."""
+class NotInitializedError(PicoPieError):
+    """Raised when the PicoGK session is used before :func:`picopie.init`."""
 
 
-class InvalidHandleError(PicoGKError):
+class InvalidHandleError(PicoPieError):
     """Raised when a native object is used after being closed/destroyed."""

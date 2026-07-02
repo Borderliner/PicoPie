@@ -16,11 +16,11 @@ htmlcov/
 /native/
 
 # Compiled Cython extension (generated from _fastloop.pyx)
-src/picogk/_fastloop.c
-src/picogk/*.so
+src/picopie/_fastloop.c
+src/picopie/*.so
 
 # Bundled native runtime (staged at build time by scripts/stage_runtime.py)
-src/picogk/_lib/
+src/picopie/_lib/
 
 # Example output
 examples/_out/

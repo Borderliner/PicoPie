@@ -1,7 +1,7 @@
 """Per-property mesh colouring (port of ShapeKernel ``MeshPainter``).
 
 Split a mesh into coloured sub-meshes by overhang angle or a custom triangle
-property, each coloured via an :mod:`~picogk.shapes.colors` scale. The split
+property, each coloured via an :mod:`~picopie.shapes.colors` scale. The split
 functions return ``[(Mesh, rgb), ...]`` (display-independent); :func:`preview`
 shows them in the interactive viewer.
 """

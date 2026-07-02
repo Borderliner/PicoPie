@@ -12,16 +12,16 @@ C#-equivalence table.
 
 Example::
 
-    import picogk
-    from picogk.shapes import Sphere, LocalFrame
+    import picopie
+    from picopie.shapes import Sphere, LocalFrame
 
-    picogk.init(0.5)
+    picopie.init(0.5)
     part = Sphere(LocalFrame(position=(0, 0, 0)), radius=10).to_voxels()
 
-The math/support layer lives in submodules: :mod:`~picogk.shapes.vectors`,
-:mod:`~picogk.shapes.formulas`, :mod:`~picogk.shapes.lists`,
-:mod:`~picogk.shapes.grids`, :mod:`~picogk.shapes.spline_ops`,
-:mod:`~picogk.shapes.decimation`.
+The math/support layer lives in submodules: :mod:`~picopie.shapes.vectors`,
+:mod:`~picopie.shapes.formulas`, :mod:`~picopie.shapes.lists`,
+:mod:`~picopie.shapes.grids`, :mod:`~picopie.shapes.spline_ops`,
+:mod:`~picopie.shapes.decimation`.
 """
 
 from . import (

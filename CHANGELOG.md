@@ -2,6 +2,25 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.5.0 — 2026-07-02
+
+### Changed — BREAKING: the import namespace is now `picopie`, not `picogk`
+
+At the request of LEAP 71 (PicoGK's maintainers), the package now consistently
+uses the **PicoPie** name so there's no confusion with the official PicoGK
+library: this is an independent, community-maintained binding — **not** an
+official LEAP 71 project.
+
+- **Migration:** replace `import picogk` with `import picopie` (and `from picogk…`
+  with `from picopie…`). The parametric layer is now `picopie.shapes`; the web
+  viewer is `picopie.web`.
+- The exception type `PicoGKError` is renamed to **`PicoPieError`**.
+- The **PyPI package name is unchanged** (`pip install picopie`), and the bundled
+  native **PicoGK runtime is unchanged** (it remains `picogk.so`, as it is the
+  actual PicoGK runtime binary).
+- README and NOTICE now state clearly that PicoPie is unofficial and not
+  affiliated with or endorsed by LEAP 71.
+
 ## 0.4.2 — 2026-06-29
 
 ### Fixed
@@ -16,7 +35,7 @@ All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 - Added direct coverage for previously-untested public wrappers
   (`Voxels.voxel_size_mm` / `bounding_box`, `Lattice` / `VdbFile.is_valid`, field
   `memory_bytes`, `Metadata.to_dict`, the `VdbFile.save` failure path, and the
-  `picogk.__all__` re-exports) and shape branches (spherical frame alignment, the
+  `picopie.__all__` re-exports) and shape branches (spherical frame alignment, the
   cylindrical control-spline tangential step, closed control surfaces,
   `LatticeManifold(extend_both_sides=...)`, the down-facing painter split, mesh
   STL export). 436 CI tests.
@@ -57,10 +76,10 @@ hardening. The core was verified to have no crash/hang gaps.
 ## 0.4.0 — 2026-06-29
 
 ### Added
-- **`picogk.web`** — a browser-based 3D viewer (three.js inside an
+- **`picopie.web`** — a browser-based 3D viewer (three.js inside an
   [anywidget](https://anywidget.dev)), via the optional `[web]` extra. Geometry is
   computed in Python and streamed to the browser as binary buffers, so it renders
-  where the desktop GLFW `picogk.Viewer` can't: JupyterLab, VS Code notebooks,
+  where the desktop GLFW `picopie.Viewer` can't: JupyterLab, VS Code notebooks,
   Google Colab, and remote/SSH sessions (compute-in-Python, render-in-browser).
   - `WebViewer` mirrors the desktop `Viewer` — `add` (Voxels/Mesh/PolyLine),
     `remove`, `set_group_material`, `set_group_visible`, `set_background`,
@@ -120,7 +139,7 @@ hardening. The core was verified to have no crash/hang gaps.
 ## 0.3.0 — 2026-06-26
 
 ### Added
-- **`picogk.shapes`** — a full, Pythonic port of LEAP 71's
+- **`picopie.shapes`** — a full, Pythonic port of LEAP 71's
   [ShapeKernel](https://github.com/leap71/LEAP71_ShapeKernel) (pinned at tag
   `ShapeKernel-v2.1.0`), **parity-tested against the reference C#** (geometry to
   float precision):

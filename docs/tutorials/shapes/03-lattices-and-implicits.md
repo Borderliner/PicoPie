@@ -9,20 +9,20 @@ primitives, measurement, and the colour/painter visualisation helpers.
 adds self-supporting tear-drop tips for printable overhangs.
 
 ```python
-import picogk
-from picogk.shapes import LatticePipe, LatticeManifold, LocalFrame
+import picopie
+from picopie.shapes import LatticePipe, LatticeManifold, LocalFrame
 
-picogk.init(0.5)
+picopie.init(0.5)
 pipe = LatticePipe(LocalFrame((0, 0, 0)), length=60, radius=8).to_voxels()
 manifold = LatticeManifold(LocalFrame((0, 0, 0), local_z=(0, 1, 0)),
                            length=50, radius=6, max_overhang_angle=45).to_voxels()
 ```
 
-Build raw lattices from points / splines / grids with `picogk.shapes.functions`,
+Build raw lattices from points / splines / grids with `picopie.shapes.functions`,
 or quick axis-aligned solids with the `*_between_z` helpers:
 
 ```python
-from picogk.shapes import functions as fn
+from picopie.shapes import functions as fn
 
 lat = fn.lat_from_line([[0, 0, 0], [20, 0, 0], [20, 20, 0]], beam=2)
 cyl = fn.cylinder_between_z(0, 30, radius=6)        # also box/cone/pipe_between_z
@@ -35,8 +35,8 @@ box, or intersect it with an existing volume (e.g. to fill a part with a gyroid
 lattice):
 
 ```python
-from picogk import Voxels
-from picogk.shapes import ImplicitSphere, ImplicitGyroid, ImplicitSuperEllipsoid
+from picopie import Voxels
+from picopie.shapes import ImplicitSphere, ImplicitGyroid, ImplicitSuperEllipsoid
 
 # render an SDF straight into voxels
 ball = ImplicitSphere(center=(0, 0, 0), radius=10).render(((-12,) * 3, (12,) * 3))
@@ -53,11 +53,11 @@ voxel from Python, so keep the bounding box modest.
 
 ## Measurement
 
-`picogk.shapes.measure` reports volume, surface area, centre of gravity, and the
+`picopie.shapes.measure` reports volume, surface area, centre of gravity, and the
 inertia tensor (integrated over the meshed solid):
 
 ```python
-from picogk.shapes import measure as me
+from picopie.shapes import measure as me
 
 vox = ball
 print(me.volume(vox), "mm³")
@@ -66,17 +66,17 @@ cg = me.centre_of_gravity(vox)
 inertia = me.moment_of_inertia(vox, LocalFrame(tuple(cg)), density=7800)  # kg/m³
 ```
 
-`picogk.shapes.mesh_utils` adds mesh-level helpers: `mesh_from_grid`,
+`picopie.shapes.mesh_utils` adds mesh-level helpers: `mesh_from_grid`,
 `apply_transformation`, `translate_mesh_onto_frame`, `append`.
 
 ## Colour & the mesh painter
 
-`picogk.shapes.colors` provides a named palette, spectra, and value→colour
+`picopie.shapes.colors` provides a named palette, spectra, and value→colour
 scales; `painter` splits a mesh into coloured sub-meshes by a property:
 
 ```python
-from picogk.shapes import Palette, painter
-from picogk.shapes.colors import ColorScale3D, rainbow_spectrum
+from picopie.shapes import Palette, painter
+from picopie.shapes.colors import ColorScale3D, rainbow_spectrum
 
 mesh = ball.to_mesh()
 scale = ColorScale3D(rainbow_spectrum(), 0.0, 90.0)
@@ -85,6 +85,6 @@ painter.preview(groups)                                 # show in the viewer (ne
 ```
 
 Colours are plain RGB `0..1` tuples — drop them straight into
-`Viewer.set_group_material` or `picogk.show()`. See the
+`Viewer.set_group_material` or `picopie.show()`. See the
 [gallery](../../gallery.md) for rendered examples, and
 [QuickLearn](../QuickLearn.md) for the whole API on one page.

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "picopie"
-version = "0.4.2"
+version = "0.5.0"
 description = "A Pythonic binding for the PicoGK computational-geometry kernel"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -53,7 +53,7 @@ Issues = "https://github.com/Borderliner/PicoPie/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-picogk = ["py.typed", "_native/headers/*.h", "_lib/*", "_assets/*"]
+picopie = ["py.typed", "_native/headers/*.h", "_lib/*", "_assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -66,9 +66,9 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["picogk"]
+source = ["picopie"]
 omit = [
-    "*/picogk/_native/_gen_prototypes.py",  # build-time codegen tool, not shipped runtime
+    "*/picopie/_native/_gen_prototypes.py",  # build-time codegen tool, not shipped runtime
 ]
 
 [tool.coverage.report]
@@ -83,13 +83,13 @@ exclude_lines = [
 line-length = 100
 src = ["src"]
 # generated file (by _gen_prototypes.py); native/ is vendored upstream
-extend-exclude = ["native", "src/picogk/_native/prototypes.py"]
+extend-exclude = ["native", "src/picopie/_native/prototypes.py"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.mypy]
-files = ["src/picogk"]
+files = ["src/picopie"]
 # Target the dev/runtime interpreter; numpy's stubs require >=3.12. Source stays
 # 3.10-compatible at runtime via `from __future__ import annotations`.
 python_version = "3.12"

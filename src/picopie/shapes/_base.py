@@ -2,7 +2,7 @@
 
 A Pythonic port of LEAP 71 ShapeKernel's ``BaseShape``. A concrete shape
 implements :meth:`BaseShape.to_mesh` (sampling its parametric surface into a
-triangle :class:`~picogk.Mesh`); :meth:`BaseShape.to_voxels` then rasterises
+triangle :class:`~picopie.Mesh`); :meth:`BaseShape.to_voxels` then rasterises
 that mesh into the kernel via :meth:`Voxels.from_mesh`.
 
 C# equivalence: ``mshConstruct()`` -> ``to_mesh()``, ``voxConstruct()`` ->

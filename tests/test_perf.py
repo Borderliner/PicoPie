@@ -19,7 +19,7 @@ import time
 import numpy as np
 import pytest
 
-from picogk import ScalarField, Voxels, _fast
+from picopie import ScalarField, Voxels, _fast
 
 # generous floor vs the observed ~13-21x -- catches a real regression, never flakes
 _MIN_SPEEDUP = 2.0

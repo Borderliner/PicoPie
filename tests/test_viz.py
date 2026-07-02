@@ -5,8 +5,8 @@ import math
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Voxels, viz
+import picopie
+from picopie import Voxels, viz
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def test_midslice_inside_area_matches_circle(sphere):
     _, s = sphere.voxel_dimensions()
     sl = sphere.slice_z(int(s[2]) // 2)
     inside = int((sl <= 0).sum())
-    r_vox = 10.0 / picogk.voxel_size()           # radius in voxels
+    r_vox = 10.0 / picopie.voxel_size()           # radius in voxels
     expected = math.pi * r_vox ** 2
     assert inside == pytest.approx(expected, rel=0.1)
 
@@ -193,7 +193,7 @@ def test_mesh_preview(tmp_path, sphere):
 def test_mesh_preview_empty_raises():
     pytest.importorskip("matplotlib")
     with pytest.raises(ValueError):
-        viz.mesh_preview(picogk.Mesh())   # no triangles
+        viz.mesh_preview(picopie.Mesh())   # no triangles
 
 
 def test_mesh_preview_no_figure_leak(tmp_path, sphere):

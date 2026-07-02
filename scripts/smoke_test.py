@@ -14,15 +14,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from picogk._native.ctypes_types import PKVector3  # noqa: E402
-from picogk._native.loader import load_runtime  # noqa: E402
+from picopie._native.ctypes_types import PKVector3  # noqa: E402
+from picopie._native.loader import load_runtime  # noqa: E402
 
 STRLEN = 255
 
 
 def main() -> int:
     lib = load_runtime()
-    print(f"[ok] loaded runtime: {lib._picogk_path}")
+    print(f"[ok] loaded runtime: {lib._picopie_path}")
 
     # --- string info getters: void Library_GetX(char psz[255]) ---
     for fn in ("Library_GetName", "Library_GetVersion", "Library_GetBuildInfo"):

@@ -7,15 +7,15 @@ Needs the viz extras:  pip install 'picopie[viz]'
 """
 from pathlib import Path
 
-import picogk
-from picogk import Voxels, mesh_preview, save_slice_png, save_slice_sheet
+import picopie
+from picopie import Voxels, mesh_preview, save_slice_png, save_slice_sheet
 
 OUT = Path(__file__).parent / "_out"
 OUT.mkdir(exist_ok=True)
 
 
 def main() -> None:
-    picogk.init(voxel_size_mm=0.3)
+    picopie.init(voxel_size_mm=0.3)
 
     # a hollow shelled part with a through-hole
     part = Voxels.sphere(radius=12) - Voxels.sphere(center=(7, 0, 0), radius=7)

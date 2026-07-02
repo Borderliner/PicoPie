@@ -1,7 +1,7 @@
 """Mesh construction / transformation helpers (port of ShapeKernel ``MeshUtility``).
 
 Build meshes from point grids/quads, transform a mesh's vertices, move a mesh
-between frames, and append meshes. Functions return new :class:`~picogk.Mesh`
+between frames, and append meshes. Functions return new :class:`~picopie.Mesh`
 objects (the vertex transform is vectorised: it takes/returns an ``(N, 3)`` array).
 """
 

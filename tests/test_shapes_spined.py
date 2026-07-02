@@ -8,7 +8,7 @@ fast (full-resolution parity is covered by the golden test).
 import numpy as np
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     Frames,
     LineModulation,
     LocalFrame,
@@ -16,7 +16,7 @@ from picogk.shapes import (
     PipeSegment,
     Revolve,
 )
-from picogk.shapes import spline_ops as SO
+from picopie.shapes import spline_ops as SO
 
 F = LocalFrame((0, 0, 0))
 
@@ -82,7 +82,7 @@ def test_revolve_offset_spine_makes_tube():
 
 
 def test_revolve_frames_from_contour():
-    from picogk.shapes import GenericContour
+    from picopie.shapes import GenericContour
     contour = GenericContour(20.0, LineModulation(5.0))
     frames = Revolve.frames_from_contour(contour)
     assert isinstance(frames, Frames)

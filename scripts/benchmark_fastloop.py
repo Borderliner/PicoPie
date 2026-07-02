@@ -7,8 +7,8 @@ import time
 
 import numpy as np
 
-import picogk
-from picogk import Mesh, ScalarField, Voxels, _fast
+import picopie
+from picopie import Mesh, ScalarField, Voxels, _fast
 
 
 def timed(fn):
@@ -19,7 +19,7 @@ def timed(fn):
 
 def main() -> None:
     print(f"compiled _fastloop available: {_fast.available()}\n")
-    picogk.init(voxel_size_mm=0.15)
+    picopie.init(voxel_size_mm=0.15)
     mesh = Voxels.sphere(radius=15).to_mesh()
     nv, nt = mesh.vertex_count(), mesh.triangle_count()
     print(f"benchmark mesh: {nv:,} vertices  {nt:,} triangles\n")

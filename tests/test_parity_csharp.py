@@ -16,8 +16,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Lattice, Voxels
+import picopie
+from picopie import Lattice, Voxels
 
 GOLDEN = Path(__file__).parent / "golden" / "csharp_parity.json"
 pytestmark = pytest.mark.skipif(not GOLDEN.exists(), reason="C# golden not generated")
@@ -27,7 +27,7 @@ VOL_REL = 1e-4   # float32 precision; values agree to ~7 sig figs
 
 
 def test_session_voxel_size_matches_golden():
-    assert picogk.voxel_size() == pytest.approx(G["voxel_size_mm"])
+    assert picopie.voxel_size() == pytest.approx(G["voxel_size_mm"])
 
 
 def test_sphere_volume():
@@ -123,7 +123,7 @@ def test_is_inside_points():
 
 def test_vdb_cross_read_from_csharp():
     """A .vdb written by C# PicoGK loads in PicoPie and yields the same geometry."""
-    from picogk import load_vdb
+    from picopie import load_vdb
     vdb = GOLDEN.parent / "csharp_sphere.vdb"
     if not vdb.exists():
         pytest.skip("C# reference .vdb not generated")

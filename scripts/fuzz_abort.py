@@ -54,12 +54,12 @@ def _spt(rng: random.Random) -> tuple[float, float, float]:
 def worker(seed: int, n: int) -> int:
     import numpy as np
 
-    import picogk
-    from picogk import Mesh, Metadata, ScalarField, VdbFile, Voxels
+    import picopie
+    from picopie import Mesh, Metadata, ScalarField, VdbFile, Voxels
 
     rng = random.Random(seed)
     vs = VOXEL_SWEEP[seed % len(VOXEL_SWEEP)]
-    picogk.init(voxel_size_mm=vs)
+    picopie.init(voxel_size_mm=vs)
 
     # Keep voxel counts bounded at fine resolutions (radius ~ proportional to the
     # voxel size); NaN/inf/0 radii still flow through to exercise the guards.

@@ -10,7 +10,7 @@
 //
 // The same `createViewer` powers both the anywidget (notebook) path via the
 // default `render` export and the self-contained HTML export
-// (picogk.web.export_html).
+// (picopie.web.export_html).
 //
 // three.js is loaded from the esm.sh CDN (needs internet the first time; the
 // browser caches it afterwards).
@@ -186,7 +186,7 @@ export function createViewer(el, opts = {}) {
     renderer.domElement.toBlob((blob) => cb(blob), "image/png");
   }
 
-  function downloadPNG(name = "picogk.png") {
+  function downloadPNG(name = "picopie.png") {
     pngBlob((blob) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

@@ -4,20 +4,20 @@ library info/diagnostics, type helpers, BBox3, and a couple of Voxels paths."""
 import numpy as np
 import pytest
 
-import picogk
-from picogk import BBox3, Voxels
-from picogk._native.ctypes_types import PKColorFloat, PKVector2, PKVector3
-from picogk.types import to_color, to_vec2, to_vec3
+import picopie
+from picopie import BBox3, Voxels
+from picopie._native.ctypes_types import PKColorFloat, PKVector2, PKVector3
+from picopie.types import to_color, to_vec2, to_vec3
 
 
 # --- library info / diagnostics ---------------------------------------------
 def test_library_info_and_state():
-    assert picogk.is_initialized()
-    assert isinstance(picogk.build_info(), str) and picogk.build_info()
-    assert isinstance(picogk.name(), str)
+    assert picopie.is_initialized()
+    assert isinstance(picopie.build_info(), str) and picopie.build_info()
+    assert isinstance(picopie.name(), str)
     # create something so memory usage is non-zero
     _v = Voxels.sphere(radius=5)
-    assert picogk.total_memory_bytes() > 0
+    assert picopie.total_memory_bytes() > 0
 
 
 # --- type helpers ------------------------------------------------------------
@@ -86,8 +86,8 @@ def test_slice_x_y_index_validation():
 
 
 def test_vectorfield_bulk_fallback(monkeypatch):
-    from picogk import VectorField
-    monkeypatch.setattr(picogk._fast, "lib", None)   # force pure-Python path
+    from picopie import VectorField
+    monkeypatch.setattr(picopie._fast, "lib", None)   # force pure-Python path
     pos = np.array([[0, 0, 0], [2, 0, 0]], dtype=np.float32)
     vals = np.array([[1, 1, 1], [2, 2, 2]], dtype=np.float32)
     vf = VectorField().set_many(pos, vals)
@@ -97,7 +97,7 @@ def test_vectorfield_bulk_fallback(monkeypatch):
 
 
 def test_loader_missing_runtime_env(monkeypatch):
-    from picogk._native import loader
+    from picopie._native import loader
     monkeypatch.setenv("PICOGK_RUNTIME", "/nonexistent/picogk.so")
     with pytest.raises(FileNotFoundError):
         loader.find_runtime()

@@ -4,8 +4,8 @@ and the public API must work whether or not the extension is compiled."""
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Mesh, ScalarField, VectorField, Voxels, _fast
+import picopie
+from picopie import Mesh, ScalarField, VectorField, Voxels, _fast
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def test_triangles_fast_equals_pure(mesh):
 
 def test_vertices_fallback_matches(monkeypatch, mesh):
     fast = mesh.vertices
-    monkeypatch.setattr(picogk._fast, "lib", None)
+    monkeypatch.setattr(picopie._fast, "lib", None)
     pure = mesh.vertices
     assert np.array_equal(fast, pure)
 
@@ -46,7 +46,7 @@ def test_from_arrays_fallback_matches(monkeypatch):
     verts = np.array([(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)], dtype=np.float32)
     tris = np.array([(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)], dtype=np.int32)
     fast = Mesh.from_arrays(verts, tris)
-    monkeypatch.setattr(picogk._fast, "lib", None)
+    monkeypatch.setattr(picopie._fast, "lib", None)
     pure = Mesh.from_arrays(verts, tris)
     assert np.array_equal(fast.vertices, pure.vertices)
     assert np.array_equal(fast.triangles, pure.triangles)
@@ -69,7 +69,7 @@ def test_scalar_set_get_many_roundtrip():
 def test_scalar_set_get_many_fallback(monkeypatch):
     pos = _distinct_voxel_grid()
     vals = np.arange(len(pos), dtype=np.float32)
-    monkeypatch.setattr(picogk._fast, "lib", None)
+    monkeypatch.setattr(picopie._fast, "lib", None)
     sf = ScalarField().set_many(pos, vals)
     got, found = sf.get_many(pos)
     assert found.all()

@@ -12,9 +12,9 @@ import math
 import numpy as np
 import pytest
 
-import picogk
-from picogk import Viewer, Voxels, library, render_png, show
-from picogk._errors import InvalidHandleError, PicoGKError
+import picopie
+from picopie import Viewer, Voxels, library, render_png, show
+from picopie._errors import InvalidHandleError, PicoPieError
 
 
 def _viewer_or_skip(**kw) -> Viewer:
@@ -26,8 +26,8 @@ def _viewer_or_skip(**kw) -> Viewer:
 
 def test_viewer_importable():
     # must import + expose the class with no display (headless-safe import)
-    assert hasattr(picogk, "Viewer")
-    assert Viewer.__module__ == "picogk.viewer"
+    assert hasattr(picopie, "Viewer")
+    assert Viewer.__module__ == "picopie.viewer"
 
 
 @pytest.mark.viewer
@@ -191,12 +191,12 @@ def test_viewer_requires_main_thread():
     t = threading.Thread(target=worker)
     t.start()
     t.join()
-    assert errs and isinstance(errs[0], PicoGKError)
+    assert errs and isinstance(errs[0], PicoPieError)
     assert "main thread" in str(errs[0])
 
 
 def test_camera_math_view_is_orthonormal():
-    from picogk.viewer import _look_at, _perspective
+    from picopie.viewer import _look_at, _perspective
     eye = np.array([40.0, 30.0, 25.0], np.float32)
     m = _look_at(eye, np.zeros(3, np.float32), np.array([0, 0, 1], np.float32))
     rot = m[:3, :3]                          # the 3 basis columns must be orthonormal
@@ -206,7 +206,7 @@ def test_camera_math_view_is_orthonormal():
 
 
 def test_perspective_degenerate_near_far_no_nan():
-    from picogk.viewer import _perspective, _to_mat4
+    from picopie.viewer import _perspective, _to_mat4
     p = _perspective(np.radians(35), 1.0, 5.0, 5.0)   # near == far -> guarded
     assert np.all(np.isfinite(p))
     m = _to_mat4(np.eye(4))                            # identity round-trips

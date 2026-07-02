@@ -8,14 +8,14 @@ thin viewer wrapper, exercised by the viewer tests). C# parity isn't applicable
 
 import pytest
 
-from picogk.shapes import (
+from picopie.shapes import (
     Box,
     LocalFrame,
     Sphere,
     colors,
     painter,
 )
-from picogk.shapes.colors import (
+from picopie.shapes.colors import (
     ColorScale3D,
     CustomColorScale,
     LinearColorScale,

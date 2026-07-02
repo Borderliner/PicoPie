@@ -1,6 +1,6 @@
 # Gallery
 
-A selection of shapes built with [`picogk.shapes`](tutorials/shapes/01-parametric-shapes.md)
+A selection of shapes built with [`picopie.shapes`](tutorials/shapes/01-parametric-shapes.md)
 and rendered with `render_png` / the interactive viewer. Every image is produced
 by the runnable [`examples/shapekernel/gallery.py`](https://github.com/Borderliner/PicoPie/blob/main/examples/shapekernel/gallery.py)
 (a port of LEAP 71's ShapeKernel examples):

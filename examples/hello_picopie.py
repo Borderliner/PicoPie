@@ -3,21 +3,21 @@
 
 Run from the repo root (so the dev runtime under native/ is found)::
 
-    PYTHONPATH=src python examples/hello_picogk.py
+    PYTHONPATH=src python examples/hello_picopie.py
 """
 import math
 from pathlib import Path
 
-import picogk
-from picogk import Lattice, Voxels
+import picopie
+from picopie import Lattice, Voxels
 
 OUT = Path(__file__).parent / "_out"
 OUT.mkdir(exist_ok=True)
 
 
 def main() -> None:
-    picogk.init(voxel_size_mm=0.2)
-    print(f"PicoGK {picogk.version()}  ({picogk.name()})")
+    picopie.init(voxel_size_mm=0.2)
+    print(f"PicoGK {picopie.version()}  ({picopie.name()})")
 
     # 1) a sphere with a smaller sphere subtracted, then hollowed to a shell
     body = Voxels.sphere(radius=10)
@@ -71,7 +71,7 @@ def main() -> None:
     print(f"   -> gyroid_sphere.stl  (volume {tpms.volume_mm3():.1f} mm^3, "
           f"{tpms_mesh.triangle_count()} triangles)")
 
-    print(f"\nnative memory in use: {picogk.total_memory_bytes()/1e6:.1f} MB")
+    print(f"\nnative memory in use: {picopie.total_memory_bytes()/1e6:.1f} MB")
     print("done.")
 
 

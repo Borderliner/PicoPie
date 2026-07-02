@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m venv /tmp/v
           /tmp/v/bin/pip install numpy dist/*.tar.gz
-          /tmp/v/bin/python -c "import picogk._fastloop; print('fastloop built from sdist OK')"
+          /tmp/v/bin/python -c "import picopie._fastloop; print('fastloop built from sdist OK')"
       - uses: actions/upload-artifact@v4
         with:
           name: sdist

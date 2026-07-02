@@ -2,9 +2,9 @@
 ``RectUtility``).
 
 Lattice builders turn point lists / splines / grids into a
-:class:`~picogk.Lattice`; the ``*_between_z`` helpers make a solid spanning two
+:class:`~picopie.Lattice`; the ``*_between_z`` helpers make a solid spanning two
 heights along an axis. (The obsolete ``Sh.vox*`` delegators are omitted —
-PicoPie's :class:`~picogk.Voxels` already exposes offset/boolean/shell/implicit
+PicoPie's :class:`~picopie.Voxels` already exposes offset/boolean/shell/implicit
 operations directly.)
 """
 

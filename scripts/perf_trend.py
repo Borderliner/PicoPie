@@ -29,8 +29,8 @@ from pathlib import Path
 
 import numpy as np
 
-import picogk
-from picogk import ScalarField, Voxels, _fast
+import picopie
+from picopie import ScalarField, Voxels, _fast
 
 LEDGER = Path(__file__).resolve().parents[1] / "benchmarks" / "history.jsonl"
 REGRESSION_BAND = 0.25   # flag if speedup drops > 25% vs the last like-for-like baseline
@@ -59,7 +59,7 @@ def _fast_vs_fallback(fn, fast_repeats: int, slow_repeats: int) -> tuple[float, 
 
 
 def measure() -> dict:
-    picogk.init(voxel_size_mm=0.5)
+    picopie.init(voxel_size_mm=0.5)
     mesh = Voxels.sphere(radius=20.0).to_mesh()
     field = ScalarField.from_voxels(Voxels.sphere(radius=20.0))
     rng = np.random.default_rng(0)
@@ -77,7 +77,7 @@ def measure() -> dict:
         out[name] = {"fast_ms": round(fast * 1e3, 3),
                      "fallback_ms": round(slow * 1e3, 3),
                      "speedup": round(sp, 2)}
-    picogk.shutdown()
+    picopie.shutdown()
     return out
 
 

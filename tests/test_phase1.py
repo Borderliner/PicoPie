@@ -3,8 +3,8 @@
 import numpy as np
 import pytest
 
-import picogk
-from picogk import (
+import picopie
+from picopie import (
     FieldType,
     Mesh,
     Metadata,
@@ -99,7 +99,7 @@ def test_vdb_roundtrip(tmp_path, sphere):
 
 
 def test_vdb_field_types(tmp_path, sphere):
-    from picogk import VdbFile
+    from picopie import VdbFile
     p = tmp_path / "v.vdb"
     save_vdb(str(p), body=sphere)
     f = VdbFile.load(str(p))
@@ -160,5 +160,5 @@ def test_bool_guard_rejects_non_voxels(sphere):
 def test_bool_guard_rejects_closed(sphere):
     other = Voxels.sphere(radius=3)
     other.close()
-    with pytest.raises(picogk.InvalidHandleError):
+    with pytest.raises(picopie.InvalidHandleError):
         sphere.bool_add_(other)

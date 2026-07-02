@@ -2,7 +2,7 @@
 
 Resolution order:
   1. ``$PICOGK_RUNTIME`` env var (full path to the shared library), if set.
-  2. A copy bundled inside the wheel at ``picogk/_lib/`` (populated at build time).
+  2. A copy bundled inside the wheel at ``picopie/_lib/`` (populated at build time).
   3. Developer build trees under the repo's ``native/`` directory.
   4. The OS default search path (``picogk`` / ``libpicogk``).
 
@@ -33,7 +33,7 @@ def _candidate_dirs() -> list[Path]:
     dirs: list[Path] = []
     # 2. bundled in wheel
     dirs.append(here.parent.parent / "_lib")
-    # 3. developer build trees (repo root is .../src/picogk/_native -> up 4)
+    # 3. developer build trees (repo root is .../src/picopie/_native -> up 4)
     repo_root = here.parents[3]
     native = repo_root / "native" / "PicoGKRuntime"
     dirs += [native / "Dist", native / "build" / "lib", native / "build" / "Dist",
@@ -97,5 +97,5 @@ def load_runtime() -> C.CDLL:
             # _lib. Add that dir to the DLL search path before loading.
             os.add_dll_directory(str(Path(path).resolve().parent))
         _LIB = C.CDLL(path)
-        _LIB._picogk_path = path  # type: ignore[attr-defined]
+        _LIB._picopie_path = path  # type: ignore[attr-defined]
     return _LIB
