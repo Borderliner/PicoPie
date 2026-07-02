@@ -64,6 +64,47 @@ part = Voxels.sphere(radius=12) - Voxels.capsule((-13,0,0),(13,0,0), radius=4)
 When you *do* render implicitly, keep the `bbox` snug — every extra voxel in the box
 is another Python call.
 
+### Compiled callbacks (numba / ctypes): ~30× faster
+
+Some SDFs *can't* be expressed as primitives + booleans — a gyroid, or an implicit
+driven by a learned model (a CPPN / PINN / neuroevolved field). For those, the
+per-voxel Python call is the dominant cost. `render_implicit_` and
+`intersect_implicit_` therefore also accept a **compiled** callback and hand it
+straight to the native loop, with no interpreter in the inner loop:
+
+```python
+import numba
+from numba import types
+
+# ABI must be float(const PKVector3*): a pointer to three contiguous float32.
+sig = types.float32(types.CPointer(types.float32))
+
+@numba.cfunc(sig, nopython=True)
+def gyroid(p):
+    x, y, z = p[0], p[1], p[2]
+    import math
+    return (math.sin(x)*math.cos(y) + math.sin(y)*math.cos(z)
+            + math.sin(z)*math.cos(x))
+
+part.render_implicit_(gyroid, bbox)   # detected as compiled, runs natively
+```
+
+On a sphere at 0.2 mm voxels this is **~30× faster** than the equivalent Python
+callback (measured 724 ms → 23 ms), with identical geometry. A `numba.cfunc`, a
+hand-written C shared library loaded with `ctypes.CDLL`, or a cffi callback all
+work — numba is **not** a dependency of PicoPie; a compiled function pointer is
+just detected by duck typing.
+
+!!! warning "The compiled path bypasses the safety guard"
+    A plain Python `sdf` is wrapped so that an exception or a NaN/inf return can
+    never reach the native loop (it would silently inject a zero-distance
+    surface). That guard is exactly what makes the Python path both safe **and**
+    slow, so the compiled path **skips it**: your compiled function owns its own
+    correctness and must return finite values. This matches upstream C# PicoGK
+    behaviour — a bad return corrupts the level set rather than raising. Keep the
+    body `nopython` / `nogil` and touch no Python objects (that is also what lets
+    it run without the GIL).
+
 ## 4. `volume_mm3()` vs `calculate_properties()`
 
 ```python

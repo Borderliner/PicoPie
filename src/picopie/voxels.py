@@ -230,18 +230,63 @@ class Voxels(NativeObject):
             return r if math.isfinite(r) else 1.0e30
         return _cb
 
+    @staticmethod
+    def _as_native_sdf(sdf):
+        """If ``sdf`` is already a *compiled* callback, return it rebuilt as a
+        :data:`PKPFnfSdf` so it can be handed straight to the native loop --
+        no per-voxel Python round-trip. Otherwise return ``None`` (the guarded
+        Python path is used).
+
+        Detected forms:
+
+        * a ``numba.cfunc`` (exposes an integer ``.address``);
+        * any ctypes function pointer -- a ``CFUNCTYPE`` instance, a ``CDLL``
+          export, or a cffi callback.
+
+        The compiled fn must have the ABI ``float(const PKVector3*)`` -- i.e.
+        take a pointer to three contiguous ``float32`` and return a ``float``.
+        For numba that is ``types.float32(types.CPointer(types.float32))``,
+        reading ``p[0], p[1], p[2]``.
+
+        This path deliberately **bypasses** the finite/exception guard of
+        :meth:`_wrap_sdf`: a compiled callback runs with no interpreter and
+        (for ``nopython``/``nogil`` code) no GIL, which is exactly what makes
+        it fast, so it owns its own correctness -- returning NaN/inf injects a
+        zero-distance surface, the same behaviour as upstream C# PicoGK. The
+        caller keeps ``sdf`` referenced for the duration of the native call so
+        the compiled code is not collected out from under the pointer.
+        """
+        addr = getattr(sdf, "address", None)          # numba.cfunc
+        if isinstance(addr, int) and addr:
+            return PKPFnfSdf(addr)
+        if isinstance(sdf, C._CFuncPtr):              # ctypes / CDLL / cffi
+            return PKPFnfSdf(C.cast(sdf, C.c_void_p).value)
+        return None
+
     def render_implicit_(self, sdf, bbox) -> Voxels:
         """Render a signed-distance function ``sdf(x, y, z) -> float`` within
         ``bbox`` (a :class:`BBox3` or ``((xmin,ymin,zmin),(xmax,ymax,zmax))``).
 
-        NOTE: ``sdf`` is invoked once per voxel from native code; a pure-Python
-        callback is correspondingly slow. Prefer primitives + booleans, or a
-        compiled callback, for large volumes. If ``sdf`` raises, the exception
-        is re-raised after the native pass (the volume is left partially built).
+        ``sdf`` may be a plain Python callable (invoked once per voxel from
+        native code -- correspondingly slow; prefer primitives + booleans for
+        bulk solids) or a **compiled callback** -- a ``numba.cfunc`` or any
+        ctypes function pointer with the ABI ``float(const PKVector3*)``. A
+        compiled callback runs entirely in native code (no per-voxel Python
+        round-trip; ~30x faster in practice) but bypasses the finite/exception
+        guard, so it must return finite values itself -- see
+        :meth:`_as_native_sdf`.
+
+        If a Python ``sdf`` raises, the exception is re-raised after the native
+        pass (the volume is left partially built).
         """
+        box = _to_pkbbox(bbox)
+        native_cb = self._as_native_sdf(sdf)
+        if native_cb is not None:
+            self._lib.Voxels_RenderImplicit(self._inst, self.handle,
+                                            C.byref(box), native_cb)
+            return self                               # sdf kept alive by param
         errors: list = []
         cb = self._wrap_sdf(sdf, errors)
-        box = _to_pkbbox(bbox)
         self._lib.Voxels_RenderImplicit(self._inst, self.handle,
                                         C.byref(box), cb)
         if errors:
@@ -250,6 +295,12 @@ class Voxels(NativeObject):
 
     def intersect_implicit_(self, sdf) -> Voxels:
         """Intersect this volume with the region where ``sdf(x,y,z) <= 0``.
+
+        ``sdf`` may be a plain Python callable or a **compiled callback**
+        (``numba.cfunc`` / ctypes function pointer with the ABI
+        ``float(const PKVector3*)``); the compiled form runs natively and
+        bypasses the finite guard -- see :meth:`render_implicit_` and
+        :meth:`_as_native_sdf`.
 
         WARNING: the resulting grid may not be a valid level set. Calling this a
         second time on the same volume (or a copy of it) raises
@@ -265,6 +316,12 @@ class Voxels(NativeObject):
                 "is no longer a valid level set and a second implicit intersect "
                 "aborts the process. Compose the clip into one render_implicit_ "
                 "callback instead, e.g. max(feature_sdf, clip_sdf).")
+        native_cb = self._as_native_sdf(sdf)
+        if native_cb is not None:
+            self._lib.Voxels_IntersectImplicit(self._inst, self.handle,
+                                               native_cb)
+            self._implicit_intersected = True
+            return self                               # sdf kept alive by param
         errors: list = []
         cb = self._wrap_sdf(sdf, errors)
         self._lib.Voxels_IntersectImplicit(self._inst,
