@@ -2,6 +2,38 @@
 
 All notable changes to PicoPie. Versions follow [SemVer](https://semver.org).
 
+## 0.6.0 — 2026-07-02
+
+### Added — compiled callbacks for `render_implicit_` / `intersect_implicit_`
+
+`render_implicit_(sdf, bbox)` and `intersect_implicit_(sdf)` now accept a
+**compiled** SDF as well as a plain Python callable. Pass a `numba.cfunc` or any
+ctypes function pointer with the ABI `float(const PKVector3*)` (a pointer to three
+contiguous `float32`) and it is handed straight to the native loop — no per-voxel
+Python round-trip. Measured **~30×** faster than the Python-callback path on a
+sphere at 0.2 mm voxels, with bit-identical geometry.
+
+```python
+sig = types.float32(types.CPointer(types.float32))  # matches PKPFnfSdf
+
+@numba.cfunc(sig)
+def my_sdf(p):
+    return (p[0]**2 + p[1]**2 + p[2]**2) ** 0.5 - 8.0
+
+part.render_implicit_(my_sdf, bbox)   # detected and run natively
+```
+
+- Plain `sdf(x, y, z)` callables are unchanged and keep the never-abort finite
+  guard. Detection is duck-typed, so **numba stays an optional, undeclared
+  dependency** — the feature works equally with numba, a hand-written C shared
+  library, or cffi.
+- **Caveat:** the compiled path deliberately bypasses the finite/exception guard
+  (that guard is what makes the Python path safe *and* slow). A compiled callback
+  owns its own correctness — returning NaN/inf injects a zero-distance surface,
+  the same behaviour as upstream C# PicoGK. See the "Compiled callbacks" section
+  in `docs/tutorials/advanced/01-performance.md`.
+- Requested in [#1](https://github.com/Borderliner/PicoPie/issues/1).
+
 ## 0.5.0 — 2026-07-02
 
 ### Changed — BREAKING: the import namespace is now `picopie`, not `picogk`
